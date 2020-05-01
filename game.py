@@ -19,5 +19,5 @@ class Game:
             pg.display.update()
             self.clock.tick(60)
 
-    def exit(self):
+    def quit(self):
         pg.quit()
