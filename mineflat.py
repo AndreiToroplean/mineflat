@@ -1,4 +1,10 @@
-import pygame as pg
+from game_manager import GameManager
 
-print("hello world")
-pg.init()
+
+def main():
+    with GameManager() as game:
+        game.main_loop()
+
+
+if __name__ == '__main__':
+    main()
