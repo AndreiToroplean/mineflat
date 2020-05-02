@@ -1,28 +1,33 @@
 import pygame as pg
 
-import globals
+from global_params import GlobalParams
+from core import Color, WorldPos, WorldViewRect
 from player import Player
 from world import World
 
 
 class Game:
-    C_SKY = 20, 230, 240
+    C_SKY = Color(20, 230, 240)
 
     def __init__(self):
+        self.global_params = GlobalParams()
+
         pg.init()
         self.main_player = Player()
-        self.world = World()
+        self.world = World(self.global_params)
 
         self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
 
         self.clock = pg.time.Clock()
 
         # Game constants:
-        self.RES = self.screen.get_size()
-        self.BLOCKS_ON_SCREEN = tuple(x / globals.BLOCK_SCREEN_SIZE for x in self.RES)
-        self.BLOCKS_VIEW_SHIFT = (
-            self.BLOCKS_ON_SCREEN[0] * globals.PLAYER_SCREEN_RELATIVE_POS[0],
-            self.BLOCKS_ON_SCREEN[1] * globals.PLAYER_SCREEN_RELATIVE_POS[1],
+        self.global_params.RES = self.screen.get_size()
+        self.global_params.BLOCKS_ON_SCREEN = tuple(x / self.global_params.BLOCK_SCREEN_SIZE for x in self.global_params.RES)
+        self.global_params.BLOCKS_ON_EACH_SIDE = (
+            self.global_params.BLOCKS_ON_SCREEN[0] * self.global_params.PLAYER_SCREEN_RELATIVE_POS[0],
+            self.global_params.BLOCKS_ON_SCREEN[1] * self.global_params.PLAYER_SCREEN_RELATIVE_POS[1],
+            self.global_params.BLOCKS_ON_SCREEN[0] * (1-self.global_params.PLAYER_SCREEN_RELATIVE_POS[0]),
+            self.global_params.BLOCKS_ON_SCREEN[1] * (1-self.global_params.PLAYER_SCREEN_RELATIVE_POS[1]),
             )
 
     def main_loop(self):
@@ -41,11 +46,15 @@ class Game:
     def view_rect(self):
         """World referred part of the world visible on screen. """
         mp_pos = self.main_player.pos
-        rtn = pg.Rect(
-            left=mp_pos[0]-self.BLOCKS_VIEW_SHIFT[0],
-            top=mp_pos[1]-self.BLOCKS_VIEW_SHIFT[1],
-            width=self.BLOCKS_ON_SCREEN[0],
-            height=self.BLOCKS_ON_SCREEN[1],
+        rtn = WorldViewRect(
+            WorldPos(
+                x=mp_pos[0] - self.global_params.BLOCKS_ON_EACH_SIDE[0],
+                y=mp_pos[1] - self.global_params.BLOCKS_ON_EACH_SIDE[1],
+                ),
+            WorldPos(
+                x=mp_pos[0] + self.global_params.BLOCKS_ON_EACH_SIDE[2],
+                y=mp_pos[1] + self.global_params.BLOCKS_ON_EACH_SIDE[3],
+                ),
             )
         return rtn
 
