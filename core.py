@@ -2,8 +2,11 @@ from collections import namedtuple
 
 Color = namedtuple("Color", ("r", "g", "b"))
 
-WorldPos = namedtuple("WorldPos", ("x", "y"))
-ChunkPos = namedtuple("ChunkPos", ("x", "y"))
+
+PixVec = namedtuple("PixVec", ("x", "y"))
+ScreenVec = namedtuple("ScreenVec", ("x", "y"))
+WorldVec = namedtuple("WorldVec", ("x", "y"))
+ChunkVec = namedtuple("ChunkVec", ("x", "y"))
 
 WorldViewRect = namedtuple("WorldViewRect", ("pos_0", "pos_1"))
 ChunkViewRect = namedtuple("ChunkViewRect", ("pos_0", "pos_1"))
