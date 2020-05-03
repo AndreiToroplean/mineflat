@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS
+from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, C_SKY
 from game_params import GameParams
 from core import Color, WorldVec, WorldViewRect
 from player import Player
@@ -8,21 +8,15 @@ from world import World
 
 
 class Game:
-    C_SKY = Color(20, 230, 240)
-
     def __init__(self):
-        self.params = GameParams()
-
         pg.init()
-        self.main_player = Player()
-        self.world = World(self.params)
 
         self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
-
         self.clock = pg.time.Clock()
 
-        # Game constants:
+        self.params = GameParams()
         self.params.RES = self.screen.get_size()
+        # self.params.RES = 1920, 1080  # prov
         self.params.BLOCKS_ON_SCREEN = tuple(x / BLOCK_PIX_SIZE for x in self.params.RES)
         self.params.BLOCKS_ON_EACH_SIDE = (
             self.params.BLOCKS_ON_SCREEN[0] * PLAYER_SCREEN_POS[0],
@@ -30,6 +24,9 @@ class Game:
             self.params.BLOCKS_ON_SCREEN[0] * (1 - PLAYER_SCREEN_POS[0]),
             self.params.BLOCKS_ON_SCREEN[1] * (1 - PLAYER_SCREEN_POS[1]),
             )
+
+        self.main_player = Player()
+        self.world = World(self.params)
 
     def main_loop(self):
         while True:
@@ -41,6 +38,7 @@ class Game:
             self.draw_sky()
             self.draw_world()
 
+            pg.display.flip()
             self.clock.tick(60)
 
     @property
@@ -60,7 +58,7 @@ class Game:
         return rtn
 
     def draw_sky(self):
-        self.screen.fill(self.C_SKY)
+        self.screen.fill(C_SKY)
 
     def draw_world(self):
         self.world.draw(self.view_rect)
