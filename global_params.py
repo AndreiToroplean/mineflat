@@ -12,5 +12,6 @@ WORLD_MAX_HEIGHT = 2 ** 8
 WATER_HEIGHT = 2 ** 6
 
 # Colors
+C_KEY = Color(255, 0, 0)
 C_SKY = Color(80, 220, 240)
 

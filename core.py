@@ -17,5 +17,6 @@ Colliders = namedtuple("Colliders", ("left", "right", "top", "bottom"))
 
 
 class Material(Enum):
-    air = "0"
+    stone = "1"
+    grass = "2"
     dirt = "3"
