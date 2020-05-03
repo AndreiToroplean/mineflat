@@ -12,6 +12,9 @@ def chunk_to_world_pos(chunk_pos):
     return WorldVec(*rtn)
 
 
-def world_to_pix_shift(world_shift):
-    rtn = [world_shift_dim * BLOCK_PIX_SIZE for world_shift_dim in world_shift]
+def world_to_pix_shift(world_shift, surface_res):
+    rtn = [
+        world_shift[0] * BLOCK_PIX_SIZE,
+        surface_res - ((1+world_shift[1]) * BLOCK_PIX_SIZE),
+        ]
     return PixVec(*rtn)

@@ -61,9 +61,8 @@ class Game:
         self.screen.fill(C_SKY)
 
     def draw_world(self):
-        self.world.draw(self.view_rect)
-        # compute the displacement of self.world.surface relative to self.screen
-        # blit self.world.surface to self.screen in the computed position
+        surface, pix_shift = self.world.get_surface(self.view_rect, self.params.RES)
+        self.screen.blit(surface, pix_shift)
 
     def quit(self):
         pg.quit()

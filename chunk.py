@@ -9,11 +9,13 @@ from block import Block
 class Chunk:
     block_materials = {}
 
-    def __init__(self, chunk_pos):
-        self.chunk_pos = chunk_pos
-        self.world_pos = chunk_to_world_pos(self.chunk_pos)
+    def __init__(self, world_pos):
+        self.world_pos = world_pos
         self.blocks = self.generate_blocks()
-        self.surface = None
+        self.surface = pg.Surface((
+                BLOCK_PIX_SIZE * CHUNK_SIZE[0],
+                BLOCK_PIX_SIZE * CHUNK_SIZE[1],
+            ))
         self.colliders = None
         self.draw()
 
@@ -34,7 +36,10 @@ class Chunk:
         return blocks
 
     def draw(self):
-        blit_sequence = [(block.surface, world_to_pix_shift(world_shift)) for world_shift, block in self.blocks.items()]
+        blit_sequence = [(
+            block.surface,
+            world_to_pix_shift(world_shift, self.surface.get_size())
+            ) for world_shift, block in self.blocks.items()]
         self.surface.blits(blit_sequence, doreturn=False)
 
     @property

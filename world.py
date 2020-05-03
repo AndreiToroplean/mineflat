@@ -1,10 +1,11 @@
 from itertools import product
+from math import floor
 
 import pygame as pg
 
-from core_funcs import world_to_chunk_pos
-from global_params import CHUNK_SIZE, CHUNK_PADDING, BLOCK_PIX_SIZE
-from core import WorldViewRect, WorldVec, ChunkViewRect, ChunkVec, ChunkData, Colliders
+from core_funcs import world_to_chunk_pos, world_to_pix_shift
+from global_params import CHUNK_SIZE, CHUNK_PADDING, BLOCK_PIX_SIZE, CHUNK_PIX_SIZE
+from core import ChunkViewRect, WorldViewRect, PixVec, ChunkVec, WorldVec
 from chunk import Chunk
 
 
@@ -25,34 +26,49 @@ class World:
                     * BLOCK_PIX_SIZE
                     ),
             ))
+        self.surface_world_shift = WorldVec(0, 0)
+        self.chunks_world_shift = ChunkVec(0, 0)
 
-    def chunk_poss_in_view_rect(self, world_view_rect):
+    def load_chunks(self, view_rect):
+        self.chunks_visible = {}
+
         chunk_view_rect = ChunkViewRect(
-            world_to_chunk_pos(world_view_rect.pos_0),
-            world_to_chunk_pos(world_view_rect.pos_1),
+            world_to_chunk_pos(view_rect.pos_0),
+            world_to_chunk_pos(view_rect.pos_1),
             )
 
-        chunk_range_x = range(chunk_view_rect.pos_0.x, chunk_view_rect.pos_1.x + 1)
-        chunk_range_y = range(chunk_view_rect.pos_0.y, chunk_view_rect.pos_1.y + 1)
-        chunk_poss = product(chunk_range_x, chunk_range_y)
-        return chunk_poss
+        max_view_rect = WorldViewRect(
+            WorldVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(chunk_view_rect.pos_0, CHUNK_SIZE)]),
+            WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(chunk_view_rect.pos_0, CHUNK_SIZE)]),
+            )
 
-    def load_chunks(self, chunk_poss):
-        self.chunks_visible = {}
-        for chunk_pos in chunk_poss:
-            if chunk_pos in self.chunks_existing:
-                chunk_to_load = self.chunks_existing[chunk_pos]
-            else:
-                chunk_to_load = Chunk(chunk_pos)
-                self.chunks_existing[chunk_pos] = chunk_to_load
+        self.surface_world_shift = WorldVec(
+            *[view_dim - max_view_dim for view_dim, max_view_dim in zip(view_rect.pos_0, max_view_rect.pos_0)]
+            )
+        self.chunks_world_shift = max_view_rect.pos_0
 
-            self.chunks_visible[chunk_pos] = chunk_to_load.data
+        for chunk_world_pos_x in range(max_view_rect.pos_0.x, max_view_rect.pos_1.x, CHUNK_SIZE.x):
+            for chunk_world_pos_y in range(max_view_rect.pos_0.y, max_view_rect.pos_1.y, CHUNK_SIZE.y):
+                chunk_world_pos = WorldVec(chunk_world_pos_x, chunk_world_pos_y)
+                if chunk_world_pos in self.chunks_existing:
+                    chunk_to_load = self.chunks_existing[chunk_world_pos]
+                else:
+                    chunk_to_load = Chunk(chunk_world_pos)
+                    self.chunks_existing[chunk_world_pos] = chunk_to_load
 
-    def update(self, view_rect):
-        chunk_poss_needed = self.chunk_poss_in_view_rect(view_rect)
-        self.load_chunks(chunk_poss_needed)
+                self.chunks_visible[chunk_world_pos] = chunk_to_load.data
 
     def draw(self, view_rect):
-        self.update(view_rect)
-        blit_sequence = []
-        self.surface.blit()
+        self.load_chunks(view_rect)
+        world_pos_to_pix_shift = lambda world_pos: PixVec(
+            *world_to_pix_shift([pos-shift for pos, shift in zip(world_pos, self.chunks_world_shift)], self.surface.get_size())
+            )
+        blit_sequence = [(
+            chunk.surface,
+            world_pos_to_pix_shift(world_pos)
+            ) for world_pos, chunk in self.chunks_visible.items()]
+        self.surface.blits(blit_sequence)
+
+    def get_surface(self, view_rect, screen_res):
+        self.draw(view_rect)
+        return self.surface, world_to_pix_shift(self.surface_world_shift, screen_res)

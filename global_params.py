@@ -1,9 +1,10 @@
-from core import ScreenVec, WorldVec, Color
+from core import PixVec, ScreenVec, WorldVec, Color
 
 # Technical dimensions
-BLOCK_PIX_SIZE = 50
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.33)
+BLOCK_PIX_SIZE = 50
 CHUNK_SIZE = WorldVec(9, 9)
+CHUNK_PIX_SIZE = PixVec(*[BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_SIZE])
 CHUNK_PADDING = 1
 
 # Artistic dimensions
