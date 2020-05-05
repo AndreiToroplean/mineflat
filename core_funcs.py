@@ -10,9 +10,8 @@ def chunk_to_world_vec(chunk_vec):
     return WorldVec(*(coord * chunk_size_dim for coord, chunk_size_dim in zip(chunk_vec, CHUNK_SIZE)))
 
 
-def world_to_pix_shift(world_shift, dest_surf_pix_size, source_surf_pix_size):
+def world_to_pix_shift(world_shift, dest_surf_pix_size, source_surf_pix_size, bloc_size=BLOCK_PIX_SIZE):
     return PixVec(
-        world_shift[0] * BLOCK_PIX_SIZE,
-        dest_surf_pix_size[1] - (world_shift[1] * BLOCK_PIX_SIZE + source_surf_pix_size[1]),
-        # world_shift[1] * BLOCK_PIX_SIZE,
+        world_shift[0] * bloc_size,
+        dest_surf_pix_size[1] - (world_shift[1] * bloc_size + source_surf_pix_size[1]),
         )

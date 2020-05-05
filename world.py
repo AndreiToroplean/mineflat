@@ -16,8 +16,9 @@ class World:
         self.chunk_view = ChunkView(ChunkVec(0, 0), ChunkVec(0, 0))
         self.max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
 
-        surf_pix_size = tuple((dim+1) * pix for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE))
-        self.max_surf = pg.Surface(surf_pix_size)
+        max_surf_pix_size = tuple((dim+1) * pix
+            for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE))
+        self.max_surf = pg.Surface(max_surf_pix_size)
         self.max_surf.set_colorkey(C_KEY)
 
     def update_chunk_view(self):
@@ -63,20 +64,21 @@ class World:
 
     def draw(self):
         are_new_chunks = self.update_chunk_view()
-        # if are_new_chunks:
-        self.draw_max_surf()
+        if are_new_chunks:
+            self.draw_max_surf()
         self.camera.draw_world(self.max_surf, self.max_view.pos_0)
 
 
 def main():
     camera = Camera()
-    camera.pos = WorldVec(0, 100)
+    camera.pos = WorldVec(0, 60)
     world = World(camera)
     world.draw()
-    Display(camera.screen)
+    pg.display.flip()
+    time.sleep(2)
 
 
 if __name__ == "__main__":
+    import time
     from camera import Camera
-    from debug.display import Display
     main()

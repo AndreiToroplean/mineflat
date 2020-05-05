@@ -31,16 +31,17 @@ class Game:
                         self.main_player.move_up()
                     elif event.key == pg.K_s:
                         self.main_player.move_down()
+                    elif event.key == pg.K_KP_PLUS:
+                        self.camera.zoom_in()
+                    elif event.key == pg.K_KP_MINUS:
+                        self.camera.zoom_out()
                 elif event.type == pg.KEYUP:
-                    if (event.key == pg.K_d
-                            or event.key == pg.K_a
-                            or event.key == pg.K_w
-                            or event.key == pg.K_s
-                            ):
-                        self.main_player.move_stop()
+                    self.main_player.move_stop()
+                    self.camera.zoom_stop()
 
             # Movement
             self.main_player.animate()
+            self.camera.animate()
 
             # Graphics
             self.draw_sky()

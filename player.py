@@ -5,7 +5,7 @@ from core import WorldVec
 
 
 class Player:
-    move_speed = 0.1
+    move_speed = 0.25
 
     def __init__(self):
         self.spawn_pos = WorldVec(float(0), float(WATER_HEIGHT))
