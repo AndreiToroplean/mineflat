@@ -2,7 +2,7 @@ import random
 
 import pygame as pg
 
-from core_funcs import chunk_to_world_pos, world_to_pix_shift
+from core_funcs import chunk_to_world_vec, world_to_pix_shift
 from global_params import BLOCK_PIX_SIZE, CHUNK_SIZE, WATER_HEIGHT, C_KEY
 from core import PixVec, ChunkVec, WorldVec, ChunkData, Colliders, Material
 from block import Block
@@ -14,11 +14,11 @@ class Chunk:
     def __init__(self, world_pos):
         self.world_pos = world_pos
         self.blocks = self.generate_blocks()
-        self.surface = pg.Surface((
+        self.surf = pg.Surface((
                 BLOCK_PIX_SIZE * CHUNK_SIZE[0],
                 BLOCK_PIX_SIZE * CHUNK_SIZE[1],
             ))
-        self.surface.set_colorkey(C_KEY)
+        self.surf.set_colorkey(C_KEY)
         self.colliders = None
         self.draw()
 
@@ -33,23 +33,23 @@ class Chunk:
                         block = self.block_materials[material]
                     except KeyError:
                         block = Block(material)
-                        self.block_materials[Material.dirt] = block
+                        self.block_materials[material] = block
 
                     blocks[WorldVec(world_shift_x, world_shift_y)] = block
         return blocks
 
     def draw(self):
-        self.surface.fill(C_KEY)
+        self.surf.fill(C_KEY)
         blit_sequence = [(
-            block.surface,
-            world_to_pix_shift(world_shift, self.surface.get_size(), (BLOCK_PIX_SIZE,)*2)
+            block.surf,
+            world_to_pix_shift(world_shift, self.surf.get_size(), (BLOCK_PIX_SIZE,)*2)
             ) for world_shift, block in self.blocks.items()]
-        self.surface.blits(blit_sequence, doreturn=False)
+        self.surf.blits(blit_sequence, doreturn=False)
 
     @property
     def data(self):
         return ChunkData(
-            surface=self.surface,
+            surf=self.surf,
             colliders=self.colliders,
             )
 
@@ -58,5 +58,5 @@ if __name__ == "__main__":
     from debug.display import Display
     from global_params import WATER_HEIGHT
 
-    test_surf = Chunk(WorldVec(0, WATER_HEIGHT-4)).surface
+    test_surf = Chunk(WorldVec(0, WATER_HEIGHT-4)).surf
     Display(test_surf)

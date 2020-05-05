@@ -9,7 +9,7 @@ class Block:
 
     def __init__(self, material):
         self.material = material
-        self.surface = None
+        self.surf = None
         self.draw()
 
     def draw(self):
@@ -18,13 +18,12 @@ class Block:
             file_name = self.special_file_names[name]
         else:
             file_name = name
-        file_path = f"res/textures/block/{file_name}.png"
-        texture = pg.image.load(file_path)
-        self.surface = pg.transform.scale(texture, size)
+        file_path = f"resources/textures/block/{file_name}.png"
+        self.surf = pg.image.load(file_path)
 
 
 if __name__ == "__main__":
     from debug.display import Display
 
-    Display(Block(Material.dirt).surface)
-    Display(Block(Material.grass).surface)
+    Display(Block(Material.dirt).surf)
+    Display(Block(Material.grass).surf)
