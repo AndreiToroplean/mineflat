@@ -9,10 +9,10 @@ ScreenVec = namedtuple("ScreenVec", ("x", "y"))
 WorldVec = namedtuple("WorldVec", ("x", "y"))
 ChunkVec = namedtuple("ChunkVec", ("x", "y"))
 
-WorldViewRect = namedtuple("WorldViewRect", ("pos_0", "pos_1"))
-ChunkViewRect = namedtuple("ChunkViewRect", ("pos_0", "pos_1"))
+WorldView = namedtuple("WorldView", ("pos_0", "pos_1"))
+ChunkView = namedtuple("ChunkView", ("pos_0", "pos_1"))
 
-ChunkData = namedtuple("ChunkData", ("surface", "colliders"))
+ChunkData = namedtuple("ChunkData", ("surf", "colliders"))
 Colliders = namedtuple("Colliders", ("left", "right", "top", "bottom"))
 
 

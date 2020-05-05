@@ -1,75 +1,46 @@
 import pygame as pg
 
-from core_funcs import world_to_chunk_pos, world_to_pix_shift
-from global_params import CHUNK_SIZE, CHUNK_PIX_SIZE, CHUNK_PADDING, BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, C_KEY
-from core import ChunkViewRect, WorldViewRect, PixVec, ChunkVec, WorldVec
+from core_funcs import world_to_chunk_vec, world_to_pix_shift
+from global_params import CHUNK_SIZE, CHUNK_PIX_SIZE, C_KEY
+from core import ChunkView, WorldView, PixVec, ChunkVec, WorldVec
 from chunk import Chunk
 
 
 class World:
-    def __init__(self, screen_res):
+    def __init__(self, camera):
+        self.camera = camera
+
         self.chunks_existing = {}
-        self.chunks_data = {}
+        self.chunks_visible = {}
 
-        self.surface = None
+        self.chunk_view = ChunkView(ChunkVec(0, 0), ChunkVec(0, 0))
+        self.max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
 
-        self.surface_world_shift = WorldVec(0, 0)
-        self.chunks_world_shift = ChunkVec(0, 0)
-        self.view_rect = WorldViewRect(
-            WorldVec(0, 0),
-            WorldVec(0, 0),
+        surf_pix_size = tuple((dim+1) * pix for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE))
+        self.max_surf = pg.Surface(surf_pix_size)
+        self.max_surf.set_colorkey(C_KEY)
+
+    def update_chunk_view(self):
+        """Updates chunk_view and returns True if there are new chunks to load, False otherwise. """
+        new_chunk_view = ChunkView(
+            world_to_chunk_vec(self.camera.world_view.pos_0),
+            world_to_chunk_vec(self.camera.world_view.pos_1),
             )
 
-        self.screen_res = screen_res
-        self.BLOCKS_ON_SCREEN = tuple(x / BLOCK_PIX_SIZE for x in self.screen_res)
-        self.BLOCKS_ON_EACH_SIDE = (
-            self.BLOCKS_ON_SCREEN[0] * PLAYER_SCREEN_POS[0],
-            self.BLOCKS_ON_SCREEN[1] * PLAYER_SCREEN_POS[1],
-            self.BLOCKS_ON_SCREEN[0] * (1 - PLAYER_SCREEN_POS[0]),
-            self.BLOCKS_ON_SCREEN[1] * (1 - PLAYER_SCREEN_POS[1]),
-            )
+        if new_chunk_view == self.chunk_view:
+            return False
 
-    def update_view_rect(self, mp_pos):
-        """World referred part of the world visible on screen. """
-        self.view_rect = WorldViewRect(
-            WorldVec(
-                x=mp_pos[0] - self.BLOCKS_ON_EACH_SIDE[0],
-                y=mp_pos[1] - self.BLOCKS_ON_EACH_SIDE[1],
-                ),
-            WorldVec(
-                x=mp_pos[0] + self.BLOCKS_ON_EACH_SIDE[2],
-                y=mp_pos[1] + self.BLOCKS_ON_EACH_SIDE[3],
-                ),
-            )
+        self.chunk_view = new_chunk_view
+        return True
 
     def load_chunks(self):
-        self.chunks_data = {}
-
-        chunk_view_rect = ChunkViewRect(
-            world_to_chunk_pos(self.view_rect.pos_0),
-            world_to_chunk_pos(self.view_rect.pos_1),
+        self.max_view = WorldView(
+            WorldVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_0, CHUNK_SIZE)]),
+            WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_1, CHUNK_SIZE)]),
             )
 
-        res = PixVec(
-            x=(1 + chunk_view_rect.pos_1.x - chunk_view_rect.pos_0.x) * CHUNK_PIX_SIZE.x,
-            y=(1 + chunk_view_rect.pos_1.y - chunk_view_rect.pos_0.y) * CHUNK_PIX_SIZE.y,
-            )
-
-        self.surface = pg.Surface(res)  # FIXME: maybe don't recreate a surface every time...
-        self.surface.set_colorkey(C_KEY)
-
-        max_view_rect = WorldViewRect(
-            WorldVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(chunk_view_rect.pos_0, CHUNK_SIZE)]),
-            WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(chunk_view_rect.pos_1, CHUNK_SIZE)]),
-            )
-
-        self.surface_world_shift = WorldVec(
-            *(max_view_dim - view_dim for view_dim, max_view_dim in zip(self.view_rect.pos_0, max_view_rect.pos_0))
-            )
-        self.chunks_world_shift = max_view_rect.pos_0
-
-        for chunk_world_pos_x in range(max_view_rect.pos_0.x, max_view_rect.pos_1.x, CHUNK_SIZE.x):
-            for chunk_world_pos_y in range(max_view_rect.pos_0.y, max_view_rect.pos_1.y, CHUNK_SIZE.y):
+        for chunk_world_pos_x in range(self.max_view.pos_0.x, self.max_view.pos_1.x, CHUNK_SIZE.x):
+            for chunk_world_pos_y in range(self.max_view.pos_0.y, self.max_view.pos_1.y, CHUNK_SIZE.y):
                 chunk_world_pos = WorldVec(chunk_world_pos_x, chunk_world_pos_y)
                 if chunk_world_pos in self.chunks_existing:
                     chunk_to_load = self.chunks_existing[chunk_world_pos]
@@ -77,31 +48,35 @@ class World:
                     chunk_to_load = Chunk(chunk_world_pos)
                     self.chunks_existing[chunk_world_pos] = chunk_to_load
 
-                self.chunks_data[chunk_world_pos] = chunk_to_load.data
+                self.chunks_visible[chunk_world_pos] = chunk_to_load
 
-    def draw(self):
+    def draw_max_surf(self):
         self.load_chunks()
 
-        self.surface.fill(C_KEY)
+        self.max_surf.fill(C_KEY)
         blit_sequence = []
-        for world_pos, (surface, _) in self.chunks_data.items():
-            world_shift = WorldVec(*(pos - shift for pos, shift in zip(world_pos, self.chunks_world_shift)))
-            pix_shift = PixVec(*world_to_pix_shift(world_shift, self.surface.get_size(), CHUNK_PIX_SIZE))
-            blit_sequence.append((surface, pix_shift))
-        self.surface.blits(blit_sequence)
+        for world_pos, chunk in self.chunks_visible.items():
+            max_view_world_shift = WorldVec(*(pos - shift for pos, shift in zip(world_pos, self.max_view.pos_0)))
+            pix_shift = world_to_pix_shift(max_view_world_shift, self.max_surf.get_size(), CHUNK_PIX_SIZE)
+            blit_sequence.append((chunk.surf, pix_shift))
+        self.max_surf.blits(blit_sequence)
 
-    def get_surface(self, mp_pos):
-        self.update_view_rect(mp_pos)
-        self.draw()
-        return self.surface, world_to_pix_shift(self.surface_world_shift, self.screen_res, (0, 0))
+    def draw(self):
+        are_new_chunks = self.update_chunk_view()
+        # if are_new_chunks:
+        self.draw_max_surf()
+        self.camera.draw_world(self.max_surf, self.max_view.pos_0)
+
+
+def main():
+    camera = Camera()
+    camera.pos = WorldVec(0, 100)
+    world = World(camera)
+    world.draw()
+    Display(camera.screen)
 
 
 if __name__ == "__main__":
+    from camera import Camera
     from debug.display import Display
-    from global_params import WATER_HEIGHT
-
-    def main():
-        world = World((1920, 1080))
-        test_surf, _ = world.get_surface((0, WATER_HEIGHT-10))
-        Display(test_surf)
     main()
