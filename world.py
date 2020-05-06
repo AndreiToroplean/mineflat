@@ -16,7 +16,7 @@ class World:
         self.chunk_view = ChunkView(ChunkVec(0, 0), ChunkVec(0, 0))
         self.max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
 
-        max_surf_pix_size = tuple((dim+1) * pix
+        max_surf_pix_size = tuple((dim+2) * pix
             for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE))
         self.max_surf = pg.Surface(max_surf_pix_size)
         self.max_surf.set_colorkey(C_KEY)
@@ -40,6 +40,7 @@ class World:
             WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_1, CHUNK_SIZE)]),
             )
 
+        self.chunks_visible = {}
         for chunk_world_pos_x in range(self.max_view.pos_0.x, self.max_view.pos_1.x, CHUNK_SIZE.x):
             for chunk_world_pos_y in range(self.max_view.pos_0.y, self.max_view.pos_1.y, CHUNK_SIZE.y):
                 chunk_world_pos = WorldVec(chunk_world_pos_x, chunk_world_pos_y)

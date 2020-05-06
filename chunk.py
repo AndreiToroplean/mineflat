@@ -27,7 +27,7 @@ class Chunk:
         for world_shift_x in range(CHUNK_SIZE[0]):
             for world_shift_y in range(CHUNK_SIZE[1]):
                 block_world_pos = WorldVec(self.world_pos.x+world_shift_x, self.world_pos.y+world_shift_y)
-                if block_world_pos.y < WATER_HEIGHT:
+                if block_world_pos.y < WATER_HEIGHT + abs(block_world_pos.x):
                     material = random.choice(list(Material))
                     try:
                         block = self.block_materials[material]

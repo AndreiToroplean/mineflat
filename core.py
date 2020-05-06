@@ -1,8 +1,8 @@
 from collections import namedtuple
 from enum import Enum
 
-Color = namedtuple("Color", ("r", "g", "b"))
 
+Color = namedtuple("Color", ("r", "g", "b"))
 
 PixVec = namedtuple("PixVec", ("x", "y"))
 ScreenVec = namedtuple("ScreenVec", ("x", "y"))

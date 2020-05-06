@@ -2,7 +2,7 @@ from math import floor
 
 import pygame as pg
 
-from global_params import BLOCK_PIX_SIZE, CHUNK_PIX_SIZE, PLAYER_SCREEN_POS, WATER_HEIGHT
+from global_params import BLOCK_PIX_SIZE, CHUNK_PIX_SIZE, CHUNK_SIZE, PLAYER_SCREEN_POS, WATER_HEIGHT
 from core import WorldVec, ChunkVec, PixVec, WorldView, ChunkView
 from core_funcs import world_to_pix_shift
 
@@ -39,22 +39,20 @@ class Camera:
             )
 
     def draw_world(self, max_surf, max_view_pos):
-        test = 1.1
-        new_size = tuple(floor(dim * (self.scale * test / BLOCK_PIX_SIZE)) for dim in max_surf.get_size())
-        # new_size = max_surf.get_size()
-        max_surf_scaled = pg.transform.scale(max_surf, new_size)
+        max_surf_scaled_pix_size = tuple(floor(dim * (self.scale / BLOCK_PIX_SIZE)) for dim in max_surf.get_size())
+        max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size)
         shifted_pos = (
-            self.pos[0] - 4.5*0.32,
-            self.pos[1] + 4.5*0.32,
+            self.pos[0],
+            self.pos[1],
             )
         world_shift = WorldVec(
             *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(shifted_pos, max_view_pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, self.pix_size, max_surf_scaled.get_size(), self.scale * test)
+        pix_shift = world_to_pix_shift(world_shift, self.pix_size, max_surf_scaled_pix_size, self.scale)
         pix_shift = (
-            pix_shift[0] + self.pix_size[0]/2,
-            pix_shift[1] - self.pix_size[1]/2,
-        )
+            pix_shift[0] + self.pix_size[0] * PLAYER_SCREEN_POS.x,
+            pix_shift[1] - self.pix_size[1] * PLAYER_SCREEN_POS.y,
+            )
         self.screen.blit(max_surf_scaled, pix_shift)
 
     def update_pos(self, mp_pos):

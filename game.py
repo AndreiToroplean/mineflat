@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import C_SKY
+from global_params import C_SKY, FPS
 from camera import Camera
 from player import Player
 from world import World
@@ -49,7 +49,7 @@ class Game:
             self.world.draw()
 
             pg.display.flip()
-            self.clock.tick(60)
+            self.clock.tick(FPS)
 
     def draw_sky(self):
         self.camera.screen.fill(C_SKY)

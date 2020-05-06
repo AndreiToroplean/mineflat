@@ -8,7 +8,7 @@ class Player:
     move_speed = 0.25
 
     def __init__(self):
-        self.spawn_pos = WorldVec(float(0), float(WATER_HEIGHT))
+        self.spawn_pos = np.array(float(0), float(WATER_HEIGHT))
         self.pos = np.array(self.spawn_pos)
         self.vel = np.array((0.0, 0.0))
 
