@@ -1,3 +1,4 @@
+import math
 import random
 
 import pygame as pg
@@ -27,15 +28,23 @@ class Chunk:
         for world_shift_x in range(CHUNK_SIZE[0]):
             for world_shift_y in range(CHUNK_SIZE[1]):
                 block_world_pos = WorldVec(self.world_pos.x+world_shift_x, self.world_pos.y+world_shift_y)
-                if block_world_pos.y < WATER_HEIGHT + abs(block_world_pos.x):
-                    material = random.choice(list(Material))
-                    try:
-                        block = self.block_materials[material]
-                    except KeyError:
-                        block = Block(material)
-                        self.block_materials[material] = block
+                test_height = WATER_HEIGHT + math.sin(block_world_pos.x/4)*4
+                if block_world_pos.y >= test_height:
+                    continue
+                if block_world_pos.y >= test_height - 1:
+                    material = Material.grass
+                elif test_height - 1 > block_world_pos.y >= test_height - 4:
+                    material = Material.dirt
+                else:
+                    material = Material.stone
 
-                    blocks[WorldVec(world_shift_x, world_shift_y)] = block
+                try:
+                    block = self.block_materials[material]
+                except KeyError:
+                    block = Block(material)
+                    self.block_materials[material] = block
+
+                blocks[WorldVec(world_shift_x, world_shift_y)] = block
         return blocks
 
     def draw(self):

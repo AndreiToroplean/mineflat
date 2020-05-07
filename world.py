@@ -16,9 +16,8 @@ class World:
         self.chunk_view = ChunkView(ChunkVec(0, 0), ChunkVec(0, 0))
         self.max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
 
-        max_surf_pix_size = tuple((dim+2) * pix
-            for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE))
-        self.max_surf = pg.Surface(max_surf_pix_size)
+        self.max_surf = pg.Surface((1, 1))
+        self.resize_max_surf()
         self.max_surf.set_colorkey(C_KEY)
 
     def update_chunk_view(self):
@@ -65,9 +64,18 @@ class World:
 
     def draw(self):
         are_new_chunks = self.update_chunk_view()
-        if are_new_chunks:
+        if resized := self.camera.is_zooming:
+            self.resize_max_surf()
+        if are_new_chunks or resized:
             self.draw_max_surf()
         self.camera.draw_world(self.max_surf, self.max_view.pos_0)
+
+    def resize_max_surf(self):
+        max_surf_pix_size = tuple(
+            (dim + 2) * pix
+            for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE)
+            )
+        self.max_surf = pg.transform.scale(self.max_surf, max_surf_pix_size)
 
 
 def main():

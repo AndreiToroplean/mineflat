@@ -1,20 +1,24 @@
+import math
 from math import floor
 
 import pygame as pg
+import numpy as np
 
-from global_params import BLOCK_PIX_SIZE, CHUNK_PIX_SIZE, CHUNK_SIZE, PLAYER_SCREEN_POS, WATER_HEIGHT
-from core import WorldVec, ChunkVec, PixVec, WorldView, ChunkView
+from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, WATER_HEIGHT, \
+    CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED
+from core import WorldVec, WorldView
 from core_funcs import world_to_pix_shift
 
 
 class Camera:
-    zoom_speed = 1.01
-
     def __init__(self):
-        # transforms
-        self.pos = WorldVec(0, WATER_HEIGHT)
-        self.scale = 64
+        self.pos = np.array((0.5, float(WATER_HEIGHT)))
+        self.req_pos = self.pos
+
         self.zoom_vel = 1.0
+        self.req_zoom_vel = 1.0
+
+        self.scale = 64
 
         self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
         self.pix_size = self.screen.get_size()
@@ -33,8 +37,8 @@ class Camera:
                 y=self.pos[1] - self.world_size.y * PLAYER_SCREEN_POS.y,
                 ),
             pos_1=WorldVec(
-                x=self.pos[0] + self.world_size.x * (1 - PLAYER_SCREEN_POS.x),
-                y=self.pos[1] + self.world_size.y * (1 - PLAYER_SCREEN_POS.y),
+                x=self.pos[0] + self.world_size.x * (1-PLAYER_SCREEN_POS.x),
+                y=self.pos[1] + self.world_size.y * (1-PLAYER_SCREEN_POS.y),
                 ),
             )
 
@@ -51,28 +55,43 @@ class Camera:
             )
         self.screen.blit(max_surf_scaled, pix_shift)
 
-    def draw_player(self, anim_surf):
+    def draw_player(self, anim_surf, player_pos):
         surf = anim_surf.get_surf()
 
         surf_scaled_pix_size = tuple(floor(dim * self.scale) for dim in anim_surf.world_size)
         max_surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)
-        pix_shift = (
-            self.pix_size[0] * PLAYER_SCREEN_POS.x,
-            self.pix_size[1] * PLAYER_SCREEN_POS.y,
+
+        world_shift = WorldVec(
+            *(player_pos_dim - pos_dim for pos_dim, player_pos_dim in zip(self.pos, player_pos))
             )
+        pix_shift = world_to_pix_shift(world_shift, self.pix_size, surf_scaled_pix_size, self.scale)
+        pix_shift = (
+            pix_shift[0] + self.pix_size[0] * PLAYER_SCREEN_POS.x - surf_scaled_pix_size[0]/2,
+            pix_shift[1] - self.pix_size[1] * PLAYER_SCREEN_POS.y,
+            )
+
         self.screen.blit(max_surf_scaled, pix_shift)
 
-    def update_pos(self, mp_pos):
-        self.pos = mp_pos
+    def req_zoom_in(self):
+        self.req_zoom_vel = CAM_ZOOM_SPEED
 
-    def zoom_in(self):
-        self.zoom_vel = self.zoom_speed
+    def req_zoom_out(self):
+        self.req_zoom_vel = 1 / CAM_ZOOM_SPEED
 
-    def zoom_out(self):
-        self.zoom_vel = 1 / self.zoom_speed
+    def req_zoom_stop(self):
+        self.req_zoom_vel = 1.0
 
-    def zoom_stop(self):
-        self.zoom_vel = 1.0
+    @property
+    def is_zooming(self):
+        return not math.isclose(self.zoom_vel, 1)
+
+    def req_update_pos(self, pos):
+        self.req_pos = pos
 
     def animate(self):
+        self.pos += (self.req_pos - self.pos) * CAM_POS_DAMPING_FACTOR
+
+        self.zoom_vel *= (self.req_zoom_vel / self.zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
+        if not(CAM_SCALE_BOUNDS[0] < self.scale < CAM_SCALE_BOUNDS[1]):
+            self.zoom_vel = 1 / self.zoom_vel
         self.scale *= self.zoom_vel

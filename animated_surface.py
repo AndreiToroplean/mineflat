@@ -15,7 +15,9 @@ class AnimAction(Enum):
 
 
 class AnimatedSurface:
-    def __init__(self, dir_path, world_height):
+    def __init__(self, dir_path, world_height, neutrals=()):
+        self.neutrals = neutrals
+
         self.images = []
         self.images_reversed = []
         for file in sorted(os.scandir(dir_path), key=lambda x: x.name):
@@ -42,11 +44,12 @@ class AnimatedSurface:
 
     def advance_time(self):
         if self.action == AnimAction.pause:
-            pass
-        elif self.action == AnimAction.reset:
+            return
+        if self.action == AnimAction.reset:
             self.frame = 0
-        elif self.action == AnimAction.play or (self.action == AnimAction.end and self.frame != 0):
+            return
+        if self.action == AnimAction.play or (self.action == AnimAction.end and self.frame not in self.neutrals):
             self.frame = (self.frame + 1) % len(self.images)
 
-        if self.action == AnimAction.end and self.frame == 0:
+        if self.action == AnimAction.end and self.frame in self.neutrals:
             self.action = AnimAction.pause
