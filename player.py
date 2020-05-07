@@ -17,7 +17,7 @@ class Player:
 
         self.acc = np.array((0.0, -22/(CAM_FPS**2)))
 
-        self.anim_surf = AnimatedSurface("resources/steve/walking/", world_height=1.5, neutrals=(0, 8))
+        self.anim_surf = AnimatedSurface("resources/steve/walking/", world_height=1.65, neutrals=(0, 8))
 
         self.walking_speed = 4.32 / CAM_FPS
 
@@ -41,7 +41,7 @@ class Player:
         self.req_vel[1] = -self.walking_speed
 
     def req_jump(self):
-        self.vel[1] += 6 / CAM_FPS
+        self.vel[1] += 7.5 / CAM_FPS
 
     def req_h_move_stop(self):
         self.anim_surf.action = AnimAction.end
