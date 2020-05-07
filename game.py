@@ -14,7 +14,7 @@ class Game:
 
         self.clock = pg.time.Clock()
 
-        self.main_player = Player()
+        self.main_player = Player(self.camera)
         self.world = World(self.camera)
 
     def main_loop(self):
@@ -47,6 +47,7 @@ class Game:
             self.draw_sky()
             self.camera.update_pos(self.main_player.pos)
             self.world.draw()
+            self.main_player.draw()
 
             pg.display.flip()
             self.clock.tick(FPS)

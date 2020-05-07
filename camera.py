@@ -13,7 +13,7 @@ class Camera:
     def __init__(self):
         # transforms
         self.pos = WorldVec(0, WATER_HEIGHT)
-        self.scale = 50
+        self.scale = 64
         self.zoom_vel = 1.0
 
         self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
@@ -41,17 +41,24 @@ class Camera:
     def draw_world(self, max_surf, max_view_pos):
         max_surf_scaled_pix_size = tuple(floor(dim * (self.scale / BLOCK_PIX_SIZE)) for dim in max_surf.get_size())
         max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size)
-        shifted_pos = (
-            self.pos[0],
-            self.pos[1],
-            )
         world_shift = WorldVec(
-            *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(shifted_pos, max_view_pos))
+            *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(self.pos, max_view_pos))
             )
         pix_shift = world_to_pix_shift(world_shift, self.pix_size, max_surf_scaled_pix_size, self.scale)
         pix_shift = (
             pix_shift[0] + self.pix_size[0] * PLAYER_SCREEN_POS.x,
             pix_shift[1] - self.pix_size[1] * PLAYER_SCREEN_POS.y,
+            )
+        self.screen.blit(max_surf_scaled, pix_shift)
+
+    def draw_player(self, anim_surf):
+        surf = anim_surf.get_surf()
+
+        surf_scaled_pix_size = tuple(floor(dim * self.scale) for dim in anim_surf.world_size)
+        max_surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)
+        pix_shift = (
+            self.pix_size[0] * PLAYER_SCREEN_POS.x,
+            self.pix_size[1] * PLAYER_SCREEN_POS.y,
             )
         self.screen.blit(max_surf_scaled, pix_shift)
 

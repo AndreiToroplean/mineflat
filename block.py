@@ -1,7 +1,13 @@
-import pygame as pg
+from enum import Enum
 
-from core import Material
+import pygame as pg
 from global_params import BLOCK_PIX_SIZE
+
+
+class Material(Enum):
+    stone = "1"
+    grass = "2"
+    dirt = "3"
 
 
 class Block:
