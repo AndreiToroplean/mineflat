@@ -15,8 +15,8 @@ class Game:
 
         self.clock = pg.time.Clock()
 
-        self.main_player = Player(self.camera)
         self.world = World(self.camera)
+        self.main_player = Player(self.camera, self.world)
 
     def main_loop(self):
         while True:
