@@ -13,7 +13,7 @@ class Player:
         self.camera = camera
         self.world = world
 
-        self.spawn_pos = np.array((0.5, float(WATER_HEIGHT + 2)))
+        self.spawn_pos = np.array((0.5, float(WATER_HEIGHT+0.1)))
         self.pos = np.array(self.spawn_pos)
         self.req_pos = np.array(self.spawn_pos)
 

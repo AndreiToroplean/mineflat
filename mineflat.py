@@ -1,8 +1,8 @@
-from game_manager import GameManager
+from game import Game
 
 
 def main():
-    with GameManager() as game:
+    with Game() as game:
         game.main_loop()
 
 
