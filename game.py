@@ -9,6 +9,8 @@ from world import World
 
 class Game:
     def __init__(self):
+        pg.init()
+
         self.camera = Camera()
 
         self.clock = pg.time.Clock()
@@ -61,7 +63,6 @@ class Game:
             self.clock.tick(CAM_FPS)
 
     def __enter__(self):
-        pg.init()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
