@@ -61,10 +61,20 @@ class Player:
         world_colliders = self.get_world_colliders()
         player_bound_shifts = ((-self.world_size[0] / 2, self.world_size[0] / 2), (0.0, self.world_size[1]))
         block_bound_shifts = ((0, 1), (0, 1))
-        tested_pos_bounds = (
+        tested_horiz_pos_bounds = (
             (
                 floor(self.req_pos[0] + player_bound_shifts[0][0]),
                 floor(self.req_pos[0] + player_bound_shifts[0][1]),
+                ),
+            (
+                floor(self.pos[1] + player_bound_shifts[1][0]),
+                floor(self.pos[1] + player_bound_shifts[1][1]),
+                ),
+            )
+        tested_vert_pos_bounds = (
+            (
+                floor(self.pos[0] + player_bound_shifts[0][0]),
+                floor(self.pos[0] + player_bound_shifts[0][1]),
                 ),
             (
                 floor(self.req_pos[1] + player_bound_shifts[1][0]),
@@ -72,40 +82,31 @@ class Player:
                 ),
             )
 
-        # vel_dir = []
-        # for vel_dir_dim in self.vel:
-        #     try:
-        #         vel_dir_dim_norm = int(abs(vel_dir_dim) / vel_dir_dim)
-        #     except ZeroDivisionError:
-        #         vel_dir_dim_norm = 0
-        #     vel_dir.append(vel_dir_dim_norm)
-        # vel_dir = tuple(vel_dir)
-
-        for pos_y in range(tested_pos_bounds[1][0], tested_pos_bounds[1][1]+1):
+        for pos_y in range(tested_horiz_pos_bounds[1][0], tested_horiz_pos_bounds[1][1]+1):
             if self.vel[0] < 0:
-                pos_x = tested_pos_bounds[0][0]
+                pos_x = tested_horiz_pos_bounds[0][0]
                 if (pos_x, pos_y) in world_colliders.right:
                     self.req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
                     self.vel[0] = 0
                     break
 
             if self.vel[0] > 0:
-                pos_x = tested_pos_bounds[0][1]
+                pos_x = tested_horiz_pos_bounds[0][1]
                 if (pos_x, pos_y) in world_colliders.left:
                     self.req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
                     self.vel[0] = 0
                     break
 
-        for pos_x in range(tested_pos_bounds[0][0], tested_pos_bounds[0][1] + 1):
+        for pos_x in range(tested_vert_pos_bounds[0][0], tested_vert_pos_bounds[0][1] + 1):
             if self.vel[1] < 0:
-                pos_y = tested_pos_bounds[1][0]
+                pos_y = tested_vert_pos_bounds[1][0]
                 if (pos_x, pos_y) in world_colliders.top:
                     self.req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
                     self.vel[1] = 0
                     break
 
             if self.vel[1] > 0:
-                pos_y = tested_pos_bounds[1][1]
+                pos_y = tested_vert_pos_bounds[1][1]
                 if (pos_x, pos_y) in world_colliders.bottom:
                     self.req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
                     self.vel[1] = 0

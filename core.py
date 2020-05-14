@@ -23,18 +23,6 @@ class Colliders:
     def __repr__(self):
         return f"left: {self.left}, \nright: {self.right}, \nbottom: {self.bottom}, \ntop: {self.top}"
 
-    # def get_horiz_from_vel(self, vel):
-    #     if vel[0] < 0:
-    #         return self.right
-    #     else:
-    #         return self.left
-    #
-    # def get_vert_from_vel(self, vel):
-    #     if vel[1] < 0:
-    #         return self.top
-    #     else:
-    #         return self.bottom
-
     def __iter__(self):
         self.i = 0
         return self
