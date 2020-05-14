@@ -88,10 +88,10 @@ class Camera:
     def is_zooming(self):
         return not math.isclose(self.zoom_vel, 1)
 
-    def req_update_pos(self, pos):
+    def req_move(self, pos):
         self.req_pos = pos
 
-    def animate(self):
+    def move(self):
         self.pos += (self.req_pos - self.pos) * CAM_POS_DAMPING_FACTOR
 
         self.zoom_vel *= (self.req_zoom_vel / self.zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR

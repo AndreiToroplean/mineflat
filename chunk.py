@@ -31,7 +31,7 @@ class Chunk:
         for world_shift_x in range(CHUNK_SIZE[0]):
             for world_shift_y in range(CHUNK_SIZE[1]):
                 block_world_pos = WorldVec(self.world_pos.x + world_shift_x, self.world_pos.y + world_shift_y)
-                test_height = WATER_HEIGHT + math.sin(block_world_pos.x/4)*4
+                test_height = WATER_HEIGHT + math.sin(block_world_pos.x/16)*4
                 if block_world_pos.y >= test_height:
                     continue
                 if block_world_pos.y >= test_height - 1:

@@ -1,5 +1,6 @@
 import os
 from enum import Enum
+from math import floor
 
 import pygame as pg
 
@@ -39,10 +40,13 @@ class AnimatedSurface:
             rtn = self.images[self.frame]
         else:
             rtn = self.images_reversed[self.frame]
-        self.advance_time()
+        self._advance_time()
         return rtn
 
-    def advance_time(self):
+    def sync(self, other):
+        self.frame = floor(len(self.images) * other.frame/len(other.images))
+
+    def _advance_time(self):
         if self.action == AnimAction.pause:
             return
         if self.action == AnimAction.reset:

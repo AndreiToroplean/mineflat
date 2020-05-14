@@ -1,7 +1,7 @@
 import pygame as pg
 
 from global_params import C_SKY, CAM_FPS
-from controls import Ctrls, CONTROLS
+from controls import Controls, Mods
 from camera import Camera
 from player import Player
 from world import World
@@ -20,39 +20,49 @@ class Game:
 
     def main_loop(self):
         while True:
-            for event in pg.event.get():
-                if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE or event.type == pg.QUIT:
-                    return
+            keys_pressed = pg.key.get_pressed()
+            mods_pressed = pg.key.get_mods()
 
-                if event.type == pg.KEYDOWN:
-                    if event.key == CONTROLS[Ctrls.right]:
-                        self.main_player.req_move_right()
-                    elif event.key == CONTROLS[Ctrls.left]:
-                        self.main_player.req_move_left()
-                    elif event.key == CONTROLS[Ctrls.up]:
-                        self.main_player.req_move_up()
-                    elif event.key == CONTROLS[Ctrls.down]:
-                        self.main_player.req_move_down()
-                    elif event.key == CONTROLS[Ctrls.jump]:
-                        self.main_player.req_jump()
+            if keys_pressed[Controls.quit] or pg.event.peek(pg.QUIT):
+                return
 
-                    elif event.key == CONTROLS[Ctrls.zoom_in]:
-                        self.camera.req_zoom_in()
-                    elif event.key == CONTROLS[Ctrls.zoom_out]:
-                        self.camera.req_zoom_out()
+            does_horiz_movement = False
+            if keys_pressed[Controls.move_left]:
+                if mods_pressed == pg.KMOD_NONE:
+                    self.main_player.req_move_left()
+                else:
+                    if mods_pressed & Mods.sprinting:
+                        self.main_player.req_sprint_left()
+                does_horiz_movement ^= True
+            if keys_pressed[Controls.move_right]:
+                if mods_pressed == pg.KMOD_NONE:
+                    self.main_player.req_move_right()
+                else:
+                    if mods_pressed & Mods.sprinting:
+                        self.main_player.req_sprint_right()
+                does_horiz_movement ^= True
+            if not does_horiz_movement:
+                self.main_player.req_h_move_stop()
 
-                elif event.type == pg.KEYUP:
-                    if event.key == CONTROLS[Ctrls.right] or event.key == CONTROLS[Ctrls.left]:
-                        self.main_player.req_h_move_stop()
-                    elif event.key == CONTROLS[Ctrls.up] or event.key == CONTROLS[Ctrls.down]:
-                        self.main_player.req_v_move_stop()
-                    elif event.key == CONTROLS[Ctrls.zoom_in] or event.key == CONTROLS[Ctrls.zoom_out]:
-                        self.camera.req_zoom_stop()
+            if keys_pressed[Controls.jump]:
+                self.main_player.req_jump()
+            else:
+                self.main_player.req_jump_stop()
+
+            is_zooming = False
+            if keys_pressed[Controls.zoom_in]:
+                self.camera.req_zoom_in()
+                is_zooming ^= True
+            if keys_pressed[Controls.zoom_out]:
+                self.camera.req_zoom_out()
+                is_zooming ^= True
+            if not is_zooming:
+                self.camera.req_zoom_stop()
 
             # Movement
-            self.main_player.animate()
-            self.camera.req_update_pos(self.main_player.pos)
-            self.camera.animate()
+            self.main_player.move()
+            self.camera.req_move(self.main_player.pos)
+            self.camera.move()
 
             # Graphics
             self.draw_sky()

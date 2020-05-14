@@ -3,23 +3,17 @@ from enum import Enum
 import pygame as pg
 
 
-class Ctrls(Enum):
-    right = 0
-    left = 1
-    up = 2
-    down = 3
-    jump = 4
-    zoom_in = 5
-    zoom_out = 6
+class Controls:
+    move_right = pg.K_d
+    move_left = pg.K_a
+    move_up = pg.K_w
+    move_down = pg.K_s
+    jump = pg.K_SPACE
+    zoom_in = pg.K_KP_PLUS
+    zoom_out = pg.K_KP_MINUS
+    quit = pg.K_ESCAPE
 
 
-CONTROLS = {
-    Ctrls.right: pg.K_d,
-    Ctrls.left: pg.K_a,
-    Ctrls.up: pg.K_w,
-    Ctrls.down: pg.K_s,
-    Ctrls.jump: pg.K_SPACE,
-
-    Ctrls.zoom_in: pg.K_KP_PLUS,
-    Ctrls.zoom_out: pg.K_KP_MINUS,
-    }
+class Mods:
+    sprinting = pg.KMOD_CTRL
+    sneaking = pg.KMOD_SHIFT
