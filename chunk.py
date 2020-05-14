@@ -5,7 +5,7 @@ import pygame as pg
 
 from core_funcs import chunk_to_world_vec, world_to_pix_shift
 from global_params import BLOCK_PIX_SIZE, CHUNK_SIZE, WATER_HEIGHT, C_KEY
-from core import PixVec, ChunkVec, WorldVec, ChunkData, get_empty_colliders
+from core import PixVec, ChunkVec, WorldVec, ChunkData, Colliders
 from block import Block, Material
 
 
@@ -24,7 +24,7 @@ class Chunk:
         self.surf.set_colorkey(C_KEY)
         self.draw()
 
-        self.colliders = get_empty_colliders()
+        self.colliders = Colliders()
         self.generate_colliders()
 
     def generate_blocks(self):
@@ -52,13 +52,13 @@ class Chunk:
     def generate_colliders(self):
         for block_world_pos in self.blocks:
             if not (block_world_pos[0]-1, block_world_pos[1]) in self.blocks:
-                self.colliders[(+1, 0)].append(block_world_pos)
+                self.colliders.left.append(block_world_pos)
             if not (block_world_pos[0]+1, block_world_pos[1]) in self.blocks:
-                self.colliders[(-1, 0)].append(block_world_pos)
+                self.colliders.right.append(block_world_pos)
             if not (block_world_pos[0], block_world_pos[1]-1) in self.blocks:
-                self.colliders[(0, +1)].append(block_world_pos)
+                self.colliders.bottom.append(block_world_pos)
             if not (block_world_pos[0], block_world_pos[1]+1) in self.blocks:
-                self.colliders[(0, -1)].append(block_world_pos)
+                self.colliders.top.append(block_world_pos)
 
     def draw(self):
         self.surf.fill(C_KEY)

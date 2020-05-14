@@ -3,7 +3,7 @@ import numpy as np
 
 from global_params import WATER_HEIGHT, CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE
 from animated_surface import AnimAction, AnimatedSurface
-from core import WorldVec, get_empty_colliders, COLLIDERS_DIRS
+from core import WorldVec, Colliders
 from core_funcs import world_to_chunk_to_world_vec
 
 
@@ -72,50 +72,48 @@ class Player:
                 ),
             )
 
-        vel_dir = []
-        for vel_dir_dim in self.vel:
-            try:
-                vel_dir_dim_norm = int(abs(vel_dir_dim) / vel_dir_dim)
-            except ZeroDivisionError:
-                vel_dir_dim_norm = 0
-            vel_dir.append(vel_dir_dim_norm)
-        vel_dir = tuple(vel_dir)
+        # vel_dir = []
+        # for vel_dir_dim in self.vel:
+        #     try:
+        #         vel_dir_dim_norm = int(abs(vel_dir_dim) / vel_dir_dim)
+        #     except ZeroDivisionError:
+        #         vel_dir_dim_norm = 0
+        #     vel_dir.append(vel_dir_dim_norm)
+        # vel_dir = tuple(vel_dir)
 
-        # if self.vel[0] < 0:
-        #     pos_x = tested_pos_bounds[0][0]
-        #     for pos_y in range(*tested_pos_bounds[1]):
-        #         if (pos_x, pos_y) in world_colliders.right:
-        #             self.req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
-        #             self.vel[0] = 0
-        #             break
+        for pos_y in range(tested_pos_bounds[1][0], tested_pos_bounds[1][1]+1):
+            if self.vel[0] < 0:
+                pos_x = tested_pos_bounds[0][0]
+                if (pos_x, pos_y) in world_colliders.right:
+                    self.req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
+                    self.vel[0] = 0
+                    break
 
-        # if self.vel[0] > 0:
-        #     pos_x = tested_pos_bounds[0][1]
-        #     for pos_y in range(*tested_pos_bounds[1]):
-        #         if (pos_x, pos_y) in world_colliders.left:
-        #             self.req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
-        #             self.vel[0] = 0
-        #             break
+            if self.vel[0] > 0:
+                pos_x = tested_pos_bounds[0][1]
+                if (pos_x, pos_y) in world_colliders.left:
+                    self.req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
+                    self.vel[0] = 0
+                    break
 
-        # if self.vel[1] < 0:
-        pos_y = tested_pos_bounds[1][0]
-        for pos_x in range(*tested_pos_bounds[0]):
-            if (pos_x, pos_y) in world_colliders[vel_dir]:  # TODO: change this horrific implementation
-                self.req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
-                self.vel[1] = 0
-                break
+        for pos_x in range(tested_pos_bounds[0][0], tested_pos_bounds[0][1] + 1):
+            if self.vel[1] < 0:
+                pos_y = tested_pos_bounds[1][0]
+                if (pos_x, pos_y) in world_colliders.top:
+                    self.req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
+                    self.vel[1] = 0
+                    break
 
-        # if self.vel[1] > 0:
-        #     pos_y = tested_pos_bounds[1][1]
-        #     for pos_x in range(*tested_pos_bounds[0]):
-        #         if (pos_x, pos_y) in world_colliders.bottom:
-        #             self.req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
-        #             self.vel[1] = 0
-        #             break
+            if self.vel[1] > 0:
+                pos_y = tested_pos_bounds[1][1]
+                if (pos_x, pos_y) in world_colliders.bottom:
+                    self.req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
+                    self.vel[1] = 0
+                    break
 
     def get_world_colliders(self):
         cur_chunk_pos = world_to_chunk_to_world_vec(self.pos)
-        world_colliders = get_empty_colliders()
+        world_colliders = Colliders()
         for pos_x in range(cur_chunk_pos.x-CHUNK_SIZE.x, cur_chunk_pos.x+2*CHUNK_SIZE.x, CHUNK_SIZE.x):
             for pos_y in range(cur_chunk_pos.y-CHUNK_SIZE.y, cur_chunk_pos.y+2*CHUNK_SIZE.y, CHUNK_SIZE.y):
                 pos = WorldVec(pos_x, pos_y)
@@ -124,8 +122,8 @@ class Player:
                 except KeyError:
                     pass
                 else:
-                    for colliders_dir in COLLIDERS_DIRS:
-                        world_colliders[colliders_dir] += chunk.colliders[colliders_dir]
+                    for world_colliders_dir, chunk_colliders_dir in zip(world_colliders, chunk.colliders):
+                        world_colliders_dir += chunk_colliders_dir
         return world_colliders
 
     def animate(self):
