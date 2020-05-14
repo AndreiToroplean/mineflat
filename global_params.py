@@ -1,5 +1,8 @@
 from core import PixVec, ScreenVec, WorldVec, Color
 
+# Game params
+FULLSCREEN = True
+
 # Technical dimensions
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.333)
 BLOCK_PIX_SIZE = 16

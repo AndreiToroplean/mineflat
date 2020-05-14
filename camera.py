@@ -5,7 +5,7 @@ import pygame as pg
 import numpy as np
 
 from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, WATER_HEIGHT, \
-    CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED
+    CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN
 from core import WorldVec, WorldView
 from core_funcs import world_to_pix_shift
 
@@ -20,7 +20,10 @@ class Camera:
 
         self.scale = 64
 
-        self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
+        if FULLSCREEN:
+            self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
+        else:
+            self.screen = pg.display.set_mode((1280, 720))
         self.pix_size = self.screen.get_size()
 
     @property

@@ -21,11 +21,11 @@ class Game:
     def main_loop(self):
         while True:
             for event in pg.event.get():
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_ESCAPE:
-                        return
+                if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE or event.type == pg.QUIT:
+                    return
 
-                    elif event.key == CONTROLS[Ctrls.right]:
+                if event.type == pg.KEYDOWN:
+                    if event.key == CONTROLS[Ctrls.right]:
                         self.main_player.req_move_right()
                     elif event.key == CONTROLS[Ctrls.left]:
                         self.main_player.req_move_left()
