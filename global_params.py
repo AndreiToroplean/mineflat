@@ -27,3 +27,23 @@ CAM_SCALE_BOUNDS = (32, 128)
 
 # Player dynamics
 PLAYER_DAMPING_FACTOR = 0.5
+
+# Cursor
+CURSOR = (
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "XXXXXXXXXXXXXXXX",
+    "XXXXXXXXXXXXXXXX",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+    "       XX       ",
+)

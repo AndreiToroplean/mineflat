@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import C_SKY, CAM_FPS
+from global_params import C_SKY, CAM_FPS, CURSOR
 from controls import Controls, Mods
 from camera import Camera
 from player import Player
@@ -10,6 +10,7 @@ from world import World
 class Game:
     def __init__(self):
         pg.init()
+        pg.mouse.set_cursor((16, 16), (8, 8), *pg.cursors.compile(CURSOR))
 
         self.camera = Camera()
 
