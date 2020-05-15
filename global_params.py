@@ -1,7 +1,10 @@
+import pygame as pg
+
 from core import PixVec, ScreenVec, WorldVec, Color
 
 # Game params
 FULLSCREEN = True
+DEBUG = False
 
 # Technical dimensions
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.333)
@@ -21,7 +24,7 @@ C_SKY = Color(120, 190, 225)
 # Cam dynamics
 CAM_FPS = 30
 CAM_ZOOM_SPEED = 1.05
-CAM_POS_DAMPING_FACTOR = 0.25
+CAM_POS_DAMPING_FACTOR = 0.5
 CAM_ZOOM_DAMPING_FACTOR = 0.15
 CAM_SCALE_BOUNDS = (32, 128)
 
@@ -29,7 +32,7 @@ CAM_SCALE_BOUNDS = (32, 128)
 PLAYER_DAMPING_FACTOR = 0.5
 
 # Cursor
-CURSOR = (
+CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
     "       XX       ",
     "       XX       ",
     "       XX       ",
@@ -46,4 +49,4 @@ CURSOR = (
     "       XX       ",
     "       XX       ",
     "       XX       ",
-)
+    ))

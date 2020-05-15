@@ -11,7 +11,7 @@ from core_funcs import world_to_pix_shift
 
 
 class Camera:
-    def __init__(self):
+    def __init__(self, clock):
         self.pos = np.array((0.5, float(WATER_HEIGHT)))
         self.req_pos = self.pos
 
@@ -25,6 +25,9 @@ class Camera:
         else:
             self.screen = pg.display.set_mode((1280, 720))
         self.pix_size = self.screen.get_size()
+
+        self.clock = clock
+        self.font = pg.font.SysFont(pg.font.get_default_font(), 24)
 
     @property
     def world_size(self):
@@ -59,7 +62,7 @@ class Camera:
         self.screen.blit(max_surf_scaled, pix_shift)
 
     def draw_player(self, anim_surf, player_pos):
-        surf = anim_surf.get_surf()
+        surf = anim_surf.get_surf_and_advance()
 
         surf_scaled_pix_size = tuple(floor(dim * self.scale) for dim in anim_surf.world_size)
         max_surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)
@@ -98,3 +101,7 @@ class Camera:
         if not(CAM_SCALE_BOUNDS[0] < self.scale < CAM_SCALE_BOUNDS[1]):
             self.zoom_vel = 1 / self.zoom_vel
         self.scale *= self.zoom_vel
+
+    def draw_debug_info(self):
+        fps_surf = self.font.render(f"{self.clock.get_fps():.1f}", True, (255, 255, 255))
+        self.screen.blit(fps_surf, (20, 20))

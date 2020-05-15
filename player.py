@@ -40,7 +40,7 @@ class Player:
 
         self.walking_speed = 4.5 / CAM_FPS
         self.sprinting_speed = 7.5 / CAM_FPS
-        self.jumping_speed = 7.75 / CAM_FPS
+        self.jumping_speed = 10*7.75 / CAM_FPS
 
     def draw(self):
         self.camera.draw_player(self.anim_surf, self.pos)

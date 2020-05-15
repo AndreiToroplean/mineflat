@@ -5,7 +5,7 @@ from math import floor
 import pygame as pg
 
 from core import PixVec, WorldVec
-from global_params import C_KEY
+from global_params import C_KEY, CAM_FPS
 
 
 class AnimAction(Enum):
@@ -16,7 +16,7 @@ class AnimAction(Enum):
 
 
 class AnimatedSurface:
-    def __init__(self, dir_path, world_height, neutrals=()):
+    def __init__(self, dir_path, world_height, neutrals=(), frame_rate=30):
         self.neutrals = neutrals
 
         self.images = []
@@ -33,27 +33,32 @@ class AnimatedSurface:
 
         self.action = AnimAction.pause
         self.frame = 0
+        self.frame_rate = frame_rate
         self.is_reversed = False
 
-    def get_surf(self):
+    def get_surf_and_advance(self):
         if not self.is_reversed:
-            rtn = self.images[self.frame]
+            rtn = self.images[self.rtn_frame]
         else:
-            rtn = self.images_reversed[self.frame]
-        self._advance_time()
+            rtn = self.images_reversed[self.rtn_frame]
+        self._advance()
         return rtn
 
     def sync(self, other):
-        self.frame = floor(len(self.images) * other.frame/len(other.images))
+        self.frame = len(self.images) * other.frame/len(other.images)
 
-    def _advance_time(self):
+    def _advance(self):
         if self.action == AnimAction.pause:
             return
         if self.action == AnimAction.reset:
             self.frame = 0
             return
-        if self.action == AnimAction.play or (self.action == AnimAction.end and self.frame not in self.neutrals):
-            self.frame = (self.frame + 1) % len(self.images)
+        if self.action == AnimAction.play or (self.action == AnimAction.end and self.rtn_frame not in self.neutrals):
+            self.frame = (self.frame + self.frame_rate/CAM_FPS) % len(self.images)
 
         if self.action == AnimAction.end and self.frame in self.neutrals:
             self.action = AnimAction.pause
+
+    @property
+    def rtn_frame(self):
+        return floor(self.frame)

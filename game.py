@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import C_SKY, CAM_FPS, CURSOR
+from global_params import C_SKY, CAM_FPS, CURSOR, DEBUG
 from controls import Controls, Mods
 from camera import Camera
 from player import Player
@@ -10,17 +10,17 @@ from world import World
 class Game:
     def __init__(self):
         pg.init()
-        pg.mouse.set_cursor((16, 16), (8, 8), *pg.cursors.compile(CURSOR))
-
-        self.camera = Camera()
+        pg.mouse.set_cursor(*CURSOR)
 
         self.clock = pg.time.Clock()
 
+        self.camera = Camera(self.clock)
         self.world = World(self.camera)
         self.main_player = Player(self.camera, self.world)
 
     def main_loop(self):
         while True:
+            # Inputs
             keys_pressed = pg.key.get_pressed()
             mods_pressed = pg.key.get_mods()
 
@@ -69,6 +69,9 @@ class Game:
             self.draw_sky()
             self.world.draw()
             self.main_player.draw()
+
+            if DEBUG:
+                self.camera.draw_debug_info()
 
             pg.display.flip()
             self.clock.tick(CAM_FPS)
