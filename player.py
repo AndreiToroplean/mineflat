@@ -40,7 +40,7 @@ class Player:
 
         self.walking_speed = 4.5 / CAM_FPS
         self.sprinting_speed = 7.5 / CAM_FPS
-        self.jumping_speed = 10*7.75 / CAM_FPS
+        self.jumping_speed = 7.75 / CAM_FPS
 
     def draw(self):
         self.camera.draw_player(self.anim_surf, self.pos)
@@ -96,9 +96,13 @@ class Player:
         self.vel[1] += self.req_vel[1]
 
         self.vel += self.acc
-        self.req_pos = self.pos + self.vel
-        self._collide()
-        self.pos = self.req_pos
+        self.req_pos[:] = self.pos
+        # Making more collision steps when the player is moving faster than 1 block per frame:
+        collision_steps = floor(np.linalg.norm(self.vel)) + 1
+        for _ in range(collision_steps):
+            self.req_pos += self.vel / collision_steps
+            self._collide()
+        self.pos[:] = self.req_pos
 
     def _collide(self, thresh=0.001):
         world_colliders = self._get_world_colliders()
