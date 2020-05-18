@@ -1,6 +1,7 @@
 import math
 from math import floor
 
+import numpy as np
 import pygame as pg
 
 from core import WorldVec, WorldView
@@ -12,14 +13,14 @@ from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FAC
 class Camera:
     def __init__(self, pos):
         self._pos = pos
-        self._req_pos = self._pos
+        self._req_pos = np.array(self._pos)
 
         self._zoom_vel = 1.0
         self._req_zoom_vel = 1.0
 
         self._scale = CAM_DEFAULT_SCALE
 
-        self._mouse_world_pos = WorldVec(0, 0)
+        self.mouse_world_pos = np.array(self._pos)
         self._block_selector_surf = pg.image.load("resources/gui/block_selector.png")
         self._block_selector_surf.set_colorkey(C_KEY)
 
@@ -102,14 +103,14 @@ class Camera:
         mouse_world_pos = WorldVec(
             *(world_shift_dim + cam_pos_dim for world_shift_dim, cam_pos_dim in zip(mouse_world_shift, self._pos))
             )
-        self._mouse_world_pos = mouse_world_pos
+        self.mouse_world_pos = mouse_world_pos
 
     def draw_gui_block_selector(self):
         self._update_mouse_world_pos()
         surf_pix_size = (floor(self._scale), floor(self._scale))
         surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
         world_shift = WorldVec(
-            *(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(self._mouse_world_pos, self._pos))
+            *(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(self.mouse_world_pos, self._pos))
             )
         pix_shift = world_to_pix_shift(
             world_shift,

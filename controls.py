@@ -13,6 +13,9 @@ class Controls:
     zoom_out = pg.K_KP_MINUS
     quit = pg.K_ESCAPE
 
+    break_block = 0
+    place_block = 2
+
 
 class Mods:
     sprinting = pg.KMOD_CTRL

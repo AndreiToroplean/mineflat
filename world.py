@@ -1,6 +1,6 @@
 import pygame as pg
 
-from core_funcs import world_to_chunk_vec, world_to_pix_shift
+from core_funcs import world_to_chunk_vec, world_to_pix_shift, world_to_chunk_to_world_vec
 from global_params import CHUNK_SIZE, CHUNK_PIX_SIZE, C_KEY
 from core import ChunkView, WorldView, PixVec, ChunkVec, WorldVec
 from chunk import Chunk
@@ -75,3 +75,24 @@ class World:
         if are_new_chunks or resized:
             self._draw_max_surf()
         camera.draw_world(self._max_surf, self._max_view.pos_0)
+
+    def _get_chunk(self, pos):
+        chunk_world_pos = world_to_chunk_to_world_vec(pos)
+        try:
+            chunk = self.chunks_existing[chunk_world_pos]
+        except KeyError:
+            return None
+
+        return chunk
+
+    def req_break_block(self, pos):
+        chunk = self._get_chunk(pos)
+        if chunk is None:
+            return
+        chunk.req_break_block(pos=pos)
+
+    def req_place_block(self, pos, material):
+        chunk = self._get_chunk(pos)
+        if chunk is None:
+            return
+        chunk.req_place_block(pos=pos, material=material)

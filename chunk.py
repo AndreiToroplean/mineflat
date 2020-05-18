@@ -70,10 +70,11 @@ class Chunk:
             blit_sequence.append((block.surf, pix_shift))
         self.surf.blits(blit_sequence, doreturn=False)
 
+    def req_break_block(self, pos):
+        self._break_block(pos)
 
-if __name__ == "__main__":
-    from debug.display import Display
-    from global_params import WATER_HEIGHT
+    def _break_block(self, pos):
+        pass
 
-    test_surf = Chunk(WorldVec(0, WATER_HEIGHT-4)).surf
-    Display(test_surf)
+    def req_place_block(self, pos, material):
+        pass

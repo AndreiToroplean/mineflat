@@ -2,6 +2,7 @@ import pygame as pg
 
 from global_params import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
 from controls import Controls, Mods
+from block import Material
 from camera import Camera
 from player import Player
 from world import World
@@ -18,13 +19,14 @@ class Game:
 
     def main_loop(self):
         while True:
-            # Inputs
+            # Keyboard inputs
             keys_pressed = pg.key.get_pressed()
             mods_pressed = pg.key.get_mods()
 
             if keys_pressed[Controls.quit] or pg.event.peek(pg.QUIT):
                 return
 
+            # Requesting horizontal movements
             does_horiz_movement = False
             if keys_pressed[Controls.move_left]:
                 if mods_pressed == pg.KMOD_NONE:
@@ -43,11 +45,13 @@ class Game:
             if not does_horiz_movement:
                 self.main_player.req_h_move_stop()
 
+            # Requesting jumps
             if keys_pressed[Controls.jump]:
                 self.main_player.req_jump()
             else:
                 self.main_player.req_jump_stop()
 
+            # Requesting camera zooms
             is_zooming = False
             if keys_pressed[Controls.zoom_in]:
                 self.camera.req_zoom_in()
@@ -58,7 +62,18 @@ class Game:
             if not is_zooming:
                 self.camera.req_zoom_stop()
 
-            # Movement
+            # Mouse inputs
+            mb_pressed = pg.mouse.get_pressed()
+
+            # Breaking blocks
+            if mb_pressed[Controls.break_block]:
+                self.world.req_break_block(pos=self.camera.mouse_world_pos)
+
+            # Placing blocks
+            if mb_pressed[Controls.place_block]:
+                self.world.req_place_block(pos=self.camera.mouse_world_pos, material=Material.dirt)
+
+            # Applying movements
             self.main_player.move(self.world)
             self.camera.req_move(self.main_player.pos)
             self.camera.move()
