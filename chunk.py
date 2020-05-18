@@ -66,7 +66,7 @@ class Chunk:
         for block_world_pos, block in self.blocks.items():
             world_shift = WorldVec(*(block_dim - chunk_dim
                 for block_dim, chunk_dim in zip(block_world_pos, self.world_pos)))
-            pix_shift = world_to_pix_shift(world_shift, self.surf.get_size(), (BLOCK_PIX_SIZE,) * 2)
+            pix_shift = world_to_pix_shift(world_shift, (BLOCK_PIX_SIZE,) * 2, self.surf.get_size())
             blit_sequence.append((block.surf, pix_shift))
         self.surf.blits(blit_sequence, doreturn=False)
 

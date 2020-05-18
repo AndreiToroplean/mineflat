@@ -7,41 +7,39 @@ from chunk import Chunk
 
 
 class World:
-    def __init__(self, camera):
-        self.camera = camera
-
+    def __init__(self):
         self.chunks_existing = {}
-        self.chunks_visible = {}
+        self._chunks_visible = {}
 
-        self.chunk_view = ChunkView(ChunkVec(0, 0), ChunkVec(0, 0))
-        self.max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
+        self._chunk_view = ChunkView(ChunkVec(0, 0), ChunkVec(0, 0))
+        self._max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
 
-        self.max_surf = pg.Surface((1, 1))
-        self.resize_max_surf()
-        self.max_surf.set_colorkey(C_KEY)
+        self._max_surf = pg.Surface((1, 1))
+        self._max_surf.set_colorkey(C_KEY)
+        self._do_init_max_surf = True
 
-    def update_chunk_view(self):
+    def _update_chunk_view(self, camera):
         """Updates chunk_view and returns True if there are new chunks to load, False otherwise. """
         new_chunk_view = ChunkView(
-            world_to_chunk_vec(self.camera.world_view.pos_0),
-            world_to_chunk_vec(self.camera.world_view.pos_1),
+            world_to_chunk_vec(camera.world_view.pos_0),
+            world_to_chunk_vec(camera.world_view.pos_1),
             )
 
-        if new_chunk_view == self.chunk_view:
+        if new_chunk_view == self._chunk_view:
             return False
 
-        self.chunk_view = new_chunk_view
+        self._chunk_view = new_chunk_view
         return True
 
-    def load_chunks(self):
-        self.max_view = WorldView(
-            WorldVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_0, CHUNK_SIZE)]),
-            WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_1, CHUNK_SIZE)]),
+    def _load_chunks(self):
+        self._max_view = WorldView(
+            WorldVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(self._chunk_view.pos_0, CHUNK_SIZE)]),
+            WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(self._chunk_view.pos_1, CHUNK_SIZE)]),
             )
 
-        self.chunks_visible = {}
-        for chunk_world_pos_x in range(self.max_view.pos_0.x, self.max_view.pos_1.x, CHUNK_SIZE.x):
-            for chunk_world_pos_y in range(self.max_view.pos_0.y, self.max_view.pos_1.y, CHUNK_SIZE.y):
+        self._chunks_visible = {}
+        for chunk_world_pos_x in range(self._max_view.pos_0.x, self._max_view.pos_1.x, CHUNK_SIZE.x):
+            for chunk_world_pos_y in range(self._max_view.pos_0.y, self._max_view.pos_1.y, CHUNK_SIZE.y):
                 chunk_world_pos = WorldVec(chunk_world_pos_x, chunk_world_pos_y)
                 if chunk_world_pos in self.chunks_existing:
                     chunk_to_load = self.chunks_existing[chunk_world_pos]
@@ -49,45 +47,31 @@ class World:
                     chunk_to_load = Chunk(chunk_world_pos)
                     self.chunks_existing[chunk_world_pos] = chunk_to_load
 
-                self.chunks_visible[chunk_world_pos] = chunk_to_load
+                self._chunks_visible[chunk_world_pos] = chunk_to_load
 
-    def draw_max_surf(self):
-        self.load_chunks()
+    def _draw_max_surf(self):
+        self._load_chunks()
 
-        self.max_surf.fill(C_KEY)
+        self._max_surf.fill(C_KEY)
         blit_sequence = []
-        for world_pos, chunk in self.chunks_visible.items():
-            max_view_world_shift = WorldVec(*(pos - shift for pos, shift in zip(world_pos, self.max_view.pos_0)))
-            pix_shift = world_to_pix_shift(max_view_world_shift, self.max_surf.get_size(), CHUNK_PIX_SIZE)
+        for world_pos, chunk in self._chunks_visible.items():
+            max_view_world_shift = WorldVec(*(pos - shift for pos, shift in zip(world_pos, self._max_view.pos_0)))
+            pix_shift = world_to_pix_shift(max_view_world_shift, CHUNK_PIX_SIZE, self._max_surf.get_size())
             blit_sequence.append((chunk.surf, pix_shift))
-        self.max_surf.blits(blit_sequence)
+        self._max_surf.blits(blit_sequence)
 
-    def draw(self):
-        are_new_chunks = self.update_chunk_view()
-        if resized := self.camera.is_zooming:
-            self.resize_max_surf()
-        if are_new_chunks or resized:
-            self.draw_max_surf()
-        self.camera.draw_world(self.max_surf, self.max_view.pos_0)
-
-    def resize_max_surf(self):
+    def _resize_max_surf(self, camera):
         max_surf_pix_size = tuple(
             (dim + 2) * pix
-            for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE)
+            for dim, pix in zip(world_to_chunk_vec(camera.world_size), CHUNK_PIX_SIZE)
             )
-        self.max_surf = pg.transform.scale(self.max_surf, max_surf_pix_size)
+        self._max_surf = pg.transform.scale(self._max_surf, max_surf_pix_size)
 
-
-def main():
-    camera = Camera()
-    camera.pos = WorldVec(0, 60)
-    world = World(camera)
-    world.draw()
-    pg.display.flip()
-    time.sleep(2)
-
-
-if __name__ == "__main__":
-    import time
-    from camera import Camera
-    main()
+    def draw(self, camera):
+        are_new_chunks = self._update_chunk_view(camera)
+        if resized := (camera.is_zooming or self._do_init_max_surf):
+            self._resize_max_surf(camera)
+            self._do_init_max_surf = False
+        if are_new_chunks or resized:
+            self._draw_max_surf()
+        camera.draw_world(self._max_surf, self._max_view.pos_0)

@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import C_SKY, CAM_FPS, CURSOR, DEBUG
+from global_params import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
 from controls import Controls, Mods
 from camera import Camera
 from player import Player
@@ -12,11 +12,9 @@ class Game:
         pg.init()
         pg.mouse.set_cursor(*CURSOR)
 
-        self.clock = pg.time.Clock()
-
-        self.camera = Camera(self.clock)
-        self.world = World(self.camera)
-        self.main_player = Player(self.camera, self.world)
+        self.world = World()
+        self.main_player = Player(spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
+        self.camera = Camera(pos=self.main_player.pos)
 
     def main_loop(self):
         while True:
@@ -61,20 +59,20 @@ class Game:
                 self.camera.req_zoom_stop()
 
             # Movement
-            self.main_player.move()
+            self.main_player.move(self.world)
             self.camera.req_move(self.main_player.pos)
             self.camera.move()
 
             # Graphics
             self.draw_sky()
-            self.world.draw()
-            self.main_player.draw()
+            self.world.draw(self.camera)
+            self.main_player.draw(self.camera)
+            self.draw_gui()
 
             if DEBUG:
                 self.camera.draw_debug_info()
 
-            pg.display.flip()
-            self.clock.tick(CAM_FPS)
+            self.camera.display_flip_and_clock_tick()
 
     def __enter__(self):
         return self
@@ -83,4 +81,7 @@ class Game:
         pg.quit()
 
     def draw_sky(self):
-        self.camera.screen.fill(C_SKY)
+        self.camera.draw_sky()
+
+    def draw_gui(self):
+        self.camera.draw_gui_block_selector()
