@@ -96,16 +96,16 @@ class World:
         self._max_surf.blit(self._empty_chunk_surf, pix_shift)
         self._max_surf.blit(chunk_surf, pix_shift)
 
-    def req_break_block(self, block_world_pos):
-        chunk, chunk_world_pos = self._get_chunk_at_pos(block_world_pos)
+    def req_break_block(self, world_pos):
+        chunk, chunk_world_pos = self._get_chunk_at_pos(world_pos)
         if chunk is None:
             return
-        chunk.req_break_block(block_world_pos)
+        chunk.req_break_block(world_pos)
         self._redraw_chunk(chunk_world_pos, chunk.surf)
 
-    def req_place_block(self, block_world_pos, material):
-        chunk, chunk_world_pos = self._get_chunk_at_pos(block_world_pos)
+    def req_place_block(self, world_pos, material):
+        chunk, chunk_world_pos = self._get_chunk_at_pos(world_pos)
         if chunk is None:
             return
-        chunk.req_place_block(block_world_pos, material=material)
+        chunk.req_place_block(world_pos, material=material)
         self._redraw_chunk(chunk_world_pos, chunk.surf)

@@ -72,6 +72,7 @@ class Game:
             # Placing blocks
             if mb_pressed[Controls.place_block]:
                 self.world.req_place_block(self.camera.mouse_world_pos, Material.dirt)
+                # TODO: choosing the material.
 
             # Applying movements
             self.main_player.move(self.world)

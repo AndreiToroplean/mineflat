@@ -27,7 +27,17 @@ class Chunk:
         self._draw()
 
         self.colliders = Colliders()
-        self._generate_colliders()
+        self._update_colliders()
+
+    def _fill_block(self, block_world_pos, material):
+        try:
+            block = self._block_materials[material]
+        except KeyError:
+            block = Block(material)
+            self._block_materials[material] = block
+
+        self._blocks[block_world_pos] = block
+        return block
 
     def _generate_blocks(self):
         for world_shift_x in range(CHUNK_SIZE[0]):
@@ -43,15 +53,9 @@ class Chunk:
                 else:
                     material = Material.stone
 
-                try:
-                    block = self._block_materials[material]
-                except KeyError:
-                    block = Block(material)
-                    self._block_materials[material] = block
+                self._fill_block(block_world_pos, material)
 
-                self._blocks[block_world_pos] = block
-
-    def _generate_colliders(self):
+    def _update_colliders(self):
         self.colliders = Colliders()
         for block_world_pos in self._blocks:
             if not (block_world_pos[0]-1, block_world_pos[1]) in self._blocks:
@@ -81,14 +85,20 @@ class Chunk:
         pix_shift = self._block_pos_to_pix_shift(block_world_pos)
         self.surf.blit(block_surf, pix_shift)
 
-    def req_break_block(self, block_world_pos):
+    def req_break_block(self, world_pos):
+        block_world_pos = WorldVec(*(floor(pos_dim) for pos_dim in world_pos))
         self._break_block(block_world_pos)
 
     def _break_block(self, block_world_pos):
-        floored_pos = WorldVec(*(floor(pos_dim) for pos_dim in block_world_pos))
-        self._blocks.pop(floored_pos, None)
-        self._redraw_block(floored_pos, self._empty_block_surf)
-        self._generate_colliders()
+        self._blocks.pop(block_world_pos, None)
+        self._redraw_block(block_world_pos, self._empty_block_surf)
+        self._update_colliders()
 
-    def req_place_block(self, block_world_pos, material):
-        pass
+    def req_place_block(self, world_pos, material):
+        block_world_pos = WorldVec(*(floor(pos_dim) for pos_dim in world_pos))
+        self._place_block(block_world_pos, material)
+
+    def _place_block(self, block_world_pos, material):
+        block = self._fill_block(block_world_pos, material)
+        self._redraw_block(block_world_pos, block.surf)
+        self._update_colliders()
