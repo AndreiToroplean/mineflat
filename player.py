@@ -71,8 +71,6 @@ class Player:
         self._req_vel[0] = -self._sprinting_speed
 
     def req_h_move_stop(self):
-        self._anim_surf_walking.sync(self._anim_surf)
-        self._anim_surf = self._anim_surf_walking
         self._anim_surf.action = AnimAction.end
         self._req_vel[0] = 0
 
