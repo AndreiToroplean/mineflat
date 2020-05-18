@@ -9,8 +9,8 @@ from core_funcs import world_to_chunk_to_world_vec
 
 class Player:
 
-    def __init__(self):
-        self.spawn_pos = np.array((0.5, float(WATER_HEIGHT+0.1)))
+    def __init__(self, spawn_pos):
+        self.spawn_pos = np.array(spawn_pos)
         self.pos = np.array(self.spawn_pos)
         self.req_pos = np.array(self.spawn_pos)
 

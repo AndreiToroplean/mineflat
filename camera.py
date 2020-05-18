@@ -2,18 +2,16 @@ import math
 from math import floor
 
 import pygame as pg
-import numpy as np
 
-from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, WATER_HEIGHT, \
-    CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, \
-    C_KEY
 from core import WorldVec, WorldView
 from core_funcs import world_to_pix_shift, pix_to_world_shift
+from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
+    CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS
 
 
 class Camera:
-    def __init__(self, clock):
-        self.pos = np.array((0.5, float(WATER_HEIGHT)))  # TODO: make it be the same as the player's spawn position.
+    def __init__(self, pos):
+        self.pos = pos
         self.req_pos = self.pos
 
         self.zoom_vel = 1.0
@@ -31,7 +29,7 @@ class Camera:
             self.screen = pg.display.set_mode((1280, 720))
         self.pix_size = self.screen.get_size()
 
-        self.clock = clock
+        self.clock = pg.time.Clock()
         self.font = pg.font.SysFont(pg.font.get_default_font(), 24)
 
     @property
@@ -121,10 +119,14 @@ class Camera:
         self.pos += (self.req_pos - self.pos) * CAM_POS_DAMPING_FACTOR
 
         self.zoom_vel *= (self.req_zoom_vel / self.zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
-        if not(CAM_SCALE_BOUNDS[0] < self.scale < CAM_SCALE_BOUNDS[1]):
+        if not (CAM_SCALE_BOUNDS[0] < self.scale < CAM_SCALE_BOUNDS[1]):
             self.zoom_vel = 1 / self.zoom_vel
         self.scale *= self.zoom_vel
 
     def draw_debug_info(self):
         fps_surf = self.font.render(f"{self.clock.get_fps():.1f}", True, (255, 255, 255))
         self.screen.blit(fps_surf, (20, 20))
+
+    def display_flip_and_clock_tick(self):
+        pg.display.flip()
+        self.clock.tick(CAM_FPS)

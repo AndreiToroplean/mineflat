@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import C_SKY, CAM_FPS, CURSOR, DEBUG
+from global_params import C_SKY, CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
 from controls import Controls, Mods
 from camera import Camera
 from player import Player
@@ -12,11 +12,9 @@ class Game:
         pg.init()
         pg.mouse.set_cursor(*CURSOR)
 
-        self.clock = pg.time.Clock()
-
-        self.camera = Camera(self.clock)
         self.world = World()
-        self.main_player = Player()
+        self.main_player = Player(spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
+        self.camera = Camera(pos=self.main_player.pos)
 
     def main_loop(self):
         while True:
@@ -74,8 +72,7 @@ class Game:
             if DEBUG:
                 self.camera.draw_debug_info()
 
-            pg.display.flip()
-            self.clock.tick(CAM_FPS)
+            self.camera.display_flip_and_clock_tick()
 
     def __enter__(self):
         return self
