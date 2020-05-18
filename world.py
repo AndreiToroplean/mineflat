@@ -7,9 +7,7 @@ from chunk import Chunk
 
 
 class World:
-    def __init__(self, camera):
-        self.camera = camera
-
+    def __init__(self):
         self.chunks_existing = {}
         self.chunks_visible = {}
 
@@ -17,14 +15,14 @@ class World:
         self.max_view = WorldView(WorldVec(0, 0), WorldVec(0, 0))
 
         self.max_surf = pg.Surface((1, 1))
-        self.resize_max_surf()
+        self.do_init_max_surf = True
         self.max_surf.set_colorkey(C_KEY)
 
-    def update_chunk_view(self):
+    def _update_chunk_view(self, camera):
         """Updates chunk_view and returns True if there are new chunks to load, False otherwise. """
         new_chunk_view = ChunkView(
-            world_to_chunk_vec(self.camera.world_view.pos_0),
-            world_to_chunk_vec(self.camera.world_view.pos_1),
+            world_to_chunk_vec(camera.world_view.pos_0),
+            world_to_chunk_vec(camera.world_view.pos_1),
             )
 
         if new_chunk_view == self.chunk_view:
@@ -33,7 +31,7 @@ class World:
         self.chunk_view = new_chunk_view
         return True
 
-    def load_chunks(self):
+    def _load_chunks(self):
         self.max_view = WorldView(
             WorldVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_0, CHUNK_SIZE)]),
             WorldVec(*[(dim+1) * chunk_size_dim for dim, chunk_size_dim in zip(self.chunk_view.pos_1, CHUNK_SIZE)]),
@@ -51,8 +49,8 @@ class World:
 
                 self.chunks_visible[chunk_world_pos] = chunk_to_load
 
-    def draw_max_surf(self):
-        self.load_chunks()
+    def _draw_max_surf(self):
+        self._load_chunks()
 
         self.max_surf.fill(C_KEY)
         blit_sequence = []
@@ -62,32 +60,18 @@ class World:
             blit_sequence.append((chunk.surf, pix_shift))
         self.max_surf.blits(blit_sequence)
 
-    def draw(self):
-        are_new_chunks = self.update_chunk_view()
-        if resized := self.camera.is_zooming:
-            self.resize_max_surf()
-        if are_new_chunks or resized:
-            self.draw_max_surf()
-        self.camera.draw_world(self.max_surf, self.max_view.pos_0)
-
-    def resize_max_surf(self):
+    def _resize_max_surf(self, camera):
         max_surf_pix_size = tuple(
             (dim + 2) * pix
-            for dim, pix in zip(world_to_chunk_vec(self.camera.world_size), CHUNK_PIX_SIZE)
+            for dim, pix in zip(world_to_chunk_vec(camera.world_size), CHUNK_PIX_SIZE)
             )
         self.max_surf = pg.transform.scale(self.max_surf, max_surf_pix_size)
 
-
-def main():
-    camera = Camera()
-    camera.pos = WorldVec(0, 60)
-    world = World(camera)
-    world.draw()
-    pg.display.flip()
-    time.sleep(2)
-
-
-if __name__ == "__main__":
-    import time
-    from camera import Camera
-    main()
+    def draw(self, camera):
+        are_new_chunks = self._update_chunk_view(camera)
+        if resized := (camera.is_zooming or self.do_init_max_surf):
+            self._resize_max_surf(camera)
+            self.do_init_max_surf = False
+        if are_new_chunks or resized:
+            self._draw_max_surf()
+        camera.draw_world(self.max_surf, self.max_view.pos_0)

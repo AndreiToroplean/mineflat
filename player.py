@@ -9,10 +9,7 @@ from core_funcs import world_to_chunk_to_world_vec
 
 class Player:
 
-    def __init__(self, camera, world):
-        self.camera = camera
-        self.world = world
-
+    def __init__(self):
         self.spawn_pos = np.array((0.5, float(WATER_HEIGHT+0.1)))
         self.pos = np.array(self.spawn_pos)
         self.req_pos = np.array(self.spawn_pos)
@@ -42,8 +39,8 @@ class Player:
         self.sprinting_speed = 7.5 / CAM_FPS
         self.jumping_speed = 7.75 / CAM_FPS
 
-    def draw(self):
-        self.camera.draw_player(self.anim_surf, self.pos)
+    def draw(self, camera):
+        camera.draw_player(self.anim_surf, self.pos)
 
     def req_move_right(self):
         self.anim_surf_walking.sync(self.anim_surf)
@@ -91,7 +88,7 @@ class Player:
     def req_jump_stop(self):
         self.req_vel[1] = 0
 
-    def move(self):
+    def move(self, world):
         self.vel[0] += (self.req_vel[0] - self.vel[0]) * PLAYER_DAMPING_FACTOR
         self.vel[1] += self.req_vel[1]
 
@@ -101,11 +98,11 @@ class Player:
         collision_steps = floor(np.linalg.norm(self.vel)) + 1
         for _ in range(collision_steps):
             self.req_pos += self.vel / collision_steps
-            self._collide()
+            self._collide(world)
         self.pos[:] = self.req_pos
 
-    def _collide(self, thresh=0.001):
-        world_colliders = self._get_world_colliders()
+    def _collide(self, world, thresh=0.001):
+        world_colliders = self._get_world_colliders(world)
         player_bound_shifts = ((-self.world_size[0] / 2, self.world_size[0] / 2), (0.0, self.world_size[1]))
         block_bound_shifts = ((0, 1), (0, 1))
         tested_horiz_pos_bounds = (
@@ -161,14 +158,14 @@ class Player:
                     self.vel[1] = 0
                     break
 
-    def _get_world_colliders(self):
+    def _get_world_colliders(self, world):
         cur_chunk_pos = world_to_chunk_to_world_vec(self.pos)
         world_colliders = Colliders()
         for pos_x in range(cur_chunk_pos.x-CHUNK_SIZE.x, cur_chunk_pos.x+2*CHUNK_SIZE.x, CHUNK_SIZE.x):
             for pos_y in range(cur_chunk_pos.y-CHUNK_SIZE.y, cur_chunk_pos.y+2*CHUNK_SIZE.y, CHUNK_SIZE.y):
                 pos = WorldVec(pos_x, pos_y)
                 try:
-                    chunk = self.world.chunks_existing[pos]
+                    chunk = world.chunks_existing[pos]
                 except KeyError:
                     pass
                 else:

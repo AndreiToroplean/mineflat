@@ -15,8 +15,8 @@ class Game:
         self.clock = pg.time.Clock()
 
         self.camera = Camera(self.clock)
-        self.world = World(self.camera)
-        self.main_player = Player(self.camera, self.world)
+        self.world = World()
+        self.main_player = Player()
 
     def main_loop(self):
         while True:
@@ -61,14 +61,14 @@ class Game:
                 self.camera.req_zoom_stop()
 
             # Movement
-            self.main_player.move()
+            self.main_player.move(self.world)
             self.camera.req_move(self.main_player.pos)
             self.camera.move()
 
             # Graphics
             self.draw_sky()
-            self.world.draw()
-            self.main_player.draw()
+            self.world.draw(self.camera)
+            self.main_player.draw(self.camera)
             self.draw_gui()
 
             if DEBUG:

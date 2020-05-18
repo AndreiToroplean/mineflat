@@ -24,5 +24,5 @@ def world_to_pix_shift(world_shift, source_surf_pix_size, dest_surf_pix_size, bl
 def pix_to_world_shift(pix_shift, source_surf_pix_size, dest_surf_pix_size, bloc_size=BLOCK_PIX_SIZE):
     return WorldVec(
         pix_shift[0] / bloc_size,
-        (pix_shift[1] + dest_surf_pix_size[1] + source_surf_pix_size[1]) / bloc_size,
+        (-pix_shift[1] + dest_surf_pix_size[1] - source_surf_pix_size[1]) / bloc_size,
         )
