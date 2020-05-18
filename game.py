@@ -67,11 +67,11 @@ class Game:
 
             # Breaking blocks
             if mb_pressed[Controls.break_block]:
-                self.world.req_break_block(pos=self.camera.mouse_world_pos)
+                self.world.req_break_block(self.camera.mouse_world_pos)
 
             # Placing blocks
             if mb_pressed[Controls.place_block]:
-                self.world.req_place_block(pos=self.camera.mouse_world_pos, material=Material.dirt)
+                self.world.req_place_block(self.camera.mouse_world_pos, Material.dirt)
 
             # Applying movements
             self.main_player.move(self.world)
@@ -88,6 +88,10 @@ class Game:
                 self.camera.draw_debug_info()
 
             self.camera.display_flip_and_clock_tick()
+
+            # Death
+            if self.main_player.pos[1] < -100:
+                return
 
     def __enter__(self):
         return self

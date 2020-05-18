@@ -1,4 +1,4 @@
-import math
+from math import sin, floor
 import random
 
 import pygame as pg
@@ -10,7 +10,9 @@ from block import Block, Material
 
 
 class Chunk:
-    block_materials = {}
+    _block_materials = {}
+    _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
+    _empty_block_surf.fill(C_KEY)
 
     def __init__(self, world_pos):
         self._world_pos = world_pos
@@ -31,8 +33,8 @@ class Chunk:
         for world_shift_x in range(CHUNK_SIZE[0]):
             for world_shift_y in range(CHUNK_SIZE[1]):
                 block_world_pos = WorldVec(self._world_pos.x + world_shift_x, self._world_pos.y + world_shift_y)
-                test_height = WATER_HEIGHT + math.sin(block_world_pos.x/16)*4
-                if block_world_pos.y >= test_height:
+                test_height = WATER_HEIGHT + sin(block_world_pos.x/16)*4
+                if block_world_pos.y >= test_height or block_world_pos.y < 0:
                     continue
                 if block_world_pos.y >= test_height - 1:
                     material = Material.grass
@@ -42,14 +44,15 @@ class Chunk:
                     material = Material.stone
 
                 try:
-                    block = self.block_materials[material]
+                    block = self._block_materials[material]
                 except KeyError:
                     block = Block(material)
-                    self.block_materials[material] = block
+                    self._block_materials[material] = block
 
                 self._blocks[block_world_pos] = block
 
     def _generate_colliders(self):
+        self.colliders = Colliders()
         for block_world_pos in self._blocks:
             if not (block_world_pos[0]-1, block_world_pos[1]) in self._blocks:
                 self.colliders.left.append(block_world_pos)
@@ -60,21 +63,32 @@ class Chunk:
             if not (block_world_pos[0], block_world_pos[1]+1) in self._blocks:
                 self.colliders.top.append(block_world_pos)
 
+    def _block_pos_to_pix_shift(self, block_world_pos):
+        world_shift = WorldVec(
+            *(block_dim - chunk_dim for block_dim, chunk_dim in zip(block_world_pos, self._world_pos))
+            )
+        return world_to_pix_shift(world_shift, (BLOCK_PIX_SIZE,) * 2, self.surf.get_size())
+
     def _draw(self):
         self.surf.fill(C_KEY)
         blit_sequence = []
         for block_world_pos, block in self._blocks.items():
-            world_shift = WorldVec(*(block_dim - chunk_dim
-                for block_dim, chunk_dim in zip(block_world_pos, self._world_pos)))
-            pix_shift = world_to_pix_shift(world_shift, (BLOCK_PIX_SIZE,) * 2, self.surf.get_size())
+            pix_shift = self._block_pos_to_pix_shift(block_world_pos)
             blit_sequence.append((block.surf, pix_shift))
         self.surf.blits(blit_sequence, doreturn=False)
 
-    def req_break_block(self, pos):
-        self._break_block(pos)
+    def _redraw_block(self, block_world_pos, block_surf):
+        pix_shift = self._block_pos_to_pix_shift(block_world_pos)
+        self.surf.blit(block_surf, pix_shift)
 
-    def _break_block(self, pos):
-        pass
+    def req_break_block(self, block_world_pos):
+        self._break_block(block_world_pos)
 
-    def req_place_block(self, pos, material):
+    def _break_block(self, block_world_pos):
+        floored_pos = WorldVec(*(floor(pos_dim) for pos_dim in block_world_pos))
+        self._blocks.pop(floored_pos, None)
+        self._redraw_block(floored_pos, self._empty_block_surf)
+        self._generate_colliders()
+
+    def req_place_block(self, block_world_pos, material):
         pass

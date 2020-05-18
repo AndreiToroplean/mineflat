@@ -116,6 +116,7 @@ class Camera:
             world_shift,
             surf_pix_size,
             self._pix_size,
+            source_pivot=(-1, 1),
             dest_pivot=(self._pix_size[0] * PLAYER_SCREEN_POS.x, self._pix_size[1] * PLAYER_SCREEN_POS.y),
             scale=self._scale)
 

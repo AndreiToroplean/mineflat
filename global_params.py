@@ -51,7 +51,7 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
 
 # Game params
 FULLSCREEN = True
-DEBUG = False
+DEBUG = True
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
