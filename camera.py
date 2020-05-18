@@ -60,11 +60,14 @@ class Camera:
         world_shift = WorldVec(
             *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(self._pos, max_view_pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, max_surf_scaled_pix_size, self._pix_size, self._scale)
-        pix_shift = (
-            pix_shift[0] + self._pix_size[0] * PLAYER_SCREEN_POS.x,
-            pix_shift[1] - self._pix_size[1] * PLAYER_SCREEN_POS.y,
+        pix_shift = world_to_pix_shift(
+            world_shift,
+            max_surf_scaled_pix_size,
+            self._pix_size,
+            dest_pivot=(self._pix_size[0] * PLAYER_SCREEN_POS.x, self._pix_size[1] * PLAYER_SCREEN_POS.y),
+            scale=self._scale
             )
+
         self._screen.blit(max_surf_scaled, pix_shift)
 
     def draw_player(self, anim_surf, player_pos):
@@ -76,30 +79,45 @@ class Camera:
         world_shift = WorldVec(
             *(player_pos_dim - pos_dim for player_pos_dim, pos_dim in zip(player_pos, self._pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, surf_scaled_pix_size, self._pix_size, self._scale)
-        pix_shift = (
-            pix_shift[0] + self._pix_size[0] * PLAYER_SCREEN_POS.x - surf_scaled_pix_size[0] / 2,
-            pix_shift[1] - self._pix_size[1] * PLAYER_SCREEN_POS.y,
+        pix_shift = world_to_pix_shift(
+            world_shift,
+            surf_scaled_pix_size,
+            self._pix_size,
+            source_pivot=(surf_scaled_pix_size[0] / 2, 0),
+            dest_pivot=(self._pix_size[0] * PLAYER_SCREEN_POS.x, self._pix_size[1] * PLAYER_SCREEN_POS.y),
+            scale=self._scale
             )
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    def update_mouse_world_pos(self):
+    def _update_mouse_world_pos(self):
         mouse_pix_shift = pg.mouse.get_pos()
-        mouse_world_shift = pix_to_world_shift(mouse_pix_shift, (0, 0), self._pix_size, self._scale)
+        mouse_world_shift = pix_to_world_shift(
+            mouse_pix_shift,
+            (0, 0),
+            self._pix_size,
+            dest_pivot=(self._pix_size[0] * PLAYER_SCREEN_POS.x, self._pix_size[1] * PLAYER_SCREEN_POS.y),
+            scale=self._scale,
+            )
         mouse_world_pos = WorldVec(
             *(world_shift_dim + cam_pos_dim for world_shift_dim, cam_pos_dim in zip(mouse_world_shift, self._pos))
             )
         self._mouse_world_pos = mouse_world_pos
 
     def draw_gui_block_selector(self):
-        self.update_mouse_world_pos()
+        self._update_mouse_world_pos()
         surf_pix_size = (floor(self._scale), floor(self._scale))
         surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
         world_shift = WorldVec(
             *(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(self._mouse_world_pos, self._pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, surf_pix_size, self._pix_size, self._scale)
+        pix_shift = world_to_pix_shift(
+            world_shift,
+            surf_pix_size,
+            self._pix_size,
+            dest_pivot=(self._pix_size[0] * PLAYER_SCREEN_POS.x, self._pix_size[1] * PLAYER_SCREEN_POS.y),
+            scale=self._scale)
+
         self._screen.blit(surf, pix_shift)
 
     def req_zoom_in(self):
