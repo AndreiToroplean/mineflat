@@ -6,127 +6,130 @@ import pygame as pg
 from core import WorldVec, WorldView
 from core_funcs import world_to_pix_shift, pix_to_world_shift
 from global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
-    CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS
+    CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS, C_SKY
 
 
 class Camera:
     def __init__(self, pos):
-        self.pos = pos
-        self.req_pos = self.pos
+        self._pos = pos
+        self._req_pos = self._pos
 
-        self.zoom_vel = 1.0
-        self.req_zoom_vel = 1.0
+        self._zoom_vel = 1.0
+        self._req_zoom_vel = 1.0
 
-        self.scale = CAM_DEFAULT_SCALE
+        self._scale = CAM_DEFAULT_SCALE
 
-        self.mouse_world_pos = WorldVec(0, 0)
-        self.block_selector_surf = pg.image.load("resources/gui/block_selector.png")
-        self.block_selector_surf.set_colorkey(C_KEY)
+        self._mouse_world_pos = WorldVec(0, 0)
+        self._block_selector_surf = pg.image.load("resources/gui/block_selector.png")
+        self._block_selector_surf.set_colorkey(C_KEY)
 
         if FULLSCREEN:
-            self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
+            self._screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
         else:
-            self.screen = pg.display.set_mode((1280, 720))
-        self.pix_size = self.screen.get_size()
+            self._screen = pg.display.set_mode((1280, 720))
+        self._pix_size = self._screen.get_size()
 
-        self.clock = pg.time.Clock()
-        self.font = pg.font.SysFont(pg.font.get_default_font(), 24)
+        self._clock = pg.time.Clock()
+        self._font = pg.font.SysFont(pg.font.get_default_font(), 24)
 
     @property
     def world_size(self):
         # TODO: add memoization
-        return WorldVec(*(dim / self.scale for dim in self.pix_size))
+        return WorldVec(*(dim / self._scale for dim in self._pix_size))
 
     @property
     def world_view(self):
         """World referred part of the world visible on screen. """
         return WorldView(
             pos_0=WorldVec(
-                x=self.pos[0] - self.world_size.x * PLAYER_SCREEN_POS.x,
-                y=self.pos[1] - self.world_size.y * PLAYER_SCREEN_POS.y,
+                x=self._pos[0] - self.world_size.x * PLAYER_SCREEN_POS.x,
+                y=self._pos[1] - self.world_size.y * PLAYER_SCREEN_POS.y,
                 ),
             pos_1=WorldVec(
-                x=self.pos[0] + self.world_size.x * (1-PLAYER_SCREEN_POS.x),
-                y=self.pos[1] + self.world_size.y * (1-PLAYER_SCREEN_POS.y),
+                x=self._pos[0] + self.world_size.x * (1 - PLAYER_SCREEN_POS.x),
+                y=self._pos[1] + self.world_size.y * (1 - PLAYER_SCREEN_POS.y),
                 ),
             )
 
+    def draw_sky(self):
+        self._screen.fill(C_SKY)
+
     def draw_world(self, max_surf, max_view_pos):
-        max_surf_scaled_pix_size = tuple(floor(dim * (self.scale / BLOCK_PIX_SIZE)) for dim in max_surf.get_size())
+        max_surf_scaled_pix_size = tuple(floor(dim * (self._scale / BLOCK_PIX_SIZE)) for dim in max_surf.get_size())
         max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size)
         world_shift = WorldVec(
-            *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(self.pos, max_view_pos))
+            *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(self._pos, max_view_pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, max_surf_scaled_pix_size, self.pix_size, self.scale)
+        pix_shift = world_to_pix_shift(world_shift, max_surf_scaled_pix_size, self._pix_size, self._scale)
         pix_shift = (
-            pix_shift[0] + self.pix_size[0] * PLAYER_SCREEN_POS.x,
-            pix_shift[1] - self.pix_size[1] * PLAYER_SCREEN_POS.y,
+            pix_shift[0] + self._pix_size[0] * PLAYER_SCREEN_POS.x,
+            pix_shift[1] - self._pix_size[1] * PLAYER_SCREEN_POS.y,
             )
-        self.screen.blit(max_surf_scaled, pix_shift)
+        self._screen.blit(max_surf_scaled, pix_shift)
 
     def draw_player(self, anim_surf, player_pos):
         surf = anim_surf.get_surf_and_advance()
 
-        surf_scaled_pix_size = tuple(floor(dim * self.scale) for dim in anim_surf.world_size)
+        surf_scaled_pix_size = tuple(floor(dim * self._scale) for dim in anim_surf.world_size)
         surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)
 
         world_shift = WorldVec(
-            *(player_pos_dim - pos_dim for player_pos_dim, pos_dim in zip(player_pos, self.pos))
+            *(player_pos_dim - pos_dim for player_pos_dim, pos_dim in zip(player_pos, self._pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, surf_scaled_pix_size, self.pix_size, self.scale)
+        pix_shift = world_to_pix_shift(world_shift, surf_scaled_pix_size, self._pix_size, self._scale)
         pix_shift = (
-            pix_shift[0] + self.pix_size[0] * PLAYER_SCREEN_POS.x - surf_scaled_pix_size[0]/2,
-            pix_shift[1] - self.pix_size[1] * PLAYER_SCREEN_POS.y,
+            pix_shift[0] + self._pix_size[0] * PLAYER_SCREEN_POS.x - surf_scaled_pix_size[0] / 2,
+            pix_shift[1] - self._pix_size[1] * PLAYER_SCREEN_POS.y,
             )
 
-        self.screen.blit(surf_scaled, pix_shift)
+        self._screen.blit(surf_scaled, pix_shift)
 
     def update_mouse_world_pos(self):
         mouse_pix_shift = pg.mouse.get_pos()
-        mouse_world_shift = pix_to_world_shift(mouse_pix_shift, (0, 0), self.pix_size, self.scale)
+        mouse_world_shift = pix_to_world_shift(mouse_pix_shift, (0, 0), self._pix_size, self._scale)
         mouse_world_pos = WorldVec(
-            *(world_shift_dim + cam_pos_dim for world_shift_dim, cam_pos_dim in zip(mouse_world_shift, self.pos))
+            *(world_shift_dim + cam_pos_dim for world_shift_dim, cam_pos_dim in zip(mouse_world_shift, self._pos))
             )
-        self.mouse_world_pos = mouse_world_pos
+        self._mouse_world_pos = mouse_world_pos
 
     def draw_gui_block_selector(self):
         self.update_mouse_world_pos()
-        surf_pix_size = (floor(self.scale), floor(self.scale))
-        surf = pg.transform.scale(self.block_selector_surf, surf_pix_size)
+        surf_pix_size = (floor(self._scale), floor(self._scale))
+        surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
         world_shift = WorldVec(
-            *(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(self.mouse_world_pos, self.pos))
+            *(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(self._mouse_world_pos, self._pos))
             )
-        pix_shift = world_to_pix_shift(world_shift, surf_pix_size, self.pix_size, self.scale)
-        self.screen.blit(surf, pix_shift)
+        pix_shift = world_to_pix_shift(world_shift, surf_pix_size, self._pix_size, self._scale)
+        self._screen.blit(surf, pix_shift)
 
     def req_zoom_in(self):
-        self.req_zoom_vel = CAM_ZOOM_SPEED
+        self._req_zoom_vel = CAM_ZOOM_SPEED
 
     def req_zoom_out(self):
-        self.req_zoom_vel = 1 / CAM_ZOOM_SPEED
+        self._req_zoom_vel = 1 / CAM_ZOOM_SPEED
 
     def req_zoom_stop(self):
-        self.req_zoom_vel = 1.0
+        self._req_zoom_vel = 1.0
 
     @property
     def is_zooming(self):
-        return not math.isclose(self.zoom_vel, 1)
+        return not math.isclose(self._zoom_vel, 1)
 
     def req_move(self, pos):
-        self.req_pos = pos
+        self._req_pos = pos
 
     def move(self):
-        self.pos += (self.req_pos - self.pos) * CAM_POS_DAMPING_FACTOR
+        self._pos += (self._req_pos - self._pos) * CAM_POS_DAMPING_FACTOR
 
-        self.zoom_vel *= (self.req_zoom_vel / self.zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
-        if not (CAM_SCALE_BOUNDS[0] < self.scale < CAM_SCALE_BOUNDS[1]):
-            self.zoom_vel = 1 / self.zoom_vel
-        self.scale *= self.zoom_vel
+        self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
+        if not (CAM_SCALE_BOUNDS[0] < self._scale < CAM_SCALE_BOUNDS[1]):
+            self._zoom_vel = 1 / self._zoom_vel
+        self._scale *= self._zoom_vel
 
     def draw_debug_info(self):
-        fps_surf = self.font.render(f"{self.clock.get_fps():.1f}", True, (255, 255, 255))
-        self.screen.blit(fps_surf, (20, 20))
+        fps_surf = self._font.render(f"{self._clock.get_fps():.1f}", True, (255, 255, 255))
+        self._screen.blit(fps_surf, (20, 20))
 
     def display_flip_and_clock_tick(self):
         pg.display.flip()
-        self.clock.tick(CAM_FPS)
+        self._clock.tick(CAM_FPS)

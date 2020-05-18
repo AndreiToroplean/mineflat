@@ -2,10 +2,6 @@ import pygame as pg
 
 from core import PixVec, ScreenVec, WorldVec
 
-# Game params
-FULLSCREEN = True
-DEBUG = False
-
 # Technical dimensions
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.333)
 BLOCK_PIX_SIZE = 16  # Needs to stay equal to block texture size resolution. That is, 16.
@@ -52,3 +48,10 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
     "       XX       ",
     "       XX       ",
     ))
+
+# Game params
+FULLSCREEN = True
+DEBUG = False
+
+# Game dynamics
+GRAVITY = (0.0, -22 / (CAM_FPS ** 2))

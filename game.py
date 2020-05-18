@@ -1,6 +1,6 @@
 import pygame as pg
 
-from global_params import C_SKY, CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
+from global_params import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
 from controls import Controls, Mods
 from camera import Camera
 from player import Player
@@ -81,7 +81,7 @@ class Game:
         pg.quit()
 
     def draw_sky(self):
-        self.camera.screen.fill(C_SKY)
+        self.camera.draw_sky()
 
     def draw_gui(self):
         self.camera.draw_gui_block_selector()
