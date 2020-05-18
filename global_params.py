@@ -1,6 +1,6 @@
 import pygame as pg
 
-from core import PixVec, ScreenVec, WorldVec, Color
+from core import PixVec, ScreenVec, WorldVec
 
 # Game params
 FULLSCREEN = True
@@ -8,7 +8,7 @@ DEBUG = False
 
 # Technical dimensions
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.333)
-BLOCK_PIX_SIZE = 16
+BLOCK_PIX_SIZE = 16  # Needs to stay equal to block texture size resolution. That is, 16.
 CHUNK_SIZE = WorldVec(8, 8)
 CHUNK_PIX_SIZE = PixVec(*[BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_SIZE])
 
@@ -17,9 +17,9 @@ WORLD_MAX_HEIGHT = 2 ** 8
 WATER_HEIGHT = 2 ** 6
 
 # Colors
-C_KEY = Color(255, 0, 0)
+C_KEY = pg.Color(255, 0, 0)
 
-C_SKY = Color(120, 190, 225)
+C_SKY = pg.Color(120, 190, 225)
 
 # Cam dynamics
 CAM_FPS = 30
