@@ -4,7 +4,7 @@ from core import PixVec, ScreenVec, WorldVec
 
 # Technical dimensions
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.333)
-BLOCK_PIX_SIZE = 16  # Needs to stay equal to block texture size resolution. That is, 16.
+BLOCK_PIX_SIZE = 16  # Should stay equal to block texture size resolution. That is, 16.
 CHUNK_SIZE = WorldVec(8, 8)
 CHUNK_PIX_SIZE = PixVec(*[BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_SIZE])
 
