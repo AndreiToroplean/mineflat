@@ -69,6 +69,7 @@ class Game:
             self.draw_sky()
             self.world.draw()
             self.main_player.draw()
+            self.draw_gui()
 
             if DEBUG:
                 self.camera.draw_debug_info()
@@ -84,3 +85,6 @@ class Game:
 
     def draw_sky(self):
         self.camera.screen.fill(C_SKY)
+
+    def draw_gui(self):
+        self.camera.draw_gui_block_selector()

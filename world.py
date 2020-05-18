@@ -58,7 +58,7 @@ class World:
         blit_sequence = []
         for world_pos, chunk in self.chunks_visible.items():
             max_view_world_shift = WorldVec(*(pos - shift for pos, shift in zip(world_pos, self.max_view.pos_0)))
-            pix_shift = world_to_pix_shift(max_view_world_shift, self.max_surf.get_size(), CHUNK_PIX_SIZE)
+            pix_shift = world_to_pix_shift(max_view_world_shift, CHUNK_PIX_SIZE, self.max_surf.get_size())
             blit_sequence.append((chunk.surf, pix_shift))
         self.max_surf.blits(blit_sequence)
 
