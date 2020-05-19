@@ -1,11 +1,11 @@
 import pygame as pg
 
-from global_params import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
-from controls import Controls, Mods
-from block import Material
-from camera import Camera
-from player import Player
-from world import World
+from core.global_params import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
+from game.controls import Controls, Mods
+from world.block import Material
+from game.camera import Camera
+from player.player import Player
+from world.world import World
 
 
 class Game:

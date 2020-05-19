@@ -1,6 +1,6 @@
 import pygame as pg
 
-from core import PixVec, ScreenVec, WorldVec
+from core.core import PixVec, ScreenVec, WorldVec
 
 # Technical dimensions
 PLAYER_SCREEN_POS = ScreenVec(0.5, 0.333)

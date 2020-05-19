@@ -1,7 +1,7 @@
 from enum import Enum
 
 import pygame as pg
-from global_params import BLOCK_PIX_SIZE
+from core.global_params import BLOCK_PIX_SIZE
 
 
 class Material(Enum):

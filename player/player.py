@@ -1,10 +1,12 @@
+import os
 from math import floor
+
 import numpy as np
 
-from global_params import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY
-from animated_surface import AnimAction, AnimatedSurface
-from core import WorldVec, Colliders
-from core_funcs import world_to_chunk_to_world_vec
+from core.global_params import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY
+from core.animated_surface import AnimAction, AnimatedSurface
+from core.core import WorldVec, Colliders
+from core.core_funcs import world_to_chunk_to_world_vec
 
 
 class Player:
@@ -23,13 +25,14 @@ class Player:
 
         self._world_size = WorldVec(0.6, 1.8)
 
+        cwd = os.getcwd()
         self._anim_surf_walking = AnimatedSurface(
-            "resources/steve/walking/",
+            os.path.join(cwd, "resources/steve/walking/"),
             world_height=self._world_size.y,
             neutrals=(0, 8),
             )
         self._anim_surf_sprinting = AnimatedSurface(
-            "resources/steve/sprinting/",
+            os.path.join(cwd, "resources/steve/sprinting/"),
             world_height=self._world_size.y,
             neutrals=(0, 6),
             )

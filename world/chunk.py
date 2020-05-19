@@ -1,12 +1,11 @@
 from math import sin, floor
-import random
 
 import pygame as pg
 
-from core_funcs import chunk_to_world_vec, world_to_pix_shift
-from global_params import BLOCK_PIX_SIZE, CHUNK_SIZE, WATER_HEIGHT, C_KEY
-from core import PixVec, ChunkVec, WorldVec, ChunkData, Colliders
-from block import Block, Material
+from core.core_funcs import world_to_pix_shift
+from core.global_params import BLOCK_PIX_SIZE, CHUNK_SIZE, WATER_HEIGHT, C_KEY
+from core.core import WorldVec, Colliders
+from world.block import Block, Material
 
 
 class Chunk:

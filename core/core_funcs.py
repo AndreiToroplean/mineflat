@@ -1,5 +1,5 @@
-from core import ChunkVec, WorldVec, PixVec
-from global_params import CHUNK_SIZE, BLOCK_PIX_SIZE
+from core.core import ChunkVec, WorldVec, PixVec
+from core.global_params import CHUNK_SIZE, BLOCK_PIX_SIZE
 
 
 def world_to_chunk_vec(world_vec):
