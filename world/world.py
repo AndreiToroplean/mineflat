@@ -1,3 +1,5 @@
+import random
+
 import pygame as pg
 
 from core.funcs import world_to_chunk_vec, world_to_pix_shift, world_to_chunk_to_world_vec
@@ -11,6 +13,8 @@ class World:
     _empty_chunk_surf.fill(C_KEY)
 
     def __init__(self):
+        self.seed = random.randint(0, 2 ** 20) + 0.15681
+
         self.chunks_existing = {}
         self._chunks_visible = {}
 
@@ -47,7 +51,7 @@ class World:
                 if chunk_world_pos in self.chunks_existing:
                     chunk_to_load = self.chunks_existing[chunk_world_pos]
                 else:
-                    chunk_to_load = Chunk(chunk_world_pos)
+                    chunk_to_load = Chunk(chunk_world_pos, self.seed)
                     self.chunks_existing[chunk_world_pos] = chunk_to_load
 
                 self._chunks_visible[chunk_world_pos] = chunk_to_load

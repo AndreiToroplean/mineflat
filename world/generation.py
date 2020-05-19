@@ -21,11 +21,13 @@ class WorldGenerator:
     DIRT_DEPTH = 5
     BEDROCK_DEPTH = 5
 
-    SEED = random.randint(0, 2**20) + 0.15681
     WORLD_HEIGHT_FREQ = 50
     CAVES_PROBABILITY = -0.25
 
     _block_materials = {}
+    
+    def __init__(self, seed):
+        self.seed = seed
 
     def get_block(self, material):
         try:
@@ -38,7 +40,7 @@ class WorldGenerator:
 
     def _choose_material_at_pos(self, block_world_pos):
         # Terrain height
-        terrain_height = self.WATER_HEIGHT + 20 * noise.pnoise2(0.062 + block_world_pos.x/self.WORLD_HEIGHT_FREQ, self.SEED, octaves=5)
+        terrain_height = self.WATER_HEIGHT + 20 * noise.pnoise2(0.062 + block_world_pos.x/self.WORLD_HEIGHT_FREQ, self.seed, octaves=5)
 
         if block_world_pos.y < WORLD_HEIGHT_BOUNDS[0]:
             material = Material.air
@@ -54,7 +56,7 @@ class WorldGenerator:
             material = Material.air
 
         # Caves
-        if noise.pnoise3(0.0468 + block_world_pos.x/10, 0.1564 + block_world_pos.y/10, self.SEED, octaves=5) < self.CAVES_PROBABILITY:
+        if noise.pnoise3(0.0468 + block_world_pos.x/10, 0.1564 + block_world_pos.y/10, self.seed, octaves=5) < self.CAVES_PROBABILITY:
             material = Material.air
 
         # Return

@@ -12,10 +12,10 @@ class Chunk:
     _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
     _empty_block_surf.fill(C_KEY)
 
-    def __init__(self, world_pos):
+    def __init__(self, world_pos, seed):
         self._world_pos = world_pos
 
-        self._generator = WorldGenerator()
+        self._generator = WorldGenerator(seed)
         self._blocks = {}
         self._generate_blocks()
 
