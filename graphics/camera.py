@@ -7,7 +7,8 @@ import pygame as pg
 from core.classes import WorldVec, WorldView
 from core.funcs import world_to_pix_shift, pix_to_world_shift
 from core.consts import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
-    CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS, C_SKY
+    CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS, C_SKY, CAM_VEL_DAMPING_FACTOR, \
+    CAM_SCALE_COLLISION_DAMPING_FACTOR
 
 
 class Camera:
@@ -142,12 +143,19 @@ class Camera:
         self._req_vel = pos - self._pos
 
     def move(self):
-        self._vel += (self._req_vel - self._vel) * CAM_POS_DAMPING_FACTOR
-        self._pos += self._vel
+        self._vel += (self._req_vel - self._vel) * CAM_VEL_DAMPING_FACTOR
+        self._pos += [vel_dim * CAM_POS_DAMPING_FACTOR**(1/(1+abs(vel_dim))) for vel_dim in self._vel]
+        # (1/(1+speed)) is 1 when speed is 0 and is 0 when speed is +inf.
+        # This is so that the CAM_POS_DAMPING_FACTOR is only applied at low speeds.
 
         self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
-        if not (CAM_SCALE_BOUNDS[0] < self._scale < CAM_SCALE_BOUNDS[1]):
-            self._zoom_vel = 1 / self._zoom_vel
+        threshold = 1.001
+        if CAM_SCALE_BOUNDS[0] > self._scale:
+            self._zoom_vel = (1 / self._zoom_vel) ** CAM_SCALE_COLLISION_DAMPING_FACTOR
+            self._scale = CAM_SCALE_BOUNDS[0] * threshold
+        if self._scale > CAM_SCALE_BOUNDS[1]:
+            self._zoom_vel = (1 / self._zoom_vel) ** CAM_SCALE_COLLISION_DAMPING_FACTOR
+            self._scale = CAM_SCALE_BOUNDS[1] / threshold
         self._scale *= self._zoom_vel
 
     def draw_debug_info(self):

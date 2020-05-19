@@ -91,8 +91,8 @@ class Game:
             self.camera.display_flip_and_clock_tick()
 
             # Death
-            if self.main_player.pos[1] < -100:
-                return
+            # if self.main_player.pos[1] < -100:
+            #     return
 
     def __enter__(self):
         return self
