@@ -3,10 +3,10 @@ from math import floor
 
 import numpy as np
 
-from core.global_params import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY
-from core.animated_surface import AnimAction, AnimatedSurface
-from core.core import WorldVec, Colliders
-from core.core_funcs import world_to_chunk_to_world_vec
+from core.consts import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY
+from graphics.animated_surface import AnimAction, AnimatedSurface
+from core.classes import WorldVec, Colliders
+from core.funcs import world_to_chunk_to_world_vec
 
 
 class Player:

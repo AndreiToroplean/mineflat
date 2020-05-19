@@ -4,9 +4,9 @@ from math import floor
 import numpy as np
 import pygame as pg
 
-from core.core import WorldVec, WorldView
-from core.core_funcs import world_to_pix_shift, pix_to_world_shift
-from core.global_params import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
+from core.classes import WorldVec, WorldView
+from core.funcs import world_to_pix_shift, pix_to_world_shift
+from core.consts import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
     CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS, C_SKY
 
 
