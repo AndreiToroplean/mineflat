@@ -28,7 +28,7 @@ class WorldGenerator:
         return block
 
     @staticmethod
-    def gen_material_at_pos(block_world_pos):
+    def _choose_material_at_pos(block_world_pos):
         test_height = WATER_HEIGHT + sin(block_world_pos.x / 16) * 4
         if block_world_pos.y >= test_height or block_world_pos.y < 0:
             return None
@@ -45,7 +45,7 @@ class WorldGenerator:
         for world_shift_x in range(CHUNK_SIZE[0]):
             for world_shift_y in range(CHUNK_SIZE[1]):
                 block_world_pos = WorldVec(chunk_world_pos.x + world_shift_x, chunk_world_pos.y + world_shift_y)
-                material = self.gen_material_at_pos(block_world_pos)
+                material = self._choose_material_at_pos(block_world_pos)
                 if material is None:
                     continue
                 blocks[block_world_pos] = self.get_block(material)

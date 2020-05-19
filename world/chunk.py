@@ -9,7 +9,6 @@ from world.generation import WorldGenerator, Material
 
 
 class Chunk:
-    _block_materials = {}
     _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
     _empty_block_surf.fill(C_KEY)
 
