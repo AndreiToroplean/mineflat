@@ -3,7 +3,7 @@ from math import floor
 
 import numpy as np
 
-from core.constants import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY, CWD
+from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY, CWD
 from graphics.animated_surface import AnimAction, AnimatedSurface
 from core.classes import WorldVec, Colliders
 from core.funcs import world_to_chunk_to_world_vec
@@ -89,7 +89,7 @@ class Player:
         self._req_vel[1] = 0
 
     def move(self, world):
-        self._vel[0] += (self._req_vel[0] - self._vel[0]) * PLAYER_DAMPING_FACTOR
+        self._vel[0] += (self._req_vel[0] - self._vel[0]) * PLAYER_POS_DAMPING_FACTOR
         self._vel[1] += self._req_vel[1]
 
         self._vel += self._acc
@@ -126,21 +126,6 @@ class Player:
                 ),
             )
 
-        for pos_y in range(tested_horiz_pos_bounds[1][0], tested_horiz_pos_bounds[1][1]+1):
-            if self._vel[0] < 0:
-                pos_x = tested_horiz_pos_bounds[0][0]
-                if (pos_x, pos_y) in world_colliders.right:
-                    self._req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
-                    self._vel[0] = 0
-                    break
-
-            if self._vel[0] > 0:
-                pos_x = tested_horiz_pos_bounds[0][1]
-                if (pos_x, pos_y) in world_colliders.left:
-                    self._req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
-                    self._vel[0] = 0
-                    break
-
         self._is_on_ground = False
         for pos_x in range(tested_vert_pos_bounds[0][0], tested_vert_pos_bounds[0][1] + 1):
             if self._vel[1] < 0:
@@ -151,11 +136,26 @@ class Player:
                     self._is_on_ground = True
                     break
 
-            if self._vel[1] > 0:
+            else:
                 pos_y = tested_vert_pos_bounds[1][1]
                 if (pos_x, pos_y) in world_colliders.bottom:
                     self._req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
                     self._vel[1] = 0
+                    break
+
+        for pos_y in range(tested_horiz_pos_bounds[1][0], tested_horiz_pos_bounds[1][1]+1):
+            if self._vel[0] < 0:
+                pos_x = tested_horiz_pos_bounds[0][0]
+                if (pos_x, pos_y) in world_colliders.right:
+                    self._req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
+                    self._vel[0] = 0
+                    break
+
+            else:
+                pos_x = tested_horiz_pos_bounds[0][1]
+                if (pos_x, pos_y) in world_colliders.left:
+                    self._req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
+                    self._vel[0] = 0
                     break
 
     def _get_world_colliders(self, world):
