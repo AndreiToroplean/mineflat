@@ -139,10 +139,11 @@ class Camera:
         return not math.isclose(self._zoom_vel, 1)
 
     def req_move(self, pos):
-        self._req_pos[:] = pos
+        self._req_vel = pos - self._pos
 
     def move(self):
-        self._pos += (self._req_pos - self._pos) * CAM_POS_DAMPING_FACTOR
+        self._vel += (self._req_vel - self._vel) * CAM_POS_DAMPING_FACTOR
+        self._pos += self._vel
 
         self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
         if not (CAM_SCALE_BOUNDS[0] < self._scale < CAM_SCALE_BOUNDS[1]):
