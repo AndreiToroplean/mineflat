@@ -1,3 +1,5 @@
+import os
+
 import pygame as pg
 
 from core.classes import PixVec, ScreenVec, WorldVec
@@ -14,15 +16,10 @@ C_KEY = pg.Color(255, 0, 0)
 
 C_SKY = pg.Color(120, 190, 225)
 
-# Cam dynamics
+# Cam
 CAM_FPS = 30
-CAM_ZOOM_SPEED = 1.05
-CAM_VEL_DAMPING_FACTOR = 0.5
-CAM_POS_DAMPING_FACTOR = 0.1
-CAM_ZOOM_DAMPING_FACTOR = 0.5
 CAM_DEFAULT_SCALE = 64.0
 CAM_SCALE_BOUNDS = (32.0, 128.0)
-CAM_SCALE_COLLISION_DAMPING_FACTOR = 0.5
 
 # Player params
 PLAYER_DEFAULT_SPAWN_POS = (0.5, WORLD_HEIGHT_BOUNDS[1])
@@ -51,6 +48,9 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
 # Game params
 FULLSCREEN = True
 DEBUG = True
+
+CWD = os.getcwd()
+SAVE_PATH = os.path.join(CWD, "save/world_01.json")
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))

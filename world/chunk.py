@@ -1,4 +1,4 @@
-from math import sin, floor
+from math import floor
 
 import pygame as pg
 
@@ -12,12 +12,15 @@ class Chunk:
     _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
     _empty_block_surf.fill(C_KEY)
 
-    def __init__(self, world_pos):
+    def __init__(self, world_pos, seed, blocks_data=None):
         self._world_pos = world_pos
 
-        self._generator = WorldGenerator()
-        self._blocks = {}
-        self._generate_blocks()
+        self._seed = seed
+        self._generator = WorldGenerator(self._seed)
+        if blocks_data is None:
+            self._blocks = self._generator.gen_chunk_blocks(self._world_pos)
+        else:
+            self._blocks = self._generator.load_chunk_blocks(blocks_data)
 
         self.surf = pg.Surface((
                 BLOCK_PIX_SIZE * CHUNK_SIZE[0],
@@ -28,9 +31,6 @@ class Chunk:
 
         self.colliders = Colliders()
         self._update_colliders()
-
-    def _generate_blocks(self):
-        self._blocks = self._generator.gen_chunk_blocks(self._world_pos)
 
     def _update_colliders(self):
         self.colliders = Colliders()
@@ -80,3 +80,9 @@ class Chunk:
         self._blocks[block_world_pos] = block
         self._redraw_block(block_world_pos, block.surf)
         self._update_colliders()
+
+    def get_chunk_data(self):
+        blocks_data = {}
+        for block_world_pos, block in self._blocks.items():
+            blocks_data[str(block_world_pos)] = str(block.material)
+        return {str(self._world_pos): blocks_data}
