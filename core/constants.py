@@ -1,3 +1,5 @@
+import os
+
 import pygame as pg
 
 from core.classes import PixVec, ScreenVec, WorldVec
@@ -46,6 +48,9 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
 # Game params
 FULLSCREEN = True
 DEBUG = True
+
+CWD = os.getcwd()
+SAVE_PATH = os.path.join(CWD, "save/world_01.json")
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
