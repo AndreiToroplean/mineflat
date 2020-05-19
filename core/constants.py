@@ -50,7 +50,7 @@ FULLSCREEN = True
 DEBUG = True
 
 CWD = os.getcwd()
-SAVE_PATH = os.path.join(CWD, "save/world_01.json")
+SAVE_PATH = os.path.join(CWD, "saves/world_01.json")
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
