@@ -25,7 +25,7 @@ class WorldGenerator:
     CAVES_PROBABILITY = -0.25
 
     _block_materials = {}
-    
+
     def __init__(self, seed):
         self.seed = seed
 
@@ -73,4 +73,10 @@ class WorldGenerator:
                 if material is None:
                     continue
                 blocks[block_world_pos] = self.get_block(material)
+        return blocks
+
+    def load_chunk_blocks(self, blocks_data):
+        blocks = {}
+        for block_world_pos, material in blocks_data.items():
+            blocks[block_world_pos] = self.get_block(material)
         return blocks

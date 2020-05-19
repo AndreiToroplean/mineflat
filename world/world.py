@@ -1,3 +1,4 @@
+import json
 import random
 
 import pygame as pg
@@ -6,6 +7,7 @@ from core.funcs import world_to_chunk_vec, world_to_pix_shift, world_to_chunk_to
 from core.constants import CHUNK_SIZE, CHUNK_PIX_SIZE, C_KEY
 from core.classes import ChunkView, WorldView, ChunkVec, WorldVec
 from world.chunk import Chunk
+from world.generation import Material
 
 
 class World:
@@ -13,7 +15,7 @@ class World:
     _empty_chunk_surf.fill(C_KEY)
 
     def __init__(self):
-        self.seed = random.randint(0, 2 ** 20) + 0.15681
+        self._seed = random.randint(0, 2 ** 20) + 0.15681
 
         self.chunks_existing = {}
         self._chunks_visible = {}
@@ -51,7 +53,7 @@ class World:
                 if chunk_world_pos in self.chunks_existing:
                     chunk_to_load = self.chunks_existing[chunk_world_pos]
                 else:
-                    chunk_to_load = Chunk(chunk_world_pos, self.seed)
+                    chunk_to_load = Chunk(chunk_world_pos, self._seed)
                     self.chunks_existing[chunk_world_pos] = chunk_to_load
 
                 self._chunks_visible[chunk_world_pos] = chunk_to_load
@@ -113,3 +115,25 @@ class World:
             return
         chunk.req_place_block(world_pos, material=material)
         self._redraw_chunk(chunk_world_pos, chunk.surf)
+
+    def load_from_disk(self, file_path):
+        try:
+            with open(file_path) as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            return
+        self._seed = data["seed"]
+        for chunk_world_pos_str, blocks_data_str in data["chunks_data"].items():
+            chunk_world_pos = eval(chunk_world_pos_str)
+            blocks_data = {}
+            for block_world_pos_str, material_str in blocks_data_str.items():
+                blocks_data[eval(block_world_pos_str)] = eval(material_str)
+            self.chunks_existing[chunk_world_pos] = Chunk(chunk_world_pos, self._seed, blocks_data)
+
+    def save_to_disk(self, file_path):
+        data = {"seed": self._seed, "chunks_data": {}}
+        for chunk in self.chunks_existing.values():
+            data["chunks_data"].update(chunk.get_chunk_data())
+
+        with open(file_path, "w") as file:
+            json.dump(data, file, indent=4)

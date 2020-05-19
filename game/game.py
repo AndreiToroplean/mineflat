@@ -1,6 +1,6 @@
 import pygame as pg
 
-from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
+from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, SAVE_PATH
 from game.controls import Controls, Mods
 from world.generation import Material
 from graphics.camera import Camera
@@ -95,9 +95,11 @@ class Game:
                 return
 
     def __enter__(self):
+        self.world.load_from_disk(SAVE_PATH)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.world.save_to_disk(SAVE_PATH)
         pg.quit()
 
     def draw_sky(self):
