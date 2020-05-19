@@ -6,12 +6,18 @@ import pygame as pg
 
 from core.classes import WorldVec, WorldView
 from core.funcs import world_to_pix_shift, pix_to_world_shift
-from core.constants import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
-    CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS, C_SKY, CAM_VEL_DAMPING_FACTOR, \
-    CAM_SCALE_COLLISION_DAMPING_FACTOR
+from core.constants import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
+    CAM_SCALE_BOUNDS
 
 
 class Camera:
+    ZOOM_SPEED = 1.05
+    VEL_DAMPING_FACTOR = 0.5
+    POS_DAMPING_FACTOR = 0.1
+    ZOOM_VEL_DAMPING_FACTOR = 0.5
+    SCALE_COLLISION_DAMPING_FACTOR = 0.5
+    SCALE_COLLISION_THRESHOLD = 1.001
+
     def __init__(self, pos):
         self._pos = np.array(pos)
         self._req_pos = np.array(self._pos)
@@ -127,10 +133,10 @@ class Camera:
         self._screen.blit(surf, pix_shift)
 
     def req_zoom_in(self):
-        self._req_zoom_vel = CAM_ZOOM_SPEED
+        self._req_zoom_vel = self.ZOOM_SPEED
 
     def req_zoom_out(self):
-        self._req_zoom_vel = 1 / CAM_ZOOM_SPEED
+        self._req_zoom_vel = 1 / self.ZOOM_SPEED
 
     def req_zoom_stop(self):
         self._req_zoom_vel = 1.0
@@ -143,19 +149,18 @@ class Camera:
         self._req_vel = pos - self._pos
 
     def move(self):
-        self._vel += (self._req_vel - self._vel) * CAM_VEL_DAMPING_FACTOR
-        self._pos += [vel_dim * CAM_POS_DAMPING_FACTOR**(1/(1+abs(vel_dim))) for vel_dim in self._vel]
+        self._vel += (self._req_vel - self._vel) * self.VEL_DAMPING_FACTOR
+        self._pos += [vel_dim * self.POS_DAMPING_FACTOR ** (1 / (1 + abs(vel_dim))) for vel_dim in self._vel]
         # (1/(1+speed)) is 1 when speed is 0 and is 0 when speed is +inf.
         # This is so that the CAM_POS_DAMPING_FACTOR is only applied at low speeds.
 
-        self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** CAM_ZOOM_DAMPING_FACTOR
-        threshold = 1.001
+        self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** self.ZOOM_VEL_DAMPING_FACTOR
         if CAM_SCALE_BOUNDS[0] > self._scale:
-            self._zoom_vel = (1 / self._zoom_vel) ** CAM_SCALE_COLLISION_DAMPING_FACTOR
-            self._scale = CAM_SCALE_BOUNDS[0] * threshold
+            self._zoom_vel = (1 / self._zoom_vel) ** self.SCALE_COLLISION_DAMPING_FACTOR
+            self._scale = CAM_SCALE_BOUNDS[0] * self.SCALE_COLLISION_THRESHOLD
         if self._scale > CAM_SCALE_BOUNDS[1]:
-            self._zoom_vel = (1 / self._zoom_vel) ** CAM_SCALE_COLLISION_DAMPING_FACTOR
-            self._scale = CAM_SCALE_BOUNDS[1] / threshold
+            self._zoom_vel = (1 / self._zoom_vel) ** self.SCALE_COLLISION_DAMPING_FACTOR
+            self._scale = CAM_SCALE_BOUNDS[1] / self.SCALE_COLLISION_THRESHOLD
         self._scale *= self._zoom_vel
 
     def draw_debug_info(self):
