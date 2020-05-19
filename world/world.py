@@ -1,7 +1,7 @@
 import pygame as pg
 
 from core.funcs import world_to_chunk_vec, world_to_pix_shift, world_to_chunk_to_world_vec
-from core.consts import CHUNK_SIZE, CHUNK_PIX_SIZE, C_KEY
+from core.constants import CHUNK_SIZE, CHUNK_PIX_SIZE, C_KEY
 from core.classes import ChunkView, WorldView, ChunkVec, WorldVec
 from world.chunk import Chunk
 

@@ -3,7 +3,7 @@ from math import floor
 
 import numpy as np
 
-from core.consts import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY
+from core.constants import CAM_FPS, PLAYER_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY
 from graphics.animated_surface import AnimAction, AnimatedSurface
 from core.classes import WorldVec, Colliders
 from core.funcs import world_to_chunk_to_world_vec
@@ -18,8 +18,8 @@ class Player:
 
         self._is_on_ground = False
 
-        self._vel = np.array((0.0, 0.0))
-        self._req_vel = np.array((0.0, 0.0))
+        self._vel = np.array((0.0, -200.0/CAM_FPS))
+        self._req_vel = np.array(self._vel)
 
         self._acc = np.array(GRAVITY)
 

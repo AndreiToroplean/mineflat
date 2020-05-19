@@ -1,6 +1,6 @@
 import pygame as pg
 
-from core.consts import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
+from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
 from game.controls import Controls, Mods
 from world.generation import Material
 from graphics.camera import Camera
@@ -91,8 +91,8 @@ class Game:
             self.camera.display_flip_and_clock_tick()
 
             # Death
-            # if self.main_player.pos[1] < -100:
-            #     return
+            if self.main_player.pos[1] < -100:
+                return
 
     def __enter__(self):
         return self

@@ -5,7 +5,7 @@ from math import floor
 import pygame as pg
 
 from core.classes import PixVec, WorldVec
-from core.consts import C_KEY, CAM_FPS
+from core.constants import C_KEY, CAM_FPS
 
 
 class AnimAction(Enum):

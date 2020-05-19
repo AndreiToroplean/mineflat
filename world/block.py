@@ -1,5 +1,5 @@
 import pygame as pg
-from core.consts import BLOCK_PIX_SIZE
+from core.constants import BLOCK_PIX_SIZE
 
 
 class Block:

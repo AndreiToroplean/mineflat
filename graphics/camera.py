@@ -6,7 +6,7 @@ import pygame as pg
 
 from core.classes import WorldVec, WorldView
 from core.funcs import world_to_pix_shift, pix_to_world_shift
-from core.consts import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
+from core.constants import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTOR, CAM_ZOOM_DAMPING_FACTOR, \
     CAM_SCALE_BOUNDS, CAM_ZOOM_SPEED, FULLSCREEN, CAM_DEFAULT_SCALE, C_KEY, CAM_FPS, C_SKY, CAM_VEL_DAMPING_FACTOR, \
     CAM_SCALE_COLLISION_DAMPING_FACTOR
 

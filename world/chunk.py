@@ -3,9 +3,9 @@ from math import sin, floor
 import pygame as pg
 
 from core.funcs import world_to_pix_shift
-from core.consts import BLOCK_PIX_SIZE, CHUNK_SIZE, WATER_HEIGHT, C_KEY
+from core.constants import BLOCK_PIX_SIZE, CHUNK_SIZE, C_KEY
 from core.classes import WorldVec, Colliders
-from world.generation import WorldGenerator, Material
+from world.generation import WorldGenerator
 
 
 class Chunk:
