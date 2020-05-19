@@ -5,7 +5,7 @@ import pygame as pg
 from core.funcs import world_to_pix_shift
 from core.consts import BLOCK_PIX_SIZE, CHUNK_SIZE, WATER_HEIGHT, C_KEY
 from core.classes import WorldVec, Colliders
-from world.block import Block, Material
+from world.generation import WorldGenerator, Material
 
 
 class Chunk:
@@ -15,6 +15,8 @@ class Chunk:
 
     def __init__(self, world_pos):
         self._world_pos = world_pos
+
+        self._generator = WorldGenerator()
         self._blocks = {}
         self._generate_blocks()
 
@@ -28,31 +30,8 @@ class Chunk:
         self.colliders = Colliders()
         self._update_colliders()
 
-    def _fill_block(self, block_world_pos, material):
-        try:
-            block = self._block_materials[material]
-        except KeyError:
-            block = Block(material)
-            self._block_materials[material] = block
-
-        self._blocks[block_world_pos] = block
-        return block
-
     def _generate_blocks(self):
-        for world_shift_x in range(CHUNK_SIZE[0]):
-            for world_shift_y in range(CHUNK_SIZE[1]):
-                block_world_pos = WorldVec(self._world_pos.x + world_shift_x, self._world_pos.y + world_shift_y)
-                test_height = WATER_HEIGHT + sin(block_world_pos.x/16)*4
-                if block_world_pos.y >= test_height or block_world_pos.y < 0:
-                    continue
-                if block_world_pos.y >= test_height - 1:
-                    material = Material.grass
-                elif test_height - 1 > block_world_pos.y >= test_height - 4:
-                    material = Material.dirt
-                else:
-                    material = Material.stone
-
-                self._fill_block(block_world_pos, material)
+        self._blocks = self._generator.gen_chunk_blocks(self._world_pos)
 
     def _update_colliders(self):
         self.colliders = Colliders()
@@ -98,6 +77,7 @@ class Chunk:
         self._place_block(block_world_pos, material)
 
     def _place_block(self, block_world_pos, material):
-        block = self._fill_block(block_world_pos, material)
+        block = self._generator.get_block(material)
+        self._blocks[block_world_pos] = block
         self._redraw_block(block_world_pos, block.surf)
         self._update_colliders()

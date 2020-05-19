@@ -12,8 +12,11 @@ from core.consts import BLOCK_PIX_SIZE, PLAYER_SCREEN_POS, CAM_POS_DAMPING_FACTO
 
 class Camera:
     def __init__(self, pos):
-        self._pos = pos
+        self._pos = np.array(pos)
         self._req_pos = np.array(self._pos)
+
+        self._vel = np.array((0.0, 0.0))
+        self._req_vel = np.array((0.0, 0.0))
 
         self._zoom_vel = 1.0
         self._req_zoom_vel = 1.0
@@ -136,7 +139,7 @@ class Camera:
         return not math.isclose(self._zoom_vel, 1)
 
     def req_move(self, pos):
-        self._req_pos = pos
+        self._req_pos[:] = pos
 
     def move(self):
         self._pos += (self._req_pos - self._pos) * CAM_POS_DAMPING_FACTOR

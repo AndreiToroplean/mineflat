@@ -2,7 +2,7 @@ import pygame as pg
 
 from core.consts import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS
 from game.controls import Controls, Mods
-from world.block import Material
+from world.generation import Material
 from graphics.camera import Camera
 from player.player import Player
 from world.world import World
