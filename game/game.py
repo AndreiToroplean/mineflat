@@ -104,7 +104,7 @@ class Game:
     def __enter__(self):
         # Create SAVES_CURRENT_DIR if it doesn't already exist.
         try:
-            os.mkdir(CURRENT_SAVE_PATH)
+            os.makedirs(CURRENT_SAVE_PATH)
         except FileExistsError:
             pass
 
