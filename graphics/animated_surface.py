@@ -4,7 +4,7 @@ from math import floor
 
 import pygame as pg
 
-from core.classes import PixVec, WorldVec
+from core.classes import PixVec, WVec
 from core.constants import C_KEY, CAM_FPS
 
 
@@ -29,7 +29,7 @@ class AnimatedSurface:
 
         self.pix_size = PixVec(*self.images[0].get_size())
         pix_to_w_factor = w_height / self.pix_size.y
-        self.w_size = WorldVec(x=self.pix_size.x * pix_to_w_factor, y=w_height)
+        self.w_size = WVec(x=self.pix_size.x * pix_to_w_factor, y=w_height)
 
         self.action = AnimAction.pause
         self.frame = 0

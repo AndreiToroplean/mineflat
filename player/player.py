@@ -4,10 +4,10 @@ from math import floor
 
 import numpy as np
 
-from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY, CWD, PLAYER_POS_MIN_HEIGHT
+from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_W_SIZE, GRAVITY, CWD, PLAYER_POS_MIN_HEIGHT
 from graphics.animated_surface import AnimAction, AnimatedSurface
-from core.classes import WorldVec, Colliders
-from core.funcs import w_to_chunk_to_w_vec
+from core.classes import WVec, Colliders
+from core.funcs import w_to_c_to_w_vec
 
 
 class Player:
@@ -25,7 +25,7 @@ class Player:
         self._vel = np.array((0.0, -200.0/CAM_FPS))
         self._req_vel = np.array(self._vel)
 
-        self._w_size = WorldVec(0.6, 1.8)
+        self._w_size = WVec(0.6, 1.8)
 
         self._anim_surf_walking = AnimatedSurface(
             os.path.join(CWD, "resources/steve/walking/"),
@@ -101,11 +101,11 @@ class Player:
                     break
 
     def _get_w_colliders(self, world):
-        cur_chunk_pos = w_to_chunk_to_w_vec(self.pos)
+        cur_c_pos = w_to_c_to_w_vec(self.pos)
         w_colliders = Colliders()
-        for pos_x in range(cur_chunk_pos.x-CHUNK_SIZE.x, cur_chunk_pos.x+2*CHUNK_SIZE.x, CHUNK_SIZE.x):
-            for pos_y in range(cur_chunk_pos.y-CHUNK_SIZE.y, cur_chunk_pos.y+2*CHUNK_SIZE.y, CHUNK_SIZE.y):
-                pos = WorldVec(pos_x, pos_y)
+        for pos_x in range(cur_c_pos.x - CHUNK_W_SIZE.x, cur_c_pos.x + 2 * CHUNK_W_SIZE.x, CHUNK_W_SIZE.x):
+            for pos_y in range(cur_c_pos.y - CHUNK_W_SIZE.y, cur_c_pos.y + 2 * CHUNK_W_SIZE.y, CHUNK_W_SIZE.y):
+                pos = WVec(pos_x, pos_y)
                 try:
                     chunk = world.chunks_existing[pos]
                 except KeyError:

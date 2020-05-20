@@ -100,12 +100,12 @@ class Game:
 
     def __enter__(self):
         self.world.load_from_disk(SAVES_PATH)
-        self.main_player.load_from_disk(SAVES_PATH)
+        # self.main_player.load_from_disk(SAVES_PATH)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.world.save_to_disk(SAVES_PATH)
-        self.main_player.save_to_disk(SAVES_PATH)
+        # self.main_player.save_to_disk(SAVES_PATH)
         pg.quit()
 
     def draw_sky(self):

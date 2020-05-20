@@ -2,14 +2,12 @@ from collections import namedtuple
 
 
 PixVec = namedtuple("PixVec", ("x", "y"))
-ScreenVec = namedtuple("ScreenVec", ("x", "y"))
-WorldVec = namedtuple("WorldVec", ("x", "y"))
-ChunkVec = namedtuple("ChunkVec", ("x", "y"))
+SVec = namedtuple("SVec", ("x", "y"))
+WVec = namedtuple("WVec", ("x", "y"))
+CVec = namedtuple("CVec", ("x", "y"))
 
-WorldView = namedtuple("WorldView", ("pos_0", "pos_1"))
-ChunkView = namedtuple("ChunkView", ("pos_0", "pos_1"))
-
-ChunkData = namedtuple("ChunkData", ("surf", "colliders"))
+WView = namedtuple("WView", ("pos_0", "pos_1"))
+CView = namedtuple("CView", ("pos_0", "pos_1"))
 
 
 class Colliders:

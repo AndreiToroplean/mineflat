@@ -3,8 +3,8 @@ from math import floor
 import pygame as pg
 
 from core.funcs import w_to_pix_shift
-from core.constants import BLOCK_PIX_SIZE, CHUNK_SIZE, C_KEY
-from core.classes import WorldVec, Colliders
+from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY
+from core.classes import WVec, Colliders
 from world.generation import WorldGenerator
 
 
@@ -23,8 +23,8 @@ class Chunk:
             self._blocks = self._generator.load_chunk_blocks(blocks_data)
 
         self.surf = pg.Surface((
-                BLOCK_PIX_SIZE * CHUNK_SIZE[0],
-                BLOCK_PIX_SIZE * CHUNK_SIZE[1],
+            BLOCK_PIX_SIZE * CHUNK_W_SIZE[0],
+            BLOCK_PIX_SIZE * CHUNK_W_SIZE[1],
             ))
         self.surf.set_colorkey(C_KEY)
         self._draw()
@@ -45,7 +45,7 @@ class Chunk:
                 self.colliders.top.append(block_w_pos)
 
     def _block_pos_to_pix_shift(self, block_w_pos):
-        w_shift = WorldVec(
+        w_shift = WVec(
             *(block_dim - chunk_dim for block_dim, chunk_dim in zip(block_w_pos, self._w_pos))
             )
         return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self.surf.get_size())
@@ -63,7 +63,7 @@ class Chunk:
         self.surf.blit(block_surf, pix_shift)
 
     def req_break_block(self, w_pos):
-        block_w_pos = WorldVec(*(floor(pos_dim) for pos_dim in w_pos))
+        block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
         self._break_block(block_w_pos)
 
     def _break_block(self, block_w_pos):
@@ -72,7 +72,7 @@ class Chunk:
         self._update_colliders()
 
     def req_place_block(self, w_pos, material):
-        block_w_pos = WorldVec(*(floor(pos_dim) for pos_dim in w_pos))
+        block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
         self._place_block(block_w_pos, material)
 
     def _place_block(self, block_w_pos, material):
