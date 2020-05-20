@@ -130,6 +130,12 @@ class World:
                 chunks.update((self._get_chunk_data_at_pos(chunk_w_pos), ))
         return chunks
 
+    def get_blocks_around(self, w_pos, c_radius=1):
+        blocks = {}
+        for chunk in self._get_chunks_around(w_pos, c_radius).values():
+            blocks.update(chunk.blocks)
+        return blocks
+
     def get_colliders_around(self, w_pos, c_radius=1):
         colliders = Colliders()
         for chunk in self._get_chunks_around(w_pos, c_radius).values():

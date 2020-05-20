@@ -114,17 +114,19 @@ class Camera:
             )
         self.mouse_w_pos = mouse_w_pos
 
-    def draw_gui_block_selector(self, action_w_pos, threshold=0.01):
+    def draw_gui_block_selector(self, action_w_pos, world, threshold=0.01):
         self._update_mouse_w_pos()
         surf_pix_size = (floor(self._scale), floor(self._scale))
         surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
 
+        # blocks = world.get_blocks_around(action_w_pos)
         # w_vel = self.mouse_w_pos - action_w_pos
         # w_speed = np.linalg.norm(w_vel) * (1 + threshold)
         # w_dir = w_vel / w_speed
         # for mult in range(floor(w_speed)):
-        #     w_pos = action_w_pos + w_dir * mult
-        #     if w_pos
+        #     w_pos = np.floor(action_w_pos + w_dir * mult)
+        #     if w_pos in blocks:
+        #
 
         w_pos = self.mouse_w_pos
         w_shift = np.array(
