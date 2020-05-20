@@ -52,8 +52,8 @@ DEBUG = True
 
 CWD = os.getcwd()
 SAVES_DIR = "saves"
-SAVES_CURRENT = "save_001"
-SAVES_PATH = os.path.join(CWD, SAVES_DIR, SAVES_CURRENT)
+SAVES_CURRENT_DIR = "save_001"
+SAVES_PATH = os.path.join(CWD, SAVES_DIR, SAVES_CURRENT_DIR)
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))

@@ -17,13 +17,9 @@ class Player:
         self.name = name
 
         self._spawn_pos = np.array(spawn_pos)
-        self.pos = np.array(self._spawn_pos)
-        self._req_pos = np.array(self._spawn_pos)
+        self.spawn()
 
         self._is_on_ground = False
-
-        self._vel = np.array((0.0, -200.0/CAM_FPS))
-        self._req_vel = np.array(self._vel)
 
         self._w_size = WVec(0.6, 1.8)
 
@@ -179,6 +175,16 @@ class Player:
     def is_dead(self):
         return self.pos[1] < PLAYER_POS_MIN_HEIGHT
 
+    def set_transforms(self, pos, vel=(0.0, 0.0)):
+        self.pos = np.array(pos)
+        self._req_pos = np.array(self.pos)
+
+        self._vel = np.array(vel)
+        self._req_vel = np.array(self._vel)
+
+    def spawn(self):
+        self.set_transforms(self._spawn_pos, (0.0, -200.0/CAM_FPS))
+
     def load_from_disk(self, dir_path):
         try:
             with open(os.path.join(dir_path, f"{self.name}.json")) as file:
@@ -186,6 +192,14 @@ class Player:
         except FileNotFoundError:
             return
 
+        self.set_transforms(data["pos"], data["vel"])
+        self._is_on_ground = data["is_on_ground"]
+
     def save_to_disk(self, dir_path):
+        data = {
+            "pos": tuple(self.pos),
+            "vel": tuple(self._vel),
+            "is_on_ground": self._is_on_ground
+            }
         with open(os.path.join(dir_path, f"{self.name}.json"), "w") as file:
             json.dump(data, file, indent=4)

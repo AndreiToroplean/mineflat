@@ -1,3 +1,5 @@
+import os
+
 import pygame as pg
 
 from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, SAVES_PATH
@@ -15,7 +17,7 @@ class Game:
 
         self.world = World()
         self.main_player = Player("main_player", spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
-        self.camera = Camera(pos=self.main_player.pos)
+        self.camera = Camera()
 
     def main_loop(self):
         while True:
@@ -95,17 +97,26 @@ class Game:
                 self.death_loop()
 
     def death_loop(self):
+        self.main_player.spawn()
         event = pg.event.Event(pg.QUIT)
         pg.event.post(event)
 
     def __enter__(self):
+        # Create SAVES_CURRENT_DIR if it doesn't already exist.
+        try:
+            os.mkdir(SAVES_PATH)
+        except FileExistsError:
+            pass
+
         self.world.load_from_disk(SAVES_PATH)
-        # self.main_player.load_from_disk(SAVES_PATH)
+        self.main_player.load_from_disk(SAVES_PATH)
+
+        self.camera.set_transforms(self.main_player.pos)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.world.save_to_disk(SAVES_PATH)
-        # self.main_player.save_to_disk(SAVES_PATH)
+        self.main_player.save_to_disk(SAVES_PATH)
         pg.quit()
 
     def draw_sky(self):

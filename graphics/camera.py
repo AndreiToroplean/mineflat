@@ -18,12 +18,12 @@ class Camera:
     SCALE_COLLISION_DAMPING_FACTOR = 0.5
     SCALE_COLLISION_THRESHOLD = 1.001
 
-    def __init__(self, pos):
-        self._pos = np.array(pos)
+    def __init__(self):
+        self._pos = np.array((0.0, 0.0))
         self._req_pos = np.array(self._pos)
 
         self._vel = np.array((0.0, 0.0))
-        self._req_vel = np.array((0.0, 0.0))
+        self._req_vel = np.array(self._vel)
 
         self._zoom_vel = 1.0
         self._req_zoom_vel = 1.0
@@ -147,6 +147,13 @@ class Camera:
 
     def req_move(self, pos):
         self._req_vel = pos - self._pos
+
+    def set_transforms(self, pos, vel=(0.0, 0.0)):
+        self._pos = np.array(pos)
+        self._req_pos = np.array(self._pos)
+
+        self._vel = np.array(vel)
+        self._req_vel = np.array(self._vel)
 
     def move(self):
         self._vel += (self._req_vel - self._vel) * self.VEL_DAMPING_FACTOR
