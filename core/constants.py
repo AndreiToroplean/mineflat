@@ -50,10 +50,13 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
 FULLSCREEN = True
 DEBUG = True
 
+# Paths
 CWD = os.getcwd()
 SAVES_DIR = "saves"
-SAVES_CURRENT_DIR = "save_001"
-SAVES_PATH = os.path.join(CWD, SAVES_DIR, SAVES_CURRENT_DIR)
+CURRENT_SAVE_DIR = "save_002"
+CURRENT_SAVE_PATH = os.path.join(CWD, SAVES_DIR, CURRENT_SAVE_DIR)
+RESOURCES_PATH = os.path.join(CWD, "resources")
+TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))

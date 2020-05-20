@@ -1,9 +1,13 @@
+import os
+
 import pygame as pg
-from core.constants import BLOCK_PIX_SIZE
+from core.constants import BLOCK_PIX_SIZE, TEXTURES_PATH
 
 
 class Block:
-    special_file_names = {"grass" : "grass_block_side"}
+    _BLOCK_DIR = "block"
+
+    _special_file_names = {"grass" : "grass_block_side"}
 
     def __init__(self, material):
         self.material = material
@@ -12,11 +16,11 @@ class Block:
         self._draw()
 
     def _draw(self):
-        if (name := self.material.name) in self.special_file_names:
-            file_name = self.special_file_names[name]
+        if (name := self.material.name) in self._special_file_names:
+            file_name = self._special_file_names[name]
         else:
             file_name = name
-        file_path = f"resources/textures/block/{file_name}.png"
+        file_path = os.path.join(TEXTURES_PATH, self._BLOCK_DIR, f"{file_name}.png")
         self.surf = pg.transform.scale(pg.image.load(file_path), self._pix_size)
 
     def __repr__(self):
