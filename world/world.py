@@ -127,7 +127,7 @@ class World:
         chunk.req_place_block(w_pos, material=material)
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
-    def _get_chunks_around(self, w_pos, c_radius=1):
+    def _get_chunks_around(self, w_pos, *, c_radius=1):
         chunks = {}
         for pos_x in range(
                 floor(w_pos[0] - c_radius * CHUNK_W_SIZE.x),
@@ -146,18 +146,22 @@ class World:
                 chunks.update((chunk_data,))
         return chunks
 
-    def _get_blocks_around(self, w_pos, c_radius=1):
+    def _get_blocks_around(self, w_pos, *, c_radius=1):
         blocks = {}
-        for chunk in self._get_chunks_around(w_pos, c_radius).values():
+        for chunk in self._get_chunks_around(w_pos, c_radius=c_radius).values():
             blocks.update(chunk.blocks)
         return blocks
 
-    def intersect_block(self, start_w_pos, end_w_pos, c_radius=1, threshold=0.01):
-        blocks = self._get_blocks_around(start_w_pos, c_radius)
+    def intersect_block(self, start_w_pos, end_w_pos, max_distance=None, *, c_radius=1, threshold=0.01):
+        blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
         w_vel = end_w_pos - start_w_pos
         w_speed = np.linalg.norm(w_vel) * (1 + threshold)
         w_dir = w_vel / w_speed
-        for mult in range(floor(w_speed)+2):
+        if max_distance is None:
+            max_mult = floor(w_speed)+2
+        else:
+            max_mult = max_distance
+        for mult in range(max_mult):
             w_pos = WVec(*(np.floor(start_w_pos + w_dir * mult)))
             if w_pos in blocks:
                 prev_w_pos = WVec(*(np.floor(start_w_pos + w_dir * (mult-1))))
@@ -165,9 +169,9 @@ class World:
 
         return None
 
-    def get_colliders_around(self, w_pos, c_radius=1):
+    def get_colliders_around(self, w_pos, *, c_radius=1):
         colliders = Colliders()
-        for chunk in self._get_chunks_around(w_pos, c_radius).values():
+        for chunk in self._get_chunks_around(w_pos, c_radius=c_radius).values():
             for colliders_dir, chunk_colliders_dir in zip(colliders, chunk.colliders):
                 colliders_dir += chunk_colliders_dir
         return colliders

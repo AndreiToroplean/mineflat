@@ -9,6 +9,8 @@ from core.funcs import w_to_pix_shift, pix_to_w_shift
 from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
     CAM_SCALE_BOUNDS
 
+SELECTION_MAX_DISTANCE = 5
+
 
 class Camera:
     _ZOOM_SPEED = 1.05
@@ -101,7 +103,7 @@ class Camera:
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    def _select_block(self, action_w_pos, world, threshold=0.01):
+    def _select_block(self, action_w_pos, world, max_distance=SELECTION_MAX_DISTANCE, *, c_radius=1, threshold=0.01):
         mouse_pix_shift = pg.mouse.get_pos()
         mouse_w_shift = pix_to_w_shift(
             mouse_pix_shift,
@@ -114,12 +116,12 @@ class Camera:
             tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
             )
 
-        selection = world.intersect_block(action_w_pos, mouse_w_pos, threshold=threshold)
+        selection = world.intersect_block(action_w_pos, mouse_w_pos, max_distance, c_radius=c_radius, threshold=threshold)
 
         return selection
 
-    def draw_gui_block_selector(self, action_w_pos, world, threshold=0.01):
-        selection = self._select_block(action_w_pos, world, threshold)
+    def draw_gui_block_selector(self, action_w_pos, world, *, c_radius=1, threshold=0.01):
+        selection = self._select_block(action_w_pos, world, c_radius=c_radius, threshold=threshold)
         if selection is None:
             self.selected_block_w_pos = None
             self.selected_space_w_pos = None
