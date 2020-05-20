@@ -29,7 +29,8 @@ class Camera:
 
         self._scale = CAM_DEFAULT_SCALE
 
-        self.mouse_w_pos = np.array(self._pos)
+        self.selected_block_w_pos = np.array(self._pos)
+        self.selected_space_w_pos = np.array(self._pos)
         self._block_selector_surf = pg.image.load("resources/gui/block_selector.png")
         self._block_selector_surf.set_colorkey(C_KEY)
 
@@ -100,7 +101,7 @@ class Camera:
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    def _update_mouse_w_pos(self):
+    def _select_block(self, action_w_pos, world, threshold=0.01):
         mouse_pix_shift = pg.mouse.get_pos()
         mouse_w_shift = pix_to_w_shift(
             mouse_pix_shift,
@@ -112,25 +113,29 @@ class Camera:
         mouse_w_pos = np.array(
             tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
             )
-        self.mouse_w_pos = mouse_w_pos
+
+        selection = world.intersect_block(action_w_pos, mouse_w_pos, threshold=threshold)
+
+        return selection
 
     def draw_gui_block_selector(self, action_w_pos, world, threshold=0.01):
-        self._update_mouse_w_pos()
+        selection = self._select_block(action_w_pos, world, threshold)
+        if selection is None:
+            self.selected_block_w_pos = None
+            self.selected_space_w_pos = None
+            return
+        selected_block, selected_space = selection
+        self.selected_block_w_pos = selected_block[0]
+        self.selected_space_w_pos = selected_space[0]
+
         surf_pix_size = (floor(self._scale), floor(self._scale))
         surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
 
-        # blocks = world.get_blocks_around(action_w_pos)
-        # w_vel = self.mouse_w_pos - action_w_pos
-        # w_speed = np.linalg.norm(w_vel) * (1 + threshold)
-        # w_dir = w_vel / w_speed
-        # for mult in range(floor(w_speed)):
-        #     w_pos = np.floor(action_w_pos + w_dir * mult)
-        #     if w_pos in blocks:
-        #
-
-        w_pos = self.mouse_w_pos
         w_shift = np.array(
-            tuple(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(w_pos, self._pos))
+            tuple(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(
+                self.selected_block_w_pos,
+                self._pos
+                ))
             )
         pix_shift = w_to_pix_shift(
             w_shift,

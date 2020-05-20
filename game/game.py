@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 
 import pygame as pg
 
@@ -10,6 +11,12 @@ from player.player import Player
 from world.world import World
 
 
+class GameAction(Enum):
+    play = 1
+    respawn = 0
+    quit = -1
+
+
 class Game:
     def __init__(self):
         pg.init()
@@ -19,13 +26,15 @@ class Game:
         self.main_player = Player("main_player", spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
         self.camera = Camera()
 
+        self.action = GameAction.play
+
     def main_loop(self):
         while True:
             # Keyboard inputs
             keys_pressed = pg.key.get_pressed()
             mods_pressed = pg.key.get_mods()
 
-            if keys_pressed[Controls.quit] or pg.event.peek(pg.QUIT):
+            if keys_pressed[Controls.quit] or pg.event.peek(pg.QUIT) or self.action == GameAction.quit:
                 return
 
             # Requesting horizontal movements
@@ -69,11 +78,11 @@ class Game:
 
             # Breaking blocks
             if mb_pressed[Controls.break_block]:
-                self.world.req_break_block(self.camera.mouse_w_pos)
+                self.world.req_break_block(self.camera.selected_block_w_pos)
 
             # Placing blocks
             if mb_pressed[Controls.place_block]:
-                self.world.req_place_block(self.camera.mouse_w_pos, Material.dirt)
+                self.world.req_place_block(self.camera.selected_space_w_pos, Material.dirt)
                 # TODO: choosing the material.
 
             # Applying movements
@@ -98,8 +107,7 @@ class Game:
 
     def death_loop(self):
         self.main_player.spawn()
-        event = pg.event.Event(pg.QUIT)
-        pg.event.post(event)
+        self.action = GameAction.quit
 
     def __enter__(self):
         # Create SAVES_CURRENT_DIR if it doesn't already exist.

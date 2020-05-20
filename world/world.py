@@ -4,6 +4,7 @@ import random
 from math import floor
 
 import pygame as pg
+import numpy as np
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY
@@ -92,8 +93,8 @@ class World:
             self._draw_max_surf()
         camera.draw_world(self._max_surf, self._max_view.pos_0)
 
-    def _get_chunk_data_at_pos(self, pos):
-        chunk_w_pos = w_to_c_to_w_vec(pos)
+    def _get_chunk_data_at_pos(self, w_pos):
+        chunk_w_pos = w_to_c_to_w_vec(w_pos)
         try:
             chunk = self.chunks_existing[chunk_w_pos]
         except KeyError:
@@ -107,6 +108,8 @@ class World:
         self._max_surf.blit(chunk_surf, pix_shift)
 
     def req_break_block(self, w_pos):
+        if w_pos is None:
+            return
         chunk_data = self._get_chunk_data_at_pos(w_pos)
         if chunk_data is None:
             return
@@ -115,6 +118,8 @@ class World:
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
     def req_place_block(self, w_pos, material):
+        if w_pos is None:
+            return
         chunk_data = self._get_chunk_data_at_pos(w_pos)
         if chunk_data is None:
             return
@@ -124,17 +129,41 @@ class World:
 
     def _get_chunks_around(self, w_pos, c_radius=1):
         chunks = {}
-        for pos_x in range(floor(w_pos[0] - c_radius * CHUNK_W_SIZE.x), floor(w_pos[0] + (c_radius + 1) * CHUNK_W_SIZE.x), CHUNK_W_SIZE.x):
-            for pos_y in range(floor(w_pos[1] - c_radius * CHUNK_W_SIZE.y), floor(w_pos[1] + (c_radius + 1) * CHUNK_W_SIZE.y), CHUNK_W_SIZE.y):
+        for pos_x in range(
+                floor(w_pos[0] - c_radius * CHUNK_W_SIZE.x),
+                floor(w_pos[0] + (c_radius+1) * CHUNK_W_SIZE.x),
+                CHUNK_W_SIZE.x
+                ):
+            for pos_y in range(
+                    floor(w_pos[1] - c_radius * CHUNK_W_SIZE.y),
+                    floor(w_pos[1] + (c_radius+1) * CHUNK_W_SIZE.y),
+                    CHUNK_W_SIZE.y
+                    ):
                 chunk_w_pos = WVec(pos_x, pos_y)
-                chunks.update((self._get_chunk_data_at_pos(chunk_w_pos), ))
+                chunk_data = self._get_chunk_data_at_pos(chunk_w_pos)
+                if chunk_data is None:
+                    continue
+                chunks.update((chunk_data,))
         return chunks
 
-    def get_blocks_around(self, w_pos, c_radius=1):
+    def _get_blocks_around(self, w_pos, c_radius=1):
         blocks = {}
         for chunk in self._get_chunks_around(w_pos, c_radius).values():
             blocks.update(chunk.blocks)
         return blocks
+
+    def intersect_block(self, start_w_pos, end_w_pos, c_radius=1, threshold=0.01):
+        blocks = self._get_blocks_around(start_w_pos, c_radius)
+        w_vel = end_w_pos - start_w_pos
+        w_speed = np.linalg.norm(w_vel) * (1 + threshold)
+        w_dir = w_vel / w_speed
+        for mult in range(floor(w_speed)+2):
+            w_pos = WVec(*(np.floor(start_w_pos + w_dir * mult)))
+            if w_pos in blocks:
+                prev_w_pos = WVec(*(np.floor(start_w_pos + w_dir * (mult-1))))
+                return (w_pos, blocks[w_pos]), (prev_w_pos, )
+
+        return None
 
     def get_colliders_around(self, w_pos, c_radius=1):
         colliders = Colliders()
