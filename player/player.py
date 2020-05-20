@@ -4,19 +4,27 @@ from math import floor
 
 import numpy as np
 
-from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_W_SIZE, GRAVITY, CWD, PLAYER_POS_MIN_HEIGHT
+from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_W_SIZE, GRAVITY, CWD, PLAYER_POS_MIN_HEIGHT, \
+    RESOURCES_PATH
 from graphics.animated_surface import AnimAction, AnimatedSurface
 from core.classes import WVec, Colliders
 from core.funcs import w_to_c_to_w_vec
 
 
 class Player:
-    _acc = np.array(GRAVITY)
+    _ACC = np.array(GRAVITY)
+    _MAIN_PLAYER_DIR = "steve"
 
     def __init__(self, name, spawn_pos):
         self.name = name
 
         self._spawn_pos = np.array(spawn_pos)
+
+        self.pos = np.array((0.0, 0.0))
+        self._req_pos = np.array((0.0, 0.0))
+        self._vel = np.array((0.0, 0.0))
+        self._req_vel = np.array((0.0, 0.0))
+
         self.spawn()
 
         self._is_on_ground = False
@@ -24,12 +32,12 @@ class Player:
         self._w_size = WVec(0.6, 1.8)
 
         self._anim_surf_walking = AnimatedSurface(
-            os.path.join(CWD, "resources/steve/walking/"),
+            os.path.join(RESOURCES_PATH, self._MAIN_PLAYER_DIR, "walking"),
             w_height=self._w_size.y,
             neutrals=(0, 8),
             )
         self._anim_surf_sprinting = AnimatedSurface(
-            os.path.join(CWD, "resources/steve/sprinting/"),
+            os.path.join(RESOURCES_PATH, self._MAIN_PLAYER_DIR, "sprinting"),
             w_height=self._w_size.y,
             neutrals=(0, 6),
             )
@@ -162,7 +170,7 @@ class Player:
         self._vel[0] += (self._req_vel[0] - self._vel[0]) * PLAYER_POS_DAMPING_FACTOR
         self._vel[1] += self._req_vel[1]
 
-        self._vel += self._acc
+        self._vel += self._ACC
         self._req_pos[:] = self.pos
         # Making more collision steps when the player is moving faster than 1 block per frame:
         collision_steps = floor(np.linalg.norm(self._vel)) + 1
