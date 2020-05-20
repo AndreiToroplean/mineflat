@@ -24,6 +24,7 @@ CAM_SCALE_BOUNDS = (32.0, 128.0)
 # Player params
 PLAYER_DEFAULT_SPAWN_POS = (0.5, WORLD_HEIGHT_BOUNDS[1])
 PLAYER_POS_DAMPING_FACTOR = 0.5
+PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS[0] - 50
 
 # Cursor
 CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
@@ -50,7 +51,9 @@ FULLSCREEN = True
 DEBUG = True
 
 CWD = os.getcwd()
-SAVE_PATH = os.path.join(CWD, "saves/world_01.json")
+SAVES_DIR = "saves"
+SAVES_CURRENT = "save_001"
+SAVES_PATH = os.path.join(CWD, SAVES_DIR, SAVES_CURRENT)
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))

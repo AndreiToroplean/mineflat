@@ -1,6 +1,6 @@
 import pygame as pg
 
-from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, SAVE_PATH
+from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, SAVES_PATH
 from game.controls import Controls, Mods
 from world.generation import Material
 from graphics.camera import Camera
@@ -14,7 +14,7 @@ class Game:
         pg.mouse.set_cursor(*CURSOR)
 
         self.world = World()
-        self.main_player = Player(spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
+        self.main_player = Player("main_player", spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
         self.camera = Camera(pos=self.main_player.pos)
 
     def main_loop(self):
@@ -67,11 +67,11 @@ class Game:
 
             # Breaking blocks
             if mb_pressed[Controls.break_block]:
-                self.world.req_break_block(self.camera.mouse_world_pos)
+                self.world.req_break_block(self.camera.mouse_w_pos)
 
             # Placing blocks
             if mb_pressed[Controls.place_block]:
-                self.world.req_place_block(self.camera.mouse_world_pos, Material.dirt)
+                self.world.req_place_block(self.camera.mouse_w_pos, Material.dirt)
                 # TODO: choosing the material.
 
             # Applying movements
@@ -91,15 +91,21 @@ class Game:
             self.camera.display_flip_and_clock_tick()
 
             # Death
-            if self.main_player.pos[1] < -100:
-                return
+            if self.main_player.is_dead:
+                self.death_loop()
+
+    def death_loop(self):
+        event = pg.event.Event(pg.QUIT)
+        pg.event.post(event)
 
     def __enter__(self):
-        self.world.load_from_disk(SAVE_PATH)
+        self.world.load_from_disk(SAVES_PATH)
+        self.main_player.load_from_disk(SAVES_PATH)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.world.save_to_disk(SAVE_PATH)
+        self.world.save_to_disk(SAVES_PATH)
+        self.main_player.save_to_disk(SAVES_PATH)
         pg.quit()
 
     def draw_sky(self):

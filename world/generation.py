@@ -38,25 +38,25 @@ class WorldGenerator:
 
         return block
 
-    def _choose_material_at_pos(self, block_world_pos):
+    def _choose_material_at_pos(self, block_w_pos):
         # Terrain height
-        terrain_height = self.WATER_HEIGHT + 20 * noise.pnoise2(0.062 + block_world_pos.x/self.WORLD_HEIGHT_FREQ, self.seed, octaves=5)
+        terrain_height = self.WATER_HEIGHT + 20 * noise.pnoise2(0.062 + block_w_pos.x/self.WORLD_HEIGHT_FREQ, self.seed, octaves=5)
 
-        if block_world_pos.y < WORLD_HEIGHT_BOUNDS[0]:
+        if block_w_pos.y < WORLD_HEIGHT_BOUNDS[0]:
             material = Material.air
-        elif block_world_pos.y < self.BEDROCK_DEPTH:
+        elif block_w_pos.y < self.BEDROCK_DEPTH:
             material = Material.bedrock
-        elif block_world_pos.y < terrain_height - self.DIRT_DEPTH:
+        elif block_w_pos.y < terrain_height - self.DIRT_DEPTH:
             material = Material.stone
-        elif block_world_pos.y < terrain_height - 1:
+        elif block_w_pos.y < terrain_height - 1:
             material = Material.dirt
-        elif block_world_pos.y < terrain_height:
+        elif block_w_pos.y < terrain_height:
             material = Material.grass
         else:
             material = Material.air
 
         # Caves
-        if noise.pnoise3(0.0468 + block_world_pos.x/10, 0.1564 + block_world_pos.y/10, self.seed, octaves=5) < self.CAVES_PROBABILITY:
+        if noise.pnoise3(0.0468 + block_w_pos.x/10, 0.1564 + block_w_pos.y/10, self.seed, octaves=5) < self.CAVES_PROBABILITY:
             material = Material.air
 
         # Return
@@ -64,19 +64,19 @@ class WorldGenerator:
             return None
         return material
 
-    def gen_chunk_blocks(self, chunk_world_pos):
+    def gen_chunk_blocks(self, chunk_w_pos):
         blocks = {}
-        for world_shift_x in range(CHUNK_SIZE[0]):
-            for world_shift_y in range(CHUNK_SIZE[1]):
-                block_world_pos = WorldVec(chunk_world_pos.x + world_shift_x, chunk_world_pos.y + world_shift_y)
-                material = self._choose_material_at_pos(block_world_pos)
+        for w_shift_x in range(CHUNK_SIZE[0]):
+            for w_shift_y in range(CHUNK_SIZE[1]):
+                block_w_pos = WorldVec(chunk_w_pos.x + w_shift_x, chunk_w_pos.y + w_shift_y)
+                material = self._choose_material_at_pos(block_w_pos)
                 if material is None:
                     continue
-                blocks[block_world_pos] = self.get_block(material)
+                blocks[block_w_pos] = self.get_block(material)
         return blocks
 
     def load_chunk_blocks(self, blocks_data):
         blocks = {}
-        for block_world_pos, material in blocks_data.items():
-            blocks[block_world_pos] = self.get_block(material)
+        for block_w_pos, material in blocks_data.items():
+            blocks[block_w_pos] = self.get_block(material)
         return blocks
