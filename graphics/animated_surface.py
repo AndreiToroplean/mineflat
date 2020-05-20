@@ -4,7 +4,7 @@ from math import floor
 
 import pygame as pg
 
-from core.classes import PixVec, WorldVec
+from core.classes import PixVec, WVec
 from core.constants import C_KEY, CAM_FPS
 
 
@@ -16,7 +16,7 @@ class AnimAction(Enum):
 
 
 class AnimatedSurface:
-    def __init__(self, dir_path, world_height, neutrals=(), frame_rate=30):
+    def __init__(self, dir_path, w_height, neutrals=(), frame_rate=30):
         self.neutrals = neutrals
 
         self.images = []
@@ -28,8 +28,8 @@ class AnimatedSurface:
             self.images_reversed.append(pg.transform.flip(image, True, False))
 
         self.pix_size = PixVec(*self.images[0].get_size())
-        pix_to_world_factor = world_height / self.pix_size.y
-        self.world_size = WorldVec(x=self.pix_size.x * pix_to_world_factor, y=world_height)
+        pix_to_w_factor = w_height / self.pix_size.y
+        self.w_size = WVec(x=self.pix_size.x * pix_to_w_factor, y=w_height)
 
         self.action = AnimAction.pause
         self.frame = 0

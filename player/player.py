@@ -1,17 +1,21 @@
+import json
 import os
 from math import floor
 
 import numpy as np
 
-from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_SIZE, GRAVITY, CWD
+from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, CHUNK_W_SIZE, GRAVITY, CWD, PLAYER_POS_MIN_HEIGHT
 from graphics.animated_surface import AnimAction, AnimatedSurface
-from core.classes import WorldVec, Colliders
-from core.funcs import world_to_chunk_to_world_vec
+from core.classes import WVec, Colliders
+from core.funcs import w_to_c_to_w_vec
 
 
 class Player:
+    _acc = np.array(GRAVITY)
 
-    def __init__(self, spawn_pos):
+    def __init__(self, name, spawn_pos):
+        self.name = name
+
         self._spawn_pos = np.array(spawn_pos)
         self.pos = np.array(self._spawn_pos)
         self._req_pos = np.array(self._spawn_pos)
@@ -21,18 +25,16 @@ class Player:
         self._vel = np.array((0.0, -200.0/CAM_FPS))
         self._req_vel = np.array(self._vel)
 
-        self._acc = np.array(GRAVITY)
-
-        self._world_size = WorldVec(0.6, 1.8)
+        self._w_size = WVec(0.6, 1.8)
 
         self._anim_surf_walking = AnimatedSurface(
             os.path.join(CWD, "resources/steve/walking/"),
-            world_height=self._world_size.y,
+            w_height=self._w_size.y,
             neutrals=(0, 8),
             )
         self._anim_surf_sprinting = AnimatedSurface(
             os.path.join(CWD, "resources/steve/sprinting/"),
-            world_height=self._world_size.y,
+            w_height=self._w_size.y,
             neutrals=(0, 6),
             )
         self._anim_surf = self._anim_surf_walking
@@ -40,6 +42,78 @@ class Player:
         self._walking_speed = 4.5 / CAM_FPS
         self._sprinting_speed = 7.5 / CAM_FPS
         self._jumping_speed = 7.75 / CAM_FPS
+
+    def _collide(self, world, thresh=0.001):
+        w_colliders = self._get_w_colliders(world)
+        player_bound_shifts = ((-self._w_size[0] / 2, self._w_size[0] / 2), (0.0, self._w_size[1]))
+        block_bound_shifts = ((0, 1), (0, 1))
+        tested_horiz_pos_bounds = (
+            (
+                floor(self._req_pos[0] + player_bound_shifts[0][0]),
+                floor(self._req_pos[0] + player_bound_shifts[0][1]),
+                ),
+            (
+                floor(self.pos[1] + player_bound_shifts[1][0]),
+                floor(self.pos[1] + player_bound_shifts[1][1]),
+                ),
+            )
+        tested_vert_pos_bounds = (
+            (
+                floor(self.pos[0] + player_bound_shifts[0][0]),
+                floor(self.pos[0] + player_bound_shifts[0][1]),
+                ),
+            (
+                floor(self._req_pos[1] + player_bound_shifts[1][0]),
+                floor(self._req_pos[1] + player_bound_shifts[1][1]),
+                ),
+            )
+
+        self._is_on_ground = False
+        for pos_x in range(tested_vert_pos_bounds[0][0], tested_vert_pos_bounds[0][1] + 1):
+            if self._vel[1] < 0:
+                pos_y = tested_vert_pos_bounds[1][0]
+                if (pos_x, pos_y) in w_colliders.top:
+                    self._req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
+                    self._vel[1] = 0
+                    self._is_on_ground = True
+                    break
+
+            else:
+                pos_y = tested_vert_pos_bounds[1][1]
+                if (pos_x, pos_y) in w_colliders.bottom:
+                    self._req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
+                    self._vel[1] = 0
+                    break
+
+        for pos_y in range(tested_horiz_pos_bounds[1][0], tested_horiz_pos_bounds[1][1]+1):
+            if self._vel[0] < 0:
+                pos_x = tested_horiz_pos_bounds[0][0]
+                if (pos_x, pos_y) in w_colliders.right:
+                    self._req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
+                    self._vel[0] = 0
+                    break
+
+            else:
+                pos_x = tested_horiz_pos_bounds[0][1]
+                if (pos_x, pos_y) in w_colliders.left:
+                    self._req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
+                    self._vel[0] = 0
+                    break
+
+    def _get_w_colliders(self, world):
+        cur_c_pos = w_to_c_to_w_vec(self.pos)
+        w_colliders = Colliders()
+        for pos_x in range(cur_c_pos.x - CHUNK_W_SIZE.x, cur_c_pos.x + 2 * CHUNK_W_SIZE.x, CHUNK_W_SIZE.x):
+            for pos_y in range(cur_c_pos.y - CHUNK_W_SIZE.y, cur_c_pos.y + 2 * CHUNK_W_SIZE.y, CHUNK_W_SIZE.y):
+                pos = WVec(pos_x, pos_y)
+                try:
+                    chunk = world.chunks_existing[pos]
+                except KeyError:
+                    pass
+                else:
+                    for w_colliders_dir, chunk_colliders_dir in zip(w_colliders, chunk.colliders):
+                        w_colliders_dir += chunk_colliders_dir
+        return w_colliders
 
     def draw(self, camera):
         camera.draw_player(self._anim_surf, self.pos)
@@ -101,74 +175,17 @@ class Player:
             self._collide(world)
         self.pos[:] = self._req_pos
 
-    def _collide(self, world, thresh=0.001):
-        world_colliders = self._get_world_colliders(world)
-        player_bound_shifts = ((-self._world_size[0] / 2, self._world_size[0] / 2), (0.0, self._world_size[1]))
-        block_bound_shifts = ((0, 1), (0, 1))
-        tested_horiz_pos_bounds = (
-            (
-                floor(self._req_pos[0] + player_bound_shifts[0][0]),
-                floor(self._req_pos[0] + player_bound_shifts[0][1]),
-                ),
-            (
-                floor(self.pos[1] + player_bound_shifts[1][0]),
-                floor(self.pos[1] + player_bound_shifts[1][1]),
-                ),
-            )
-        tested_vert_pos_bounds = (
-            (
-                floor(self.pos[0] + player_bound_shifts[0][0]),
-                floor(self.pos[0] + player_bound_shifts[0][1]),
-                ),
-            (
-                floor(self._req_pos[1] + player_bound_shifts[1][0]),
-                floor(self._req_pos[1] + player_bound_shifts[1][1]),
-                ),
-            )
+    @property
+    def is_dead(self):
+        return self.pos[1] < PLAYER_POS_MIN_HEIGHT
 
-        self._is_on_ground = False
-        for pos_x in range(tested_vert_pos_bounds[0][0], tested_vert_pos_bounds[0][1] + 1):
-            if self._vel[1] < 0:
-                pos_y = tested_vert_pos_bounds[1][0]
-                if (pos_x, pos_y) in world_colliders.top:
-                    self._req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
-                    self._vel[1] = 0
-                    self._is_on_ground = True
-                    break
+    def load_from_disk(self, dir_path):
+        try:
+            with open(os.path.join(dir_path, f"{self.name}.json")) as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            return
 
-            else:
-                pos_y = tested_vert_pos_bounds[1][1]
-                if (pos_x, pos_y) in world_colliders.bottom:
-                    self._req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
-                    self._vel[1] = 0
-                    break
-
-        for pos_y in range(tested_horiz_pos_bounds[1][0], tested_horiz_pos_bounds[1][1]+1):
-            if self._vel[0] < 0:
-                pos_x = tested_horiz_pos_bounds[0][0]
-                if (pos_x, pos_y) in world_colliders.right:
-                    self._req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
-                    self._vel[0] = 0
-                    break
-
-            else:
-                pos_x = tested_horiz_pos_bounds[0][1]
-                if (pos_x, pos_y) in world_colliders.left:
-                    self._req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
-                    self._vel[0] = 0
-                    break
-
-    def _get_world_colliders(self, world):
-        cur_chunk_pos = world_to_chunk_to_world_vec(self.pos)
-        world_colliders = Colliders()
-        for pos_x in range(cur_chunk_pos.x-CHUNK_SIZE.x, cur_chunk_pos.x+2*CHUNK_SIZE.x, CHUNK_SIZE.x):
-            for pos_y in range(cur_chunk_pos.y-CHUNK_SIZE.y, cur_chunk_pos.y+2*CHUNK_SIZE.y, CHUNK_SIZE.y):
-                pos = WorldVec(pos_x, pos_y)
-                try:
-                    chunk = world.chunks_existing[pos]
-                except KeyError:
-                    pass
-                else:
-                    for world_colliders_dir, chunk_colliders_dir in zip(world_colliders, chunk.colliders):
-                        world_colliders_dir += chunk_colliders_dir
-        return world_colliders
+    def save_to_disk(self, dir_path):
+        with open(os.path.join(dir_path, f"{self.name}.json"), "w") as file:
+            json.dump(data, file, indent=4)
