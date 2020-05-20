@@ -1,12 +1,13 @@
 import json
 import os
 import random
+from math import floor
 
 import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY
-from core.classes import CView, WView, CVec, WVec
+from core.classes import CView, WView, CVec, WVec, Colliders
 from world.chunk import Chunk
 from world.generation import Material
 
@@ -91,14 +92,14 @@ class World:
             self._draw_max_surf()
         camera.draw_world(self._max_surf, self._max_view.pos_0)
 
-    def _get_chunk_at_pos(self, pos):
+    def _get_chunk_data_at_pos(self, pos):
         chunk_w_pos = w_to_c_to_w_vec(pos)
         try:
             chunk = self.chunks_existing[chunk_w_pos]
         except KeyError:
-            return None, None
+            return None
 
-        return chunk, chunk_w_pos
+        return chunk_w_pos, chunk
 
     def _redraw_chunk(self, chunk_w_pos, chunk_surf):
         pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
@@ -106,18 +107,35 @@ class World:
         self._max_surf.blit(chunk_surf, pix_shift)
 
     def req_break_block(self, w_pos):
-        chunk, chunk_w_pos = self._get_chunk_at_pos(w_pos)
-        if chunk is None:
+        chunk_data = self._get_chunk_data_at_pos(w_pos)
+        if chunk_data is None:
             return
+        chunk_w_pos, chunk = chunk_data
         chunk.req_break_block(w_pos)
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
     def req_place_block(self, w_pos, material):
-        chunk, chunk_w_pos = self._get_chunk_at_pos(w_pos)
-        if chunk is None:
+        chunk_data = self._get_chunk_data_at_pos(w_pos)
+        if chunk_data is None:
             return
+        chunk_w_pos, chunk = chunk_data
         chunk.req_place_block(w_pos, material=material)
         self._redraw_chunk(chunk_w_pos, chunk.surf)
+
+    def _get_chunks_around(self, w_pos, c_radius=1):
+        chunks = {}
+        for pos_x in range(floor(w_pos[0] - c_radius * CHUNK_W_SIZE.x), floor(w_pos[0] + (c_radius + 1) * CHUNK_W_SIZE.x), CHUNK_W_SIZE.x):
+            for pos_y in range(floor(w_pos[1] - c_radius * CHUNK_W_SIZE.y), floor(w_pos[1] + (c_radius + 1) * CHUNK_W_SIZE.y), CHUNK_W_SIZE.y):
+                chunk_w_pos = WVec(pos_x, pos_y)
+                chunks.update((self._get_chunk_data_at_pos(chunk_w_pos), ))
+        return chunks
+
+    def get_colliders_around(self, w_pos, c_radius=1):
+        colliders = Colliders()
+        for chunk in self._get_chunks_around(w_pos, c_radius).values():
+            for colliders_dir, chunk_colliders_dir in zip(colliders, chunk.colliders):
+                colliders_dir += chunk_colliders_dir
+        return colliders
 
     def load_from_disk(self, dir_path):
         try:

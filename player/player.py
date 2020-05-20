@@ -13,6 +13,7 @@ from core.funcs import w_to_c_to_w_vec
 
 class Player:
     _ACC = np.array(GRAVITY)
+    _ACTION_POS_RATIO = 0.75
     _MAIN_PLAYER_DIR = "steve"
 
     def __init__(self, name, spawn_pos):
@@ -48,7 +49,7 @@ class Player:
         self._jumping_speed = 7.75 / CAM_FPS
 
     def _collide(self, world, thresh=0.001):
-        w_colliders = self._get_w_colliders(world)
+        world_colliders = world.get_colliders_around(self.pos)
         player_bound_shifts = ((-self._w_size[0] / 2, self._w_size[0] / 2), (0.0, self._w_size[1]))
         block_bound_shifts = ((0, 1), (0, 1))
         tested_horiz_pos_bounds = (
@@ -76,7 +77,7 @@ class Player:
         for pos_x in range(tested_vert_pos_bounds[0][0], tested_vert_pos_bounds[0][1] + 1):
             if self._vel[1] < 0:
                 pos_y = tested_vert_pos_bounds[1][0]
-                if (pos_x, pos_y) in w_colliders.top:
+                if (pos_x, pos_y) in world_colliders.top:
                     self._req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
                     self._vel[1] = 0
                     self._is_on_ground = True
@@ -84,7 +85,7 @@ class Player:
 
             else:
                 pos_y = tested_vert_pos_bounds[1][1]
-                if (pos_x, pos_y) in w_colliders.bottom:
+                if (pos_x, pos_y) in world_colliders.bottom:
                     self._req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
                     self._vel[1] = 0
                     break
@@ -92,32 +93,17 @@ class Player:
         for pos_y in range(tested_horiz_pos_bounds[1][0], tested_horiz_pos_bounds[1][1]+1):
             if self._vel[0] < 0:
                 pos_x = tested_horiz_pos_bounds[0][0]
-                if (pos_x, pos_y) in w_colliders.right:
+                if (pos_x, pos_y) in world_colliders.right:
                     self._req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
                     self._vel[0] = 0
                     break
 
             else:
                 pos_x = tested_horiz_pos_bounds[0][1]
-                if (pos_x, pos_y) in w_colliders.left:
+                if (pos_x, pos_y) in world_colliders.left:
                     self._req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
                     self._vel[0] = 0
                     break
-
-    def _get_w_colliders(self, world):
-        cur_c_pos = w_to_c_to_w_vec(self.pos)
-        w_colliders = Colliders()
-        for pos_x in range(cur_c_pos.x - CHUNK_W_SIZE.x, cur_c_pos.x + 2 * CHUNK_W_SIZE.x, CHUNK_W_SIZE.x):
-            for pos_y in range(cur_c_pos.y - CHUNK_W_SIZE.y, cur_c_pos.y + 2 * CHUNK_W_SIZE.y, CHUNK_W_SIZE.y):
-                pos = WVec(pos_x, pos_y)
-                try:
-                    chunk = world.chunks_existing[pos]
-                except KeyError:
-                    pass
-                else:
-                    for w_colliders_dir, chunk_colliders_dir in zip(w_colliders, chunk.colliders):
-                        w_colliders_dir += chunk_colliders_dir
-        return w_colliders
 
     def draw(self, camera):
         camera.draw_player(self._anim_surf, self.pos)
@@ -182,6 +168,12 @@ class Player:
     @property
     def is_dead(self):
         return self.pos[1] < PLAYER_POS_MIN_HEIGHT
+
+    @property
+    def action_w_pos(self):
+        action_w_pos = np.array(self.pos)
+        action_w_pos[1] += self._w_size[1] * self._ACTION_POS_RATIO
+        return action_w_pos
 
     def set_transforms(self, pos, vel=(0.0, 0.0)):
         self.pos = np.array(pos)

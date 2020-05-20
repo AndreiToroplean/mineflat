@@ -11,12 +11,11 @@ from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_
 
 
 class Camera:
-    ZOOM_SPEED = 1.05
-    VEL_DAMPING_FACTOR = 0.5
-    POS_DAMPING_FACTOR = 0.1
-    ZOOM_VEL_DAMPING_FACTOR = 0.5
-    SCALE_COLLISION_DAMPING_FACTOR = 0.5
-    SCALE_COLLISION_THRESHOLD = 1.001
+    _ZOOM_SPEED = 1.05
+    _VEL_DAMPING_FACTOR = 0.5
+    _POS_DAMPING_FACTOR = 0.1
+    _ZOOM_VEL_DAMPING_FACTOR = 0.1
+    _SCALE_COLLISION_DAMPING_FACTOR = 0.75
 
     def __init__(self):
         self._pos = np.array((0.0, 0.0))
@@ -110,17 +109,26 @@ class Camera:
             dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
             scale=self._scale,
             )
-        mouse_w_pos = WVec(
-            *(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
+        mouse_w_pos = np.array(
+            tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
             )
         self.mouse_w_pos = mouse_w_pos
 
-    def draw_gui_block_selector(self):
+    def draw_gui_block_selector(self, action_w_pos, threshold=0.01):
         self._update_mouse_w_pos()
         surf_pix_size = (floor(self._scale), floor(self._scale))
         surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
-        w_shift = WVec(
-            *(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(self.mouse_w_pos, self._pos))
+
+        # w_vel = self.mouse_w_pos - action_w_pos
+        # w_speed = np.linalg.norm(w_vel) * (1 + threshold)
+        # w_dir = w_vel / w_speed
+        # for mult in range(floor(w_speed)):
+        #     w_pos = action_w_pos + w_dir * mult
+        #     if w_pos
+
+        w_pos = self.mouse_w_pos
+        w_shift = np.array(
+            tuple(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(w_pos, self._pos))
             )
         pix_shift = w_to_pix_shift(
             w_shift,
@@ -133,10 +141,10 @@ class Camera:
         self._screen.blit(surf, pix_shift)
 
     def req_zoom_in(self):
-        self._req_zoom_vel = self.ZOOM_SPEED
+        self._req_zoom_vel = self._ZOOM_SPEED
 
     def req_zoom_out(self):
-        self._req_zoom_vel = 1 / self.ZOOM_SPEED
+        self._req_zoom_vel = 1 / self._ZOOM_SPEED
 
     def req_zoom_stop(self):
         self._req_zoom_vel = 1.0
@@ -155,19 +163,19 @@ class Camera:
         self._vel = np.array(vel)
         self._req_vel = np.array(self._vel)
 
-    def move(self):
-        self._vel += (self._req_vel - self._vel) * self.VEL_DAMPING_FACTOR
-        self._pos += [vel_dim * self.POS_DAMPING_FACTOR ** (1 / (1 + abs(vel_dim))) for vel_dim in self._vel]
+    def move(self, threshold=0.001):
+        self._vel += (self._req_vel - self._vel) * self._VEL_DAMPING_FACTOR
+        self._pos += [vel_dim * self._POS_DAMPING_FACTOR ** (1 / (1 + abs(vel_dim))) for vel_dim in self._vel]
         # (1/(1+speed)) is 1 when speed is 0 and is 0 when speed is +inf.
         # This is so that the CAM_POS_DAMPING_FACTOR is only applied at low speeds.
 
-        self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** self.ZOOM_VEL_DAMPING_FACTOR
+        self._zoom_vel *= (self._req_zoom_vel / self._zoom_vel) ** self._ZOOM_VEL_DAMPING_FACTOR
         if CAM_SCALE_BOUNDS[0] > self._scale:
-            self._zoom_vel = (1 / self._zoom_vel) ** self.SCALE_COLLISION_DAMPING_FACTOR
-            self._scale = CAM_SCALE_BOUNDS[0] * self.SCALE_COLLISION_THRESHOLD
+            self._zoom_vel = 1.0
+            self._scale = CAM_SCALE_BOUNDS[0] * (1+threshold)
         if self._scale > CAM_SCALE_BOUNDS[1]:
-            self._zoom_vel = (1 / self._zoom_vel) ** self.SCALE_COLLISION_DAMPING_FACTOR
-            self._scale = CAM_SCALE_BOUNDS[1] / self.SCALE_COLLISION_THRESHOLD
+            self._zoom_vel = 1.0
+            self._scale = CAM_SCALE_BOUNDS[1] / (1+threshold)
         self._scale *= self._zoom_vel
 
     def draw_debug_info(self):
