@@ -31,6 +31,7 @@ class Player:
         self._is_on_ground = False
 
         self._w_size = WVec(0.6, 1.8)
+        self._bounds_w_shift = ((-self._w_size[0] / 2, self._w_size[0] / 2), (0.0, self._w_size[1]))
 
         self._anim_surf_walking = AnimatedSurface(
             os.path.join(RESOURCES_PATH, self._MAIN_PLAYER_DIR, "walking"),
@@ -50,26 +51,25 @@ class Player:
 
     def _collide(self, world, thresh=0.001):
         world_colliders = world.get_colliders_around(self.pos)
-        player_bound_shifts = ((-self._w_size[0] / 2, self._w_size[0] / 2), (0.0, self._w_size[1]))
         block_bound_shifts = ((0, 1), (0, 1))
         tested_horiz_pos_bounds = (
             (
-                floor(self._req_pos[0] + player_bound_shifts[0][0]),
-                floor(self._req_pos[0] + player_bound_shifts[0][1]),
+                floor(self._req_pos[0] + self._bounds_w_shift[0][0]),
+                floor(self._req_pos[0] + self._bounds_w_shift[0][1]),
                 ),
             (
-                floor(self.pos[1] + player_bound_shifts[1][0]),
-                floor(self.pos[1] + player_bound_shifts[1][1]),
+                floor(self.pos[1] + self._bounds_w_shift[1][0]),
+                floor(self.pos[1] + self._bounds_w_shift[1][1]),
                 ),
             )
         tested_vert_pos_bounds = (
             (
-                floor(self.pos[0] + player_bound_shifts[0][0]),
-                floor(self.pos[0] + player_bound_shifts[0][1]),
+                floor(self.pos[0] + self._bounds_w_shift[0][0]),
+                floor(self.pos[0] + self._bounds_w_shift[0][1]),
                 ),
             (
-                floor(self._req_pos[1] + player_bound_shifts[1][0]),
-                floor(self._req_pos[1] + player_bound_shifts[1][1]),
+                floor(self._req_pos[1] + self._bounds_w_shift[1][0]),
+                floor(self._req_pos[1] + self._bounds_w_shift[1][1]),
                 ),
             )
 
@@ -78,7 +78,7 @@ class Player:
             if self._vel[1] < 0:
                 pos_y = tested_vert_pos_bounds[1][0]
                 if (pos_x, pos_y) in world_colliders.top:
-                    self._req_pos[1] = pos_y + block_bound_shifts[1][1] - player_bound_shifts[1][0] + thresh
+                    self._req_pos[1] = pos_y + block_bound_shifts[1][1] - self._bounds_w_shift[1][0] + thresh
                     self._vel[1] = 0
                     self._is_on_ground = True
                     break
@@ -86,7 +86,7 @@ class Player:
             else:
                 pos_y = tested_vert_pos_bounds[1][1]
                 if (pos_x, pos_y) in world_colliders.bottom:
-                    self._req_pos[1] = pos_y + block_bound_shifts[1][0] - player_bound_shifts[1][1] - thresh
+                    self._req_pos[1] = pos_y + block_bound_shifts[1][0] - self._bounds_w_shift[1][1] - thresh
                     self._vel[1] = 0
                     break
 
@@ -94,14 +94,14 @@ class Player:
             if self._vel[0] < 0:
                 pos_x = tested_horiz_pos_bounds[0][0]
                 if (pos_x, pos_y) in world_colliders.right:
-                    self._req_pos[0] = pos_x + block_bound_shifts[0][1] - player_bound_shifts[0][0] + thresh
+                    self._req_pos[0] = pos_x + block_bound_shifts[0][1] - self._bounds_w_shift[0][0] + thresh
                     self._vel[0] = 0
                     break
 
             else:
                 pos_x = tested_horiz_pos_bounds[0][1]
                 if (pos_x, pos_y) in world_colliders.left:
-                    self._req_pos[0] = pos_x + block_bound_shifts[0][0] - player_bound_shifts[0][1] - thresh
+                    self._req_pos[0] = pos_x + block_bound_shifts[0][0] - self._bounds_w_shift[0][1] - thresh
                     self._vel[0] = 0
                     break
 
