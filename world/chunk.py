@@ -73,6 +73,10 @@ class Chunk:
         return Result.success
 
     def req_place_block(self, block_w_pos, material):
+        # Don't replace existing blocks (by design this should already never happen):
+        if block_w_pos in self.blocks:
+            return Result.failure
+
         block = self._generator.get_block(material)
         self.blocks[block_w_pos] = block
         self._redraw_block(block_w_pos, block.surf)
