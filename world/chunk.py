@@ -62,26 +62,20 @@ class Chunk:
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
         self.surf.blit(block_surf, pix_shift)
 
-    def req_break_block(self, w_pos):
+    def break_block(self, w_pos):
         block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
-        self._break_block(block_w_pos)
-
-    def _break_block(self, block_w_pos):
         self.blocks.pop(block_w_pos, None)
         self._redraw_block(block_w_pos, self._empty_block_surf)
         self._update_colliders()
 
-    def req_place_block(self, w_pos, material):
+    def place_block(self, w_pos, material):
         block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
-        self._place_block(block_w_pos, material)
-
-    def _place_block(self, block_w_pos, material):
         block = self._generator.get_block(material)
         self.blocks[block_w_pos] = block
         self._redraw_block(block_w_pos, block.surf)
         self._update_colliders()
 
-    def get_chunk_data(self):
+    def collect_chunk_data(self):
         blocks_data = {}
         for block_w_pos, block in self.blocks.items():
             blocks_data[str(block_w_pos)] = str(block.material)

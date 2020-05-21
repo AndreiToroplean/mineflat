@@ -108,23 +108,39 @@ class World:
         self._max_surf.blit(chunk_surf, pix_shift)
 
     def req_break_block(self, w_pos):
+        # TODO: logic to see whether and when the block should be broken.
+        #   If it should, then call this:
+        self._break_block(w_pos)
+
+    def _break_block(self, w_pos):
+        # Case where the block selector hasn't reached a block
         if w_pos is None:
             return
+
         chunk_data = self._get_chunk_data_at_pos(w_pos)
         if chunk_data is None:
             return
+
         chunk_w_pos, chunk = chunk_data
-        chunk.req_break_block(w_pos)
+        chunk.break_block(w_pos)
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
     def req_place_block(self, w_pos, material):
+        # TODO: logic to see whether and when the block should be placed.
+        #   If it should, then call this:
+        self._place_block(w_pos, material)
+
+    def _place_block(self, w_pos, material):
+        # Case where the block selector hasn't reached a block
         if w_pos is None:
             return
+
         chunk_data = self._get_chunk_data_at_pos(w_pos)
         if chunk_data is None:
             return
+
         chunk_w_pos, chunk = chunk_data
-        chunk.req_place_block(w_pos, material=material)
+        chunk.place_block(w_pos, material=material)
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
     def _get_chunks_around(self, w_pos, *, c_radius=1):
@@ -193,7 +209,7 @@ class World:
     def save_to_disk(self, dir_path):
         data = {"seed": self._seed, "chunks_data": {}}
         for chunk in self.chunks_existing.values():
-            data["chunks_data"].update(chunk.get_chunk_data())
+            data["chunks_data"].update(chunk.collect_chunk_data())
 
         with open(os.path.join(dir_path, self._SAVE_FILE_NAME), "w") as file:
             json.dump(data, file, indent=4)
