@@ -4,8 +4,8 @@ import pygame as pg
 
 from core.funcs import w_to_pix_shift
 from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY
-from core.classes import WVec, Colliders
-from world.generation import WorldGenerator
+from core.classes import WVec, Colliders, Result
+from world.generation import WorldGenerator, Material
 
 
 class Chunk:
@@ -62,18 +62,25 @@ class Chunk:
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
         self.surf.blit(block_surf, pix_shift)
 
-    def break_block(self, w_pos):
+    def req_break_block(self, w_pos):
         block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
+
+        block = self.blocks[block_w_pos]
+        if block.material == Material.bedrock:
+            return Result.failure
+
         self.blocks.pop(block_w_pos, None)
         self._redraw_block(block_w_pos, self._empty_block_surf)
         self._update_colliders()
+        return Result.success
 
-    def place_block(self, w_pos, material):
+    def req_place_block(self, w_pos, material):
         block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
         block = self._generator.get_block(material)
         self.blocks[block_w_pos] = block
         self._redraw_block(block_w_pos, block.surf)
         self._update_colliders()
+        return Result.success
 
     def collect_chunk_data(self):
         blocks_data = {}

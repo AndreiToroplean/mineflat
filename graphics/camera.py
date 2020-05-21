@@ -84,7 +84,7 @@ class Camera:
         self._screen.blit(max_surf_scaled, pix_shift)
 
     def draw_player(self, anim_surf, player_pos):
-        surf = anim_surf.get_surf_and_advance()
+        surf = anim_surf.get_surf_and_tick()
 
         surf_scaled_pix_size = tuple(floor(dim * self._scale) for dim in anim_surf.w_size)
         surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)

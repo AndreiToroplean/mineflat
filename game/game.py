@@ -92,7 +92,7 @@ class Game:
 
             # Graphics
             self.draw_sky()
-            self.world.draw(self.camera)
+            self.world.draw_and_tick(self.camera)
             self.main_player.draw(self.camera)
             self.draw_gui()
 

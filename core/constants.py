@@ -60,3 +60,4 @@ TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
 
 # Game dynamics
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
+ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS

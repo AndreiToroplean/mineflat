@@ -1,5 +1,5 @@
 from collections import namedtuple
-
+from enum import Enum
 
 PixVec = namedtuple("PixVec", ("x", "y"))
 SVec = namedtuple("SVec", ("x", "y"))
@@ -8,6 +8,11 @@ CVec = namedtuple("CVec", ("x", "y"))
 
 WView = namedtuple("WView", ("pos_0", "pos_1"))
 CView = namedtuple("CView", ("pos_0", "pos_1"))
+
+
+class Result(Enum):
+    success = 0
+    failure = -1
 
 
 class Colliders:
@@ -32,4 +37,3 @@ class Colliders:
         else:
             self.i += 1
             return rtn
-

@@ -36,18 +36,7 @@ class AnimatedSurface:
         self.frame_rate = frame_rate
         self.is_reversed = False
 
-    def get_surf_and_advance(self):
-        if not self.is_reversed:
-            rtn = self.images[self.rtn_frame]
-        else:
-            rtn = self.images_reversed[self.rtn_frame]
-        self._advance()
-        return rtn
-
-    def sync(self, other):
-        self.frame = len(self.images) * other.frame/len(other.images)
-
-    def _advance(self):
+    def _tick(self):
         if self.action == AnimAction.pause:
             return
         if self.action == AnimAction.reset:
@@ -58,6 +47,17 @@ class AnimatedSurface:
 
         if self.action == AnimAction.end and self.frame in self.neutrals:
             self.action = AnimAction.pause
+
+    def get_surf_and_tick(self):
+        if not self.is_reversed:
+            rtn = self.images[self.rtn_frame]
+        else:
+            rtn = self.images_reversed[self.rtn_frame]
+        self._tick()
+        return rtn
+
+    def sync(self, other):
+        self.frame = len(self.images) * other.frame/len(other.images)
 
     @property
     def rtn_frame(self):

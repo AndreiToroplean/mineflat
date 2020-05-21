@@ -7,8 +7,8 @@ import pygame as pg
 import numpy as np
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY
-from core.classes import CView, WView, CVec, WVec, Colliders
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY
+from core.classes import CView, WView, CVec, WVec, Colliders, Result
 from world.chunk import Chunk
 from world.generation import Material
 
@@ -31,6 +31,12 @@ class World:
         self._max_surf = pg.Surface((1, 1))
         self._max_surf.set_colorkey(C_KEY)
         self._force_draw = True
+
+        self._action_cooldown_remaining = 0
+
+    def _tick(self):
+        if self._action_cooldown_remaining > 0:
+            self._action_cooldown_remaining -= 1
 
     def _update_c_view(self, camera):
         """Updates c_view and returns True if there are new chunks to load, False otherwise. """
@@ -84,7 +90,7 @@ class World:
             )
         self._max_surf = pg.transform.scale(self._max_surf, max_surf_pix_size)
 
-    def draw(self, camera):
+    def draw_and_tick(self, camera):
         are_new_chunks = self._update_c_view(camera)
         if needs_redrawing := (camera.is_zooming or self._force_draw):
             self._resize_max_surf(camera)
@@ -92,6 +98,7 @@ class World:
         if are_new_chunks or needs_redrawing:
             self._draw_max_surf()
         camera.draw_world(self._max_surf, self._max_view.pos_0)
+        self._tick()
 
     def _get_chunk_data_at_pos(self, w_pos):
         chunk_w_pos = w_to_c_to_w_vec(w_pos)
@@ -109,38 +116,54 @@ class World:
 
     def req_break_block(self, w_pos):
         # TODO: logic to see whether and when the block should be broken.
-        #   If it should, then call this:
-        self._break_block(w_pos)
+        #   If it should, then call self._break_block.
 
-    def _break_block(self, w_pos):
         # Case where the block selector hasn't reached a block
         if w_pos is None:
             return
 
+        if self._action_cooldown_remaining > 0:
+            return
+
+        self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
+        self._break_block(w_pos)
+
+    def _break_block(self, w_pos):
         chunk_data = self._get_chunk_data_at_pos(w_pos)
         if chunk_data is None:
             return
 
         chunk_w_pos, chunk = chunk_data
-        chunk.break_block(w_pos)
+        result = chunk.req_break_block(w_pos)
+        if result == Result.failure:
+            return
+
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
     def req_place_block(self, w_pos, material):
         # TODO: logic to see whether and when the block should be placed.
-        #   If it should, then call this:
-        self._place_block(w_pos, material)
+        #   If it should, then call self._place_block.
 
-    def _place_block(self, w_pos, material):
         # Case where the block selector hasn't reached a block
         if w_pos is None:
             return
 
+        if self._action_cooldown_remaining > 0:
+            return
+
+        self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
+        self._place_block(w_pos, material)
+
+    def _place_block(self, w_pos, material):
         chunk_data = self._get_chunk_data_at_pos(w_pos)
         if chunk_data is None:
             return
 
         chunk_w_pos, chunk = chunk_data
-        chunk.place_block(w_pos, material=material)
+        result = chunk.req_place_block(w_pos, material=material)
+        if result == Result.failure:
+            return
+
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
     def _get_chunks_around(self, w_pos, *, c_radius=1):
@@ -168,20 +191,19 @@ class World:
             blocks.update(chunk.blocks)
         return blocks
 
-    def intersect_block(self, start_w_pos, end_w_pos, max_distance=None, *, c_radius=1, threshold=0.01, substeps=2):
+    def intersect_block(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, threshold=0.01, substeps=5):
         blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
         w_vel = end_w_pos - start_w_pos
         w_speed = np.linalg.norm(w_vel)
         w_vel_step = w_vel / (w_speed * (1 + threshold) * substeps)
-        max_mult = floor(w_speed * substeps) + 2
-        if max_distance is not None:
-            max_mult = min(max_mult, max_distance * substeps)
+        max_mult = max_distance * substeps
         for mult in range(max_mult):
             w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
             if w_pos in blocks:
                 prev_w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * (mult-1))))
                 return (w_pos, blocks[w_pos]), (prev_w_pos, )
 
+        # If no block has been intersected up to max_distance:
         return None
 
     def get_colliders_around(self, w_pos, *, c_radius=1):
