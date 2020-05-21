@@ -9,6 +9,9 @@ CVec = namedtuple("CVec", ("x", "y"))
 WView = namedtuple("WView", ("pos_0", "pos_1"))
 CView = namedtuple("CView", ("pos_0", "pos_1"))
 
+WDimBounds = namedtuple("WDimBounds", ("min", "max"))
+WBounds = namedtuple("WBounds", ("x", "y"))
+
 
 class Result(Enum):
     success = 0

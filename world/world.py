@@ -8,7 +8,7 @@ import numpy as np
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY
-from core.classes import CView, WView, CVec, WVec, Colliders, Result
+from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, WDimBounds
 from world.chunk import Chunk
 from world.generation import Material
 
@@ -125,22 +125,29 @@ class World:
         if self._action_cooldown_remaining > 0:
             return
 
-        self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
-        self._break_block(w_pos)
+        block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
 
-    def _break_block(self, w_pos):
-        chunk_data = self._get_chunk_data_at_pos(w_pos)
+        self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
+        self._break_block(block_w_pos)
+
+    def _break_block(self, block_w_pos):
+        chunk_data = self._get_chunk_data_at_pos(block_w_pos)
         if chunk_data is None:
             return
 
         chunk_w_pos, chunk = chunk_data
-        result = chunk.req_break_block(w_pos)
+        result = chunk.req_break_block(block_w_pos)
         if result == Result.failure:
             return
 
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
-    def req_place_block(self, w_pos, material):
+    @staticmethod
+    def _is_pos_in_bounds(w_pos, bounds: WBounds(WDimBounds, WDimBounds)):
+        return (bounds.x.min <= w_pos[0] <= bounds.x.max
+                and bounds.y.min <= w_pos[1] <= bounds.y.max)
+
+    def req_place_block(self, w_pos, material, player_bounds):
         # TODO: logic to see whether and when the block should be placed.
         #   If it should, then call self._place_block.
 
@@ -151,16 +158,21 @@ class World:
         if self._action_cooldown_remaining > 0:
             return
 
-        self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
-        self._place_block(w_pos, material)
+        block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
 
-    def _place_block(self, w_pos, material):
-        chunk_data = self._get_chunk_data_at_pos(w_pos)
+        if self._is_pos_in_bounds(block_w_pos, player_bounds):
+            return
+
+        self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
+        self._place_block(block_w_pos, material)
+
+    def _place_block(self, block_w_pos, material):
+        chunk_data = self._get_chunk_data_at_pos(block_w_pos)
         if chunk_data is None:
             return
 
         chunk_w_pos, chunk = chunk_data
-        result = chunk.req_place_block(w_pos, material=material)
+        result = chunk.req_place_block(block_w_pos, material=material)
         if result == Result.failure:
             return
 
@@ -234,3 +246,4 @@ class World:
 
         with open(os.path.join(dir_path, self._SAVE_FILE_NAME), "w") as file:
             json.dump(data, file, indent=4)
+

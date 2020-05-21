@@ -62,9 +62,7 @@ class Chunk:
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
         self.surf.blit(block_surf, pix_shift)
 
-    def req_break_block(self, w_pos):
-        block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
-
+    def req_break_block(self, block_w_pos):
         block = self.blocks[block_w_pos]
         if block.material == Material.bedrock:
             return Result.failure
@@ -74,8 +72,7 @@ class Chunk:
         self._update_colliders()
         return Result.success
 
-    def req_place_block(self, w_pos, material):
-        block_w_pos = WVec(*(floor(pos_dim) for pos_dim in w_pos))
+    def req_place_block(self, block_w_pos, material):
         block = self._generator.get_block(material)
         self.blocks[block_w_pos] = block
         self._redraw_block(block_w_pos, block.surf)
