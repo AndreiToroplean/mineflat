@@ -115,9 +115,6 @@ class World:
         self._max_surf.blit(chunk_surf, pix_shift)
 
     def req_break_block(self, w_pos):
-        # TODO: logic to see whether and when the block should be broken.
-        #   If it should, then call self._break_block.
-
         # Case where the block selector hasn't reached a block
         if w_pos is None:
             return
@@ -148,9 +145,6 @@ class World:
                 and bounds.y.min <= w_pos[1] <= bounds.y.max)
 
     def req_place_block(self, w_pos, material, player_bounds):
-        # TODO: logic to see whether and when the block should be placed.
-        #   If it should, then call self._place_block.
-
         # Case where the block selector hasn't reached a block
         if w_pos is None:
             return
