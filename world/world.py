@@ -168,19 +168,18 @@ class World:
             blocks.update(chunk.blocks)
         return blocks
 
-    def intersect_block(self, start_w_pos, end_w_pos, max_distance=None, *, c_radius=1, threshold=0.01):
+    def intersect_block(self, start_w_pos, end_w_pos, max_distance=None, *, c_radius=1, threshold=0.01, substeps=2):
         blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
         w_vel = end_w_pos - start_w_pos
-        w_speed = np.linalg.norm(w_vel) * (1 + threshold)
-        w_dir = w_vel / w_speed
-        if max_distance is None:
-            max_mult = floor(w_speed)+2
-        else:
-            max_mult = max_distance
+        w_speed = np.linalg.norm(w_vel)
+        w_vel_step = w_vel / (w_speed * (1 + threshold) * substeps)
+        max_mult = floor(w_speed * substeps) + 2
+        if max_distance is not None:
+            max_mult = min(max_mult, max_distance * substeps)
         for mult in range(max_mult):
-            w_pos = WVec(*(np.floor(start_w_pos + w_dir * mult)))
+            w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
             if w_pos in blocks:
-                prev_w_pos = WVec(*(np.floor(start_w_pos + w_dir * (mult-1))))
+                prev_w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * (mult-1))))
                 return (w_pos, blocks[w_pos]), (prev_w_pos, )
 
         return None
