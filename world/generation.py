@@ -1,7 +1,6 @@
 from enum import Enum
 import random
-
-import noise
+from math import sin
 
 from core.classes import WVec
 from core.constants import CHUNK_W_SIZE, WORLD_HEIGHT_BOUNDS
@@ -40,7 +39,8 @@ class WorldGenerator:
 
     def _choose_material_at_pos(self, block_w_pos):
         # Terrain height
-        terrain_height = self.WATER_HEIGHT + 20 * noise.pnoise2(0.062 + block_w_pos.x/self.WORLD_HEIGHT_FREQ, self.seed, octaves=5)
+        # terrain_height = self.WATER_HEIGHT + 20 * noise.pnoise2(0.062 + block_w_pos.x/self.WORLD_HEIGHT_FREQ, self.seed, octaves=5)
+        terrain_height = self.WATER_HEIGHT + 4 * sin(block_w_pos.x * 50)
 
         if block_w_pos.y < WORLD_HEIGHT_BOUNDS[0]:
             material = Material.air
@@ -55,9 +55,9 @@ class WorldGenerator:
         else:
             material = Material.air
 
-        # Caves
-        if noise.pnoise3(0.0468 + block_w_pos.x/10, 0.1564 + block_w_pos.y/10, self.seed, octaves=5) < self.CAVES_PROBABILITY:
-            material = Material.air
+        # # Caves
+        # if noise.pnoise3(0.0468 + block_w_pos.x/10, 0.1564 + block_w_pos.y/10, self.seed, octaves=5) < self.CAVES_PROBABILITY:
+        #     material = Material.air
 
         # Return
         if material == Material.air:
