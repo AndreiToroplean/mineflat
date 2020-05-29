@@ -32,6 +32,8 @@ class Chunk:
         self.colliders = Colliders()
         self._update_colliders()
 
+    # ==== GENERATION AND DRAWING ====
+
     def _update_colliders(self):
         self.colliders = Colliders()
         for block_w_pos in self.blocks_map:
@@ -62,6 +64,8 @@ class Chunk:
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
         self.surf.blit(block_surf, pix_shift)
 
+    # ==== MODIFICATION ====
+
     def req_break_block(self, block_w_pos):
         """
         Break block at block_w_pos if it exists and return result (success or failure).
@@ -90,6 +94,8 @@ class Chunk:
         self._redraw_block(block_w_pos, block.surf)
         self._update_colliders()
         return Result.success
+
+    # ==== DATA COLLECTING ====
 
     def collect_data(self):
         """
