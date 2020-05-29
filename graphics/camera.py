@@ -103,7 +103,8 @@ class Camera:
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    def _select_block(self, action_w_pos, world, max_distance=SELECTION_MAX_DISTANCE, *, c_radius=1, threshold=0.01):
+    @property
+    def _mouse_w_pos(self):
         mouse_pix_shift = pg.mouse.get_pos()
         mouse_w_shift = pix_to_w_shift(
             mouse_pix_shift,
@@ -115,12 +116,23 @@ class Camera:
         mouse_w_pos = np.array(
             tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
             )
+        return mouse_w_pos
 
-        selection = world.intersect_block(action_w_pos, mouse_w_pos, max_distance, c_radius=c_radius, threshold=threshold)
+    def _select_block(self, action_w_pos, world, max_distance=SELECTION_MAX_DISTANCE, *, c_radius=1, threshold=0.01):
+        """Return selection based on player position and mouse position.
+        Selection is one selected block and one selected space.
+        """
+        selection = world.get_intersected_block(
+            action_w_pos,
+            self._mouse_w_pos,
+            max_distance,
+            c_radius=c_radius,
+            threshold=threshold
+            )
 
         return selection
 
-    def draw_gui_block_selector(self, action_w_pos, world, *, c_radius=1, threshold=0.01):
+    def draw_block_selector(self, action_w_pos, world, *, c_radius=1, threshold=0.01):
         selection = self._select_block(action_w_pos, world, c_radius=c_radius, threshold=threshold)
         if selection is None:
             self.selected_block_w_pos = None

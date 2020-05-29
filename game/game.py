@@ -135,4 +135,4 @@ class Game:
         self.camera.draw_sky()
 
     def draw_gui(self):
-        self.camera.draw_gui_block_selector(self.main_player.action_w_pos, self.world)
+        self.camera.draw_block_selector(self.main_player.action_w_pos, self.world)
