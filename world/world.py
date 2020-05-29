@@ -22,8 +22,8 @@ class World:
     def __init__(self):
         self._seed = random.randint(0, 2 ** 20) + 0.15681
 
-        self.chunks_existing = {}
-        self._chunks_visible = {}
+        self.chunks_existing_map = {}
+        self._chunks_visible_map = {}
 
         self._c_view = CView(CVec(0, 0), CVec(0, 0))
         self._max_view = WView(WVec(0, 0), WVec(0, 0))
@@ -42,17 +42,17 @@ class World:
 
     # ==== GET DATA ====
 
-    def _get_chunk_data_at_pos(self, w_pos):
+    def _get_chunks_at_w_pos(self, w_pos):
         chunk_w_pos = w_to_c_to_w_vec(w_pos)
         try:
-            chunk = self.chunks_existing[chunk_w_pos]
+            chunk = self.chunks_existing_map[chunk_w_pos]
         except KeyError:
             return None
 
         return chunk_w_pos, chunk
 
     def _get_chunks_around(self, w_pos, *, c_radius=1):
-        chunks = {}
+        chunks_map = {}
         for pos_x in range(
                 floor(w_pos[0] - c_radius * CHUNK_W_SIZE.x),
                 floor(w_pos[0] + (c_radius+1) * CHUNK_W_SIZE.x),
@@ -64,17 +64,17 @@ class World:
                     CHUNK_W_SIZE.y
                     ):
                 chunk_w_pos = WVec(pos_x, pos_y)
-                chunk_data = self._get_chunk_data_at_pos(chunk_w_pos)
-                if chunk_data is None:
+                chunk_map = self._get_chunks_at_w_pos(chunk_w_pos)
+                if chunk_map is None:
                     continue
-                chunks.update((chunk_data,))
-        return chunks
+                chunks_map.update((chunk_map,))
+        return chunks_map
 
     def _get_blocks_around(self, w_pos, *, c_radius=1):
-        blocks = {}
+        blocks_map = {}
         for chunk in self._get_chunks_around(w_pos, c_radius=c_radius).values():
-            blocks.update(chunk.blocks)
-        return blocks
+            blocks_map.update(chunk.blocks_map)
+        return blocks_map
 
     def get_colliders_around(self, w_pos, *, c_radius=1):
         colliders = Colliders()
@@ -126,17 +126,17 @@ class World:
             WVec(*[(dim + 1) * chunk_size_dim for dim, chunk_size_dim in zip(self._c_view.pos_1, CHUNK_W_SIZE)]),
             )
 
-        self._chunks_visible = {}
+        self._chunks_visible_map = {}
         for chunk_w_pos_x in range(self._max_view.pos_0.x, self._max_view.pos_1.x, CHUNK_W_SIZE.x):
             for chunk_w_pos_y in range(self._max_view.pos_0.y, self._max_view.pos_1.y, CHUNK_W_SIZE.y):
                 chunk_w_pos = WVec(chunk_w_pos_x, chunk_w_pos_y)
-                if chunk_w_pos in self.chunks_existing:
-                    chunk_to_load = self.chunks_existing[chunk_w_pos]
+                if chunk_w_pos in self.chunks_existing_map:
+                    chunk_to_load = self.chunks_existing_map[chunk_w_pos]
                 else:
                     chunk_to_load = Chunk(chunk_w_pos, self._seed)
-                    self.chunks_existing[chunk_w_pos] = chunk_to_load
+                    self.chunks_existing_map[chunk_w_pos] = chunk_to_load
 
-                self._chunks_visible[chunk_w_pos] = chunk_to_load
+                self._chunks_visible_map[chunk_w_pos] = chunk_to_load
 
     def _chunk_w_pos_to_pix_shift(self, chunk_w_pos):
         max_view_w_shift = WVec(*(pos - shift for pos, shift in zip(chunk_w_pos, self._max_view.pos_0)))
@@ -147,7 +147,7 @@ class World:
 
         self._max_surf.fill(C_KEY)
         blit_sequence = []
-        for chunk_w_pos, chunk in self._chunks_visible.items():
+        for chunk_w_pos, chunk in self._chunks_visible_map.items():
             pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
             blit_sequence.append((chunk.surf, pix_shift))
         self._max_surf.blits(blit_sequence, doreturn=False)
@@ -213,11 +213,11 @@ class World:
         """Request breaking of the block at block_w_pos to the relevant chunk.
         Then update the world in consequence.
         """
-        chunk_data = self._get_chunk_data_at_pos(block_w_pos)
-        if chunk_data is None:
+        chunk_map = self._get_chunks_at_w_pos(block_w_pos)
+        if chunk_map is None:
             return
 
-        chunk_w_pos, chunk = chunk_data
+        chunk_w_pos, chunk = chunk_map
         result = chunk.req_break_block(block_w_pos)
         if result == Result.failure:
             return
@@ -228,11 +228,11 @@ class World:
         """Request placing of the block of the given material at block_w_pos to the relevant chunk.
         Then update the world in consequence.
         """
-        chunk_data = self._get_chunk_data_at_pos(block_w_pos)
-        if chunk_data is None:
+        chunk_map = self._get_chunks_at_w_pos(block_w_pos)
+        if chunk_map is None:
             return
 
-        chunk_w_pos, chunk = chunk_data
+        chunk_w_pos, chunk = chunk_map
         result = chunk.req_place_block(block_w_pos, material=material)
         if result == Result.failure:
             return
@@ -250,15 +250,15 @@ class World:
         self._seed = data["seed"]
         for chunk_w_pos_str, blocks_data_str in data["chunks_data"].items():
             chunk_w_pos = eval(chunk_w_pos_str)
-            blocks_data = {}
+            blocks_map = {}
             for block_w_pos_str, material_str in blocks_data_str.items():
-                blocks_data[eval(block_w_pos_str)] = eval(material_str)
-            self.chunks_existing[chunk_w_pos] = Chunk(chunk_w_pos, self._seed, blocks_data)
+                blocks_map[eval(block_w_pos_str)] = eval(material_str)
+            self.chunks_existing_map[chunk_w_pos] = Chunk(chunk_w_pos, self._seed, blocks_map)
 
     def save_to_disk(self, dir_path):
         data = {"seed": self._seed, "chunks_data": {}}
-        for chunk in self.chunks_existing.values():
-            data["chunks_data"].update(chunk.collect_chunk_data())
+        for chunk in self.chunks_existing_map.values():
+            data["chunks_data"].update(chunk.collect_data())
 
         with open(os.path.join(dir_path, self._SAVE_FILE_NAME), "w") as file:
             json.dump(data, file, indent=4)

@@ -23,17 +23,17 @@ class WorldGenerator:
     WORLD_HEIGHT_FREQ = 50
     CAVES_PROBABILITY = -0.25
 
-    _block_materials = {}
+    _block_materials_map = {}
 
     def __init__(self, seed):
         self.seed = seed
 
     def get_block(self, material):
         try:
-            block = self._block_materials[material]
+            block = self._block_materials_map[material]
         except KeyError:
             block = Block(material)
-            self._block_materials[material] = block
+            self._block_materials_map[material] = block
 
         return block
 
@@ -65,18 +65,18 @@ class WorldGenerator:
         return material
 
     def gen_chunk_blocks(self, chunk_w_pos):
-        blocks = {}
+        blocks_map = {}
         for w_shift_x in range(CHUNK_W_SIZE[0]):
             for w_shift_y in range(CHUNK_W_SIZE[1]):
                 block_w_pos = WVec(chunk_w_pos.x + w_shift_x, chunk_w_pos.y + w_shift_y)
                 material = self._choose_material_at_pos(block_w_pos)
                 if material is None:
                     continue
-                blocks[block_w_pos] = self.get_block(material)
-        return blocks
+                blocks_map[block_w_pos] = self.get_block(material)
+        return blocks_map
 
     def load_chunk_blocks(self, blocks_data):
-        blocks = {}
+        blocks_map = {}
         for block_w_pos, material in blocks_data.items():
-            blocks[block_w_pos] = self.get_block(material)
-        return blocks
+            blocks_map[block_w_pos] = self.get_block(material)
+        return blocks_map

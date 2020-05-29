@@ -12,15 +12,15 @@ class Chunk:
     _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
     _empty_block_surf.fill(C_KEY)
 
-    def __init__(self, w_pos, seed, blocks_data=None):
+    def __init__(self, w_pos, seed, blocks_map=None):
         self._w_pos = w_pos
 
         self._seed = seed
         self._generator = WorldGenerator(self._seed)
-        if blocks_data is None:
-            self.blocks = self._generator.gen_chunk_blocks(self._w_pos)
+        if blocks_map is None:
+            self.blocks_map = self._generator.gen_chunk_blocks(self._w_pos)
         else:
-            self.blocks = self._generator.load_chunk_blocks(blocks_data)
+            self.blocks_map = self._generator.load_chunk_blocks(blocks_map)
 
         self.surf = pg.Surface((
             BLOCK_PIX_SIZE * CHUNK_W_SIZE[0],
@@ -34,14 +34,14 @@ class Chunk:
 
     def _update_colliders(self):
         self.colliders = Colliders()
-        for block_w_pos in self.blocks:
-            if not (block_w_pos[0]-1, block_w_pos[1]) in self.blocks:
+        for block_w_pos in self.blocks_map:
+            if not (block_w_pos[0]-1, block_w_pos[1]) in self.blocks_map:
                 self.colliders.left.append(block_w_pos)
-            if not (block_w_pos[0]+1, block_w_pos[1]) in self.blocks:
+            if not (block_w_pos[0]+1, block_w_pos[1]) in self.blocks_map:
                 self.colliders.right.append(block_w_pos)
-            if not (block_w_pos[0], block_w_pos[1]-1) in self.blocks:
+            if not (block_w_pos[0], block_w_pos[1]-1) in self.blocks_map:
                 self.colliders.bottom.append(block_w_pos)
-            if not (block_w_pos[0], block_w_pos[1]+1) in self.blocks:
+            if not (block_w_pos[0], block_w_pos[1]+1) in self.blocks_map:
                 self.colliders.top.append(block_w_pos)
 
     def _block_pos_to_pix_shift(self, block_w_pos):
@@ -53,7 +53,7 @@ class Chunk:
     def _draw(self):
         self.surf.fill(C_KEY)
         blit_sequence = []
-        for block_w_pos, block in self.blocks.items():
+        for block_w_pos, block in self.blocks_map.items():
             pix_shift = self._block_pos_to_pix_shift(block_w_pos)
             blit_sequence.append((block.surf, pix_shift))
         self.surf.blits(blit_sequence, doreturn=False)
@@ -67,11 +67,11 @@ class Chunk:
         Break block at block_w_pos if it exists and return result (success or failure).
         Then, update the chunk in consequence.
         """
-        block = self.blocks[block_w_pos]
+        block = self.blocks_map[block_w_pos]
         if block.material == Material.bedrock:
             return Result.failure
 
-        self.blocks.pop(block_w_pos, None)
+        self.blocks_map.pop(block_w_pos, None)
         self._redraw_block(block_w_pos, self._empty_block_surf)
         self._update_colliders()
         return Result.success
@@ -82,20 +82,20 @@ class Chunk:
         Then, update the chunk in consequence.
         """
         # Don't replace existing blocks (by design this should already never happen):
-        if block_w_pos in self.blocks:
+        if block_w_pos in self.blocks_map:
             return Result.failure
 
         block = self._generator.get_block(material)
-        self.blocks[block_w_pos] = block
+        self.blocks_map[block_w_pos] = block
         self._redraw_block(block_w_pos, block.surf)
         self._update_colliders()
         return Result.success
 
-    def collect_chunk_data(self):
+    def collect_data(self):
         """
         Return all the data necessary to recreate the chunk's current state.
         """
         blocks_data = {}
-        for block_w_pos, block in self.blocks.items():
+        for block_w_pos, block in self.blocks_map.items():
             blocks_data[str(block_w_pos)] = str(block.material)
         return {str(self._w_pos): blocks_data}
