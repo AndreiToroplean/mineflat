@@ -63,6 +63,10 @@ class Chunk:
         self.surf.blit(block_surf, pix_shift)
 
     def req_break_block(self, block_w_pos):
+        """
+        Break block at block_w_pos if it exists and return result (success or failure).
+        Then, update the chunk in consequence.
+        """
         block = self.blocks[block_w_pos]
         if block.material == Material.bedrock:
             return Result.failure
@@ -73,6 +77,10 @@ class Chunk:
         return Result.success
 
     def req_place_block(self, block_w_pos, material):
+        """
+        Place block at block_w_pos if the space is free and return result (success or failure).
+        Then, update the chunk in consequence.
+        """
         # Don't replace existing blocks (by design this should already never happen):
         if block_w_pos in self.blocks:
             return Result.failure
@@ -84,6 +92,9 @@ class Chunk:
         return Result.success
 
     def collect_chunk_data(self):
+        """
+        Return all the data necessary to recreate the chunk's current state.
+        """
         blocks_data = {}
         for block_w_pos, block in self.blocks.items():
             blocks_data[str(block_w_pos)] = str(block.material)
