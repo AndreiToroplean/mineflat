@@ -34,7 +34,7 @@ class World:
 
         self._action_cooldown_remaining = 0
 
-    # ==== TIME ====
+    # ==== ADVANCE TIME ====
 
     def _tick(self):
         if self._action_cooldown_remaining > 0:
@@ -105,7 +105,7 @@ class World:
         return (bounds.x.min <= w_pos[0] <= bounds.x.max
                 and bounds.y.min <= w_pos[1] <= bounds.y.max)
 
-    # ==== GENERATION AND DRAWING ====
+    # ==== GENERATE AND DRAW ====
 
     def _update_c_view(self, camera):
         """Updates c_view and returns True if there are new chunks to load, False otherwise. """
@@ -174,7 +174,7 @@ class World:
         self._max_surf.blit(self._empty_chunk_surf, pix_shift)
         self._max_surf.blit(chunk_surf, pix_shift)
 
-    # ==== MODIFICATION ====
+    # ==== MODIFY ====
 
     def req_break_block(self, w_pos):
         """Check whether a block can be broken at w_pos and if so, break it.
@@ -239,7 +239,7 @@ class World:
 
         self._redraw_chunk(chunk_w_pos, chunk.surf)
 
-    # ==== SAVING AND LOADING ====
+    # ==== SAVE AND LOAD ====
 
     def load_from_disk(self, dir_path):
         try:

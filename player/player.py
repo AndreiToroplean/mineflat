@@ -73,7 +73,7 @@ class Player:
         action_w_pos[1] += self._w_size[1] * self._ACTION_POS_RATIO
         return action_w_pos
 
-    # ==== DRAWING ====
+    # ==== DRAW ====
 
     def draw(self, camera):
         camera.draw_player(self._anim_surf, self.pos)
@@ -199,7 +199,7 @@ class Player:
             self._collide(world)
         self.pos[:] = self._req_pos
 
-    # ==== SAVING AND LOADING ====
+    # ==== SAVE AND LOAD ====
 
     def load_from_disk(self, dir_path):
         try:

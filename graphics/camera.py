@@ -45,6 +45,8 @@ class Camera:
         self._clock = pg.time.Clock()
         self._font = pg.font.SysFont(pg.font.get_default_font(), 24)
 
+    # ==== GET DATA ====
+
     @property
     def w_size(self):
         # TODO: add memoization
@@ -63,6 +65,41 @@ class Camera:
                 y=self._pos[1] + self.w_size.y * (1 - PLAYER_S_POS.y),
                 ),
             )
+
+    @property
+    def _mouse_w_pos(self):
+        mouse_pix_shift = pg.mouse.get_pos()
+        mouse_w_shift = pix_to_w_shift(
+            mouse_pix_shift,
+            (0, 0),
+            self._pix_size,
+            dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
+            scale=self._scale,
+            )
+        mouse_w_pos = np.array(
+            tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
+            )
+        return mouse_w_pos
+
+    @property
+    def is_zooming(self):
+        return not math.isclose(self._zoom_vel, 1)
+
+    def _select_block(self, action_w_pos, world, max_distance=SELECTION_MAX_DISTANCE, *, c_radius=1, threshold=0.01):
+        """Return selection based on player position and mouse position.
+        Selection is one selected block and one selected space.
+        """
+        selection = world.get_intersected_block(
+            action_w_pos,
+            self._mouse_w_pos,
+            max_distance,
+            c_radius=c_radius,
+            threshold=threshold
+            )
+
+        return selection
+
+    # ==== DRAW ====
 
     def draw_sky(self):
         self._screen.fill(C_SKY)
@@ -103,35 +140,6 @@ class Camera:
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    @property
-    def _mouse_w_pos(self):
-        mouse_pix_shift = pg.mouse.get_pos()
-        mouse_w_shift = pix_to_w_shift(
-            mouse_pix_shift,
-            (0, 0),
-            self._pix_size,
-            dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
-            scale=self._scale,
-            )
-        mouse_w_pos = np.array(
-            tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
-            )
-        return mouse_w_pos
-
-    def _select_block(self, action_w_pos, world, max_distance=SELECTION_MAX_DISTANCE, *, c_radius=1, threshold=0.01):
-        """Return selection based on player position and mouse position.
-        Selection is one selected block and one selected space.
-        """
-        selection = world.get_intersected_block(
-            action_w_pos,
-            self._mouse_w_pos,
-            max_distance,
-            c_radius=c_radius,
-            threshold=threshold
-            )
-
-        return selection
-
     def draw_block_selector(self, action_w_pos, world, *, c_radius=1, threshold=0.01):
         selection = self._select_block(action_w_pos, world, c_radius=c_radius, threshold=threshold)
         if selection is None:
@@ -161,6 +169,16 @@ class Camera:
 
         self._screen.blit(surf, pix_shift)
 
+    def draw_debug_info(self):
+        fps_surf = self._font.render(f"{self._clock.get_fps():.1f}", True, (255, 255, 255))
+        self._screen.blit(fps_surf, (20, 20))
+
+    def display_flip_and_clock_tick(self):
+        pg.display.flip()
+        self._clock.tick(CAM_FPS)
+
+    # ==== REQUEST MOVEMENTS ====
+
     def req_zoom_in(self):
         self._req_zoom_vel = self._ZOOM_SPEED
 
@@ -170,12 +188,10 @@ class Camera:
     def req_zoom_stop(self):
         self._req_zoom_vel = 1.0
 
-    @property
-    def is_zooming(self):
-        return not math.isclose(self._zoom_vel, 1)
-
     def req_move(self, pos):
         self._req_vel = pos - self._pos
+
+    # ==== APPLY MOVEMENTS ====
 
     def set_transforms(self, pos, vel=(0.0, 0.0)):
         self._pos = np.array(pos)
@@ -198,11 +214,3 @@ class Camera:
             self._zoom_vel = 1.0
             self._scale = CAM_SCALE_BOUNDS[1] / (1+threshold)
         self._scale *= self._zoom_vel
-
-    def draw_debug_info(self):
-        fps_surf = self._font.render(f"{self._clock.get_fps():.1f}", True, (255, 255, 255))
-        self._screen.blit(fps_surf, (20, 20))
-
-    def display_flip_and_clock_tick(self):
-        pg.display.flip()
-        self._clock.tick(CAM_FPS)

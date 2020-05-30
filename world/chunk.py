@@ -32,7 +32,7 @@ class Chunk:
         self.colliders = Colliders()
         self._update_colliders()
 
-    # ==== GENERATION AND DRAWING ====
+    # ==== GENERATE AND DRAW ====
 
     def _update_colliders(self):
         self.colliders = Colliders()
@@ -64,7 +64,7 @@ class Chunk:
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
         self.surf.blit(block_surf, pix_shift)
 
-    # ==== MODIFICATION ====
+    # ==== MODIFY ====
 
     def req_break_block(self, block_w_pos):
         """
@@ -95,7 +95,7 @@ class Chunk:
         self._update_colliders()
         return Result.success
 
-    # ==== DATA COLLECTING ====
+    # ==== COLLECT DATA ====
 
     def collect_data(self):
         """
