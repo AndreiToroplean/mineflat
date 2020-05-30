@@ -51,56 +51,34 @@ class Player:
         self._sprinting_speed = 7.5 / CAM_FPS
         self._jumping_speed = 7.75 / CAM_FPS
 
-    def get_bounds(self, w_pos=None):
+    # ==== GET DATA ====
+
+    def get_bounds(self, w_pos=None) -> WBounds:
+        """Return the boundaries of the Player at its current position, or at w_pos if the argument has been passed.
+        """
         if w_pos is None:
             w_pos = self.pos
 
         return get_bounds(w_pos, self._bounds_w_shift)
 
-    def _collide(self, world, thresh=0.001):
-        world_colliders = world.get_colliders_around(self.pos)
-        block_bound_shifts = WBounds(WDimBounds(0, 1), WDimBounds(0, 1))
+    @property
+    def is_dead(self):
+        return self.pos[1] < PLAYER_POS_MIN_HEIGHT
 
-        tested_horiz_pos = (self._req_pos[0], self.pos[1])
-        tested_horiz_pos_bounds = self.get_bounds(tested_horiz_pos)
+    @property
+    def action_w_pos(self):
+        """Getter for the position from which the player acts upon its environment.
+        """
+        action_w_pos = np.array(self.pos)
+        action_w_pos[1] += self._w_size[1] * self._ACTION_POS_RATIO
+        return action_w_pos
 
-        tested_vert_pos = (self.pos[0], self._req_pos[1])
-        tested_vert_pos_bounds = self.get_bounds(tested_vert_pos)
-
-        self._is_on_ground = False
-        for pos_x in range(tested_vert_pos_bounds.x.min, tested_vert_pos_bounds.x.max+1):
-            if self._vel[1] < 0:
-                pos_y = tested_vert_pos_bounds.y.min
-                if (pos_x, pos_y) in world_colliders.top:
-                    self._req_pos[1] = pos_y + block_bound_shifts.y.max - self._bounds_w_shift.y.min + thresh
-                    self._vel[1] = 0
-                    self._is_on_ground = True
-                    break
-
-            else:
-                pos_y = tested_vert_pos_bounds.y.max
-                if (pos_x, pos_y) in world_colliders.bottom:
-                    self._req_pos[1] = pos_y + block_bound_shifts.y.min - self._bounds_w_shift.y.max - thresh
-                    self._vel[1] = 0
-                    break
-
-        for pos_y in range(tested_horiz_pos_bounds.y.min, tested_horiz_pos_bounds.y.max+1):
-            if self._vel[0] < 0:
-                pos_x = tested_horiz_pos_bounds.x.min
-                if (pos_x, pos_y) in world_colliders.right:
-                    self._req_pos[0] = pos_x + block_bound_shifts.x.max - self._bounds_w_shift.x.min + thresh
-                    self._vel[0] = 0
-                    break
-
-            else:
-                pos_x = tested_horiz_pos_bounds.x.max
-                if (pos_x, pos_y) in world_colliders.left:
-                    self._req_pos[0] = pos_x + block_bound_shifts.x.min - self._bounds_w_shift.x.max - thresh
-                    self._vel[0] = 0
-                    break
+    # ==== DRAWING ====
 
     def draw(self, camera):
         camera.draw_player(self._anim_surf, self.pos)
+
+    # ==== REQUEST MOVEMENTS ====
 
     def req_move_right(self):
         self._anim_surf_walking.sync(self._anim_surf)
@@ -146,7 +124,69 @@ class Player:
     def req_jump_stop(self):
         self._req_vel[1] = 0
 
+    # ==== APPLY MOVEMENTS ====
+
+    def set_transforms(self, pos, vel=(0.0, 0.0)):
+        """Set the transforms directly without going through a request.
+        """
+        self.pos = np.array(pos)
+        self._req_pos = np.array(self.pos)
+
+        self._vel = np.array(vel)
+        self._req_vel = np.array(self._vel)
+
+    def spawn(self):
+        """Set or reset the player to its spawning state.
+        """
+        self.set_transforms(self._spawn_pos, (0.0, -200.0/CAM_FPS))
+
+    def _collide(self, world, threshold=0.001):
+        """Check for collisions with the world and update the transforms accordingly.
+        """
+        world_colliders = world.get_colliders_around(self.pos)
+        block_bound_shifts = WBounds(WDimBounds(0, 1), WDimBounds(0, 1))
+
+        tested_horiz_pos = (self._req_pos[0], self.pos[1])
+        tested_horiz_pos_bounds = self.get_bounds(tested_horiz_pos)
+
+        tested_vert_pos = (self.pos[0], self._req_pos[1])
+        tested_vert_pos_bounds = self.get_bounds(tested_vert_pos)
+
+        self._is_on_ground = False
+        for pos_x in range(tested_vert_pos_bounds.x.min, tested_vert_pos_bounds.x.max+1):
+            if self._vel[1] < 0:
+                pos_y = tested_vert_pos_bounds.y.min
+                if (pos_x, pos_y) in world_colliders.top:
+                    self._req_pos[1] = pos_y + block_bound_shifts.y.max - self._bounds_w_shift.y.min + threshold
+                    self._vel[1] = 0
+                    self._is_on_ground = True
+                    break
+
+            else:
+                pos_y = tested_vert_pos_bounds.y.max
+                if (pos_x, pos_y) in world_colliders.bottom:
+                    self._req_pos[1] = pos_y + block_bound_shifts.y.min - self._bounds_w_shift.y.max - threshold
+                    self._vel[1] = 0
+                    break
+
+        for pos_y in range(tested_horiz_pos_bounds.y.min, tested_horiz_pos_bounds.y.max+1):
+            if self._vel[0] < 0:
+                pos_x = tested_horiz_pos_bounds.x.min
+                if (pos_x, pos_y) in world_colliders.right:
+                    self._req_pos[0] = pos_x + block_bound_shifts.x.max - self._bounds_w_shift.x.min + threshold
+                    self._vel[0] = 0
+                    break
+
+            else:
+                pos_x = tested_horiz_pos_bounds.x.max
+                if (pos_x, pos_y) in world_colliders.left:
+                    self._req_pos[0] = pos_x + block_bound_shifts.x.min - self._bounds_w_shift.x.max - threshold
+                    self._vel[0] = 0
+                    break
+
     def move(self, world):
+        """Apply requested and physics-induced movements.
+        """
         self._vel[0] += (self._req_vel[0] - self._vel[0]) * PLAYER_POS_DAMPING_FACTOR
         self._vel[1] += self._req_vel[1]
 
@@ -159,25 +199,7 @@ class Player:
             self._collide(world)
         self.pos[:] = self._req_pos
 
-    @property
-    def is_dead(self):
-        return self.pos[1] < PLAYER_POS_MIN_HEIGHT
-
-    @property
-    def action_w_pos(self):
-        action_w_pos = np.array(self.pos)
-        action_w_pos[1] += self._w_size[1] * self._ACTION_POS_RATIO
-        return action_w_pos
-
-    def set_transforms(self, pos, vel=(0.0, 0.0)):
-        self.pos = np.array(pos)
-        self._req_pos = np.array(self.pos)
-
-        self._vel = np.array(vel)
-        self._req_vel = np.array(self._vel)
-
-    def spawn(self):
-        self.set_transforms(self._spawn_pos, (0.0, -200.0/CAM_FPS))
+    # ==== SAVING AND LOADING ====
 
     def load_from_disk(self, dir_path):
         try:
