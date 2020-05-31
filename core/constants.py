@@ -2,7 +2,7 @@ import os
 
 import pygame as pg
 
-from core.classes import PixVec, SVec, WVec
+from core.classes import PixVec, SVec, WVec, WBounds, WDimBounds
 
 # ==== TECHNICAL DIMENSIONS ====
 PLAYER_S_POS = SVec(0.5, 0.333)
@@ -10,6 +10,7 @@ BLOCK_PIX_SIZE = 16  # Should stay equal to block texture size resolution. That 
 CHUNK_W_SIZE = WVec(8, 8)
 CHUNK_PIX_SIZE = PixVec(*[BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_W_SIZE])
 WORLD_HEIGHT_BOUNDS = (0, 2**8)
+BLOCK_BOUND_SHIFTS = WBounds(WDimBounds(0, 1), WDimBounds(0, 1))
 
 # ==== COLORS ====
 C_KEY = pg.Color(255, 0, 0)

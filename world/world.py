@@ -7,7 +7,7 @@ import pygame as pg
 import numpy as np
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
 from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, WDimBounds
 from world.chunk import Chunk
 from world.generation import Material
@@ -83,24 +83,61 @@ class World:
                 colliders_dir += chunk_colliders_dir
         return colliders
 
-    def get_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_rays, *, c_radius=1, threshold=0.01, substeps=5):
-        # TODO: This is a WIP. Finish implementing it.
-
+    def get_block_pos_and_space_pos(self, start_w_pos, end_w_pos, *, c_radius=1, threshold=0.01, substeps=5, max_rays=3):
+        # FIXME: still doesn't work as intended. Needs debugging, and maybe some refactoring to make it more readable.
         block_w_pos = WVec(
             *(floor(pos_dim) for pos_dim in end_w_pos)
             )
-        blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
+        blocks = self._get_blocks_around(end_w_pos, c_radius=c_radius)
         w_vel = end_w_pos - start_w_pos
-        w_speed = np.linalg.norm(w_vel)
-        w_vel_step = w_vel / (w_speed * (1 + threshold) * substeps)
-        max_mult = w_speed * substeps + 1
-        for mult in range(max_mult):
-            w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
-            if w_pos in blocks:
-                prev_w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * (mult - 1))))
-                return w_pos, prev_w_pos
+        w_dir = WVec(
+            *(vel_dim / abs(vel_dim) for vel_dim in w_vel)
+            )
 
-        # If no block has been intersected up to max_distance:
+        pos_shift = []
+        if round(w_dir[0]) == 1:
+            pos_shift.append(BLOCK_BOUND_SHIFTS.x.max)
+        else:
+            pos_shift.append(BLOCK_BOUND_SHIFTS.x.min)
+        if round(w_dir[1]) == 1:
+            pos_shift.append(BLOCK_BOUND_SHIFTS.y.max)
+        else:
+            pos_shift.append(BLOCK_BOUND_SHIFTS.y.min)
+
+        if abs(w_vel[0]) > abs(w_vel[1]):
+            space_w_pos_shift = w_dir[0], 0
+        else:
+            space_w_pos_shift = 0, w_dir[1]
+
+        poss_to_check = set()
+        for ray_index in range(max_rays + 1):
+            poss_to_check.update(
+                WVec(
+                    x=block_w_pos[0] + pos_shift[0],
+                    y=block_w_pos[1] + ray_index / max_rays,
+                    ),
+                WVec(
+                    x=block_w_pos[0] + ray_index / max_rays,
+                    y=block_w_pos[1] + pos_shift[1],
+                    ),
+                )
+
+        for pos_to_check in poss_to_check:
+            w_vel_iter = pos_to_check - start_w_pos
+            w_speed = np.linalg.norm(w_vel_iter)
+            w_vel_step = w_vel_iter / (w_speed * (1 + threshold) * substeps)
+            max_mult = floor(w_speed * substeps + 1)
+            for mult in range(max_mult):
+                w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
+                if w_pos in blocks:
+                    break
+            else:
+                space_w_pos = WVec(
+                    *(block_w_pos_dim + space_pos_shift_dim for block_w_pos_dim, space_pos_shift_dim in zip(block_w_pos, space_w_pos_shift))
+                    )
+                return block_w_pos, space_w_pos
+
+        # If no ray from the start_w_pos has reached the block:
         return None
 
     def get_intersected_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, threshold=0.01, substeps=5):

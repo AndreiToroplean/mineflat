@@ -85,28 +85,27 @@ class Camera:
     def is_zooming(self):
         return not math.isclose(self._zoom_vel, 1)
 
-    def _select_block(self, action_w_pos, world, max_distance=SELECTION_MAX_DISTANCE, *, c_radius=1, threshold=0.01):
+    def _select_block(self, action_w_pos, world, *, c_radius=1, threshold=0.01, max_rays=3):
         """Return selection based on player position and mouse position.
         Selection is one selected block and one selected space.
         """
-        # TODO: WIP, uncomment when World.get_block_pos_and_space_pos is implemented.
-        # selection = world.get_block_pos_and_space_pos(
-        #     action_w_pos,
-        #     self._mouse_w_pos,
-        #     max_distance,
-        #     c_radius=c_radius,
-        #     threshold=threshold
-        #     )
-        #
-        # if selection is not None:
-        #     return selection
+        selection = world.get_block_pos_and_space_pos(
+            action_w_pos,
+            self._mouse_w_pos,
+            c_radius=c_radius,
+            threshold=threshold,
+            max_rays=max_rays
+            )
+
+        if selection is not None:
+            return selection
 
         selection = world.get_intersected_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
-            max_distance,
+            SELECTION_MAX_DISTANCE,
             c_radius=c_radius,
-            threshold=threshold
+            threshold=threshold,
             )
 
         return selection
