@@ -83,7 +83,27 @@ class World:
                 colliders_dir += chunk_colliders_dir
         return colliders
 
-    def get_intersected_block(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, threshold=0.01, substeps=5):
+    def get_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_rays, *, c_radius=1, threshold=0.01, substeps=5):
+        # TODO: This is a WIP. Finish implementing it.
+
+        block_w_pos = WVec(
+            *(floor(pos_dim) for pos_dim in end_w_pos)
+            )
+        blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
+        w_vel = end_w_pos - start_w_pos
+        w_speed = np.linalg.norm(w_vel)
+        w_vel_step = w_vel / (w_speed * (1 + threshold) * substeps)
+        max_mult = w_speed * substeps + 1
+        for mult in range(max_mult):
+            w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
+            if w_pos in blocks:
+                prev_w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * (mult - 1))))
+                return w_pos, prev_w_pos
+
+        # If no block has been intersected up to max_distance:
+        return None
+
+    def get_intersected_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, threshold=0.01, substeps=5):
         blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
         w_vel = end_w_pos - start_w_pos
         w_speed = np.linalg.norm(w_vel)
@@ -93,7 +113,7 @@ class World:
             w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
             if w_pos in blocks:
                 prev_w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * (mult-1))))
-                return (w_pos, blocks[w_pos]), (prev_w_pos, )
+                return w_pos, prev_w_pos
 
         # If no block has been intersected up to max_distance:
         return None
@@ -101,7 +121,7 @@ class World:
     # ==== CHECK BOOLEANS ====
 
     @staticmethod
-    def _is_pos_in_bounds(w_pos, bounds: WBounds(WDimBounds, WDimBounds)):
+    def _is_pos_in_bounds(w_pos, bounds: WBounds(WDimBounds, WDimBounds)) -> bool:
         return (bounds.x.min <= w_pos[0] <= bounds.x.max
                 and bounds.y.min <= w_pos[1] <= bounds.y.max)
 

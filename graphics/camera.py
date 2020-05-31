@@ -89,7 +89,19 @@ class Camera:
         """Return selection based on player position and mouse position.
         Selection is one selected block and one selected space.
         """
-        selection = world.get_intersected_block(
+        # TODO: WIP, uncomment when World.get_block_pos_and_space_pos is implemented.
+        # selection = world.get_block_pos_and_space_pos(
+        #     action_w_pos,
+        #     self._mouse_w_pos,
+        #     max_distance,
+        #     c_radius=c_radius,
+        #     threshold=threshold
+        #     )
+        #
+        # if selection is not None:
+        #     return selection
+
+        selection = world.get_intersected_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
             max_distance,
@@ -146,9 +158,9 @@ class Camera:
             self.selected_block_w_pos = None
             self.selected_space_w_pos = None
             return
-        selected_block, selected_space = selection
-        self.selected_block_w_pos = selected_block[0]
-        self.selected_space_w_pos = selected_space[0]
+
+        self.selected_block_w_pos = selection[0]
+        self.selected_space_w_pos = selection[1]
 
         surf_pix_size = (floor(self._scale), floor(self._scale))
         surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
