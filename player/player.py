@@ -4,7 +4,8 @@ from math import floor
 
 import numpy as np
 
-from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_POS_MIN_HEIGHT, RESOURCES_PATH
+from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_POS_MIN_HEIGHT, RESOURCES_PATH, \
+    BLOCK_BOUND_SHIFTS
 from core.funcs import get_bounds
 from graphics.animated_surface import AnimAction, AnimatedSurface
 from core.classes import WVec, WBounds, WDimBounds
@@ -144,7 +145,6 @@ class Player:
         """Check for collisions with the world and update the transforms accordingly.
         """
         world_colliders = world.get_colliders_around(self.pos)
-        block_bound_shifts = WBounds(WDimBounds(0, 1), WDimBounds(0, 1))
 
         tested_horiz_pos = (self._req_pos[0], self.pos[1])
         tested_horiz_pos_bounds = self.get_bounds(tested_horiz_pos)
@@ -157,7 +157,7 @@ class Player:
             if self._vel[1] < 0:
                 pos_y = tested_vert_pos_bounds.y.min
                 if (pos_x, pos_y) in world_colliders.top:
-                    self._req_pos[1] = pos_y + block_bound_shifts.y.max - self._bounds_w_shift.y.min + threshold
+                    self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.y.max - self._bounds_w_shift.y.min + threshold
                     self._vel[1] = 0
                     self._is_on_ground = True
                     break
@@ -165,7 +165,7 @@ class Player:
             else:
                 pos_y = tested_vert_pos_bounds.y.max
                 if (pos_x, pos_y) in world_colliders.bottom:
-                    self._req_pos[1] = pos_y + block_bound_shifts.y.min - self._bounds_w_shift.y.max - threshold
+                    self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.y.min - self._bounds_w_shift.y.max - threshold
                     self._vel[1] = 0
                     break
 
@@ -173,14 +173,14 @@ class Player:
             if self._vel[0] < 0:
                 pos_x = tested_horiz_pos_bounds.x.min
                 if (pos_x, pos_y) in world_colliders.right:
-                    self._req_pos[0] = pos_x + block_bound_shifts.x.max - self._bounds_w_shift.x.min + threshold
+                    self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.x.max - self._bounds_w_shift.x.min + threshold
                     self._vel[0] = 0
                     break
 
             else:
                 pos_x = tested_horiz_pos_bounds.x.max
                 if (pos_x, pos_y) in world_colliders.left:
-                    self._req_pos[0] = pos_x + block_bound_shifts.x.min - self._bounds_w_shift.x.max - threshold
+                    self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.x.min - self._bounds_w_shift.x.max - threshold
                     self._vel[0] = 0
                     break
 

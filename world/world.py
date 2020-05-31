@@ -1,14 +1,15 @@
 import json
 import os
 import random
+from enum import Enum
 from math import floor
 
 import pygame as pg
 import numpy as np
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY
-from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, WDimBounds
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
+from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, WDimBounds, BlockSelection
 from world.chunk import Chunk
 from world.generation import Material
 
@@ -83,25 +84,114 @@ class World:
                 colliders_dir += chunk_colliders_dir
         return colliders
 
-    def get_intersected_block(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, threshold=0.01, substeps=5):
-        blocks = self._get_blocks_around(start_w_pos, c_radius=c_radius)
+    def get_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, substeps=5, max_rays=3) -> BlockSelection:
+        block_w_pos = WVec(
+            *(floor(pos_dim) for pos_dim in end_w_pos)
+            )
+        blocks_map = self._get_blocks_around(end_w_pos, c_radius=c_radius)
+
         w_vel = end_w_pos - start_w_pos
         w_speed = np.linalg.norm(w_vel)
-        w_vel_step = w_vel / (w_speed * (1 + threshold) * substeps)
+        w_dir = WVec(
+            *(vel_dim / abs(vel_dim) for vel_dim in w_vel)
+            )
+
+        # Return early if there's no block at block_w_pos:
+        if block_w_pos not in blocks_map:
+            return BlockSelection(None, None, space_only=True)
+        # Return early if block_w_pos is too far:
+        if w_speed > max_distance:
+            return BlockSelection(None, None, space_only=False)
+
+        block_pos_shift = []
+        if round(w_dir[0]) == 1:
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.x.min)
+        else:
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.x.max)
+        if round(w_dir[1]) == 1:
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.y.min)
+        else:
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.y.max)
+
+        poss_to_check = set()
+        for ray_index in range(max_rays):
+            poss_to_check.add(
+                WVec(
+                    x=block_w_pos[0] + block_pos_shift[0],
+                    y=block_w_pos[1] + ray_index / (max_rays - 1),
+                    )
+                )
+            poss_to_check.add(
+                WVec(
+                    x=block_w_pos[0] + ray_index / (max_rays - 1),
+                    y=block_w_pos[1] + block_pos_shift[1],
+                    )
+                )
+
+        block_center_rel_w_pos = WVec(
+            *(end_w_pos_dim - block_w_pos_dim - 0.5 for end_w_pos_dim, block_w_pos_dim in zip(end_w_pos, block_w_pos))
+            )
+        space_w_pos_shifts = [(0, -w_dir[1]), (-w_dir[0], 0)]
+        if -w_dir[0] * block_center_rel_w_pos[0] > -w_dir[1] * block_center_rel_w_pos[1]:
+            space_w_pos_shifts.reverse()
+
+        hits = 0
+        for pos_to_check in poss_to_check:
+            w_vel_iter = pos_to_check - start_w_pos
+            w_speed_iter = np.linalg.norm(w_vel_iter)
+            w_vel_step = w_vel_iter / (w_speed_iter * substeps)
+            max_mult = floor(w_speed_iter * substeps)
+            for mult in range(max_mult + 1):
+                w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
+                if w_pos in blocks_map and not w_pos == block_w_pos:
+                    break
+            else:
+                hits += 1
+                if hits < 2:  # This is to avoid selecting blocks for which only 1 corner is visible.
+                    continue
+                space_w_pos_shift = space_w_pos_shifts[0]
+                space_w_pos = WVec(
+                    *(block_w_pos_dim + space_pos_shift_dim for block_w_pos_dim, space_pos_shift_dim in zip(block_w_pos, space_w_pos_shift))
+                    )
+                if space_w_pos in blocks_map:
+                    space_w_pos_shift = space_w_pos_shifts[1]
+                return BlockSelection(block_w_pos, space_w_pos_shift, space_only=False)
+
+        # If no ray from the start_w_pos has reached the block:
+        return BlockSelection(None, None, space_only=False)
+
+    def get_intersected_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, substeps=5) -> BlockSelection:
+        blocks_map = self._get_blocks_around(start_w_pos, c_radius=c_radius)
+        w_vel = end_w_pos - start_w_pos
+        w_speed = np.linalg.norm(w_vel)
+        w_dir = WVec(
+            *(vel_dim / abs(vel_dim) for vel_dim in w_vel)
+            )
+        w_vel_step = w_vel / (w_speed * substeps)
         max_mult = max_distance * substeps
-        for mult in range(max_mult):
+
+        space_w_pos_shifts = [(0, -w_dir[1]), (-w_dir[0], 0)]
+        if abs(w_vel[0]) > abs(w_vel[1]):
+            space_w_pos_shifts.reverse()
+
+        for mult in range(max_mult + 1):
             w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
-            if w_pos in blocks:
-                prev_w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * (mult-1))))
-                return (w_pos, blocks[w_pos]), (prev_w_pos, )
+            if w_pos in blocks_map:
+                space_w_pos_shift = space_w_pos_shifts[0]
+                space_w_pos = WVec(
+                    *(block_w_pos_dim + space_pos_shift_dim for block_w_pos_dim, space_pos_shift_dim in zip(w_pos, space_w_pos_shift))
+                    )
+                if space_w_pos in blocks_map:
+                    space_w_pos_shift = space_w_pos_shifts[1]
+                return BlockSelection(w_pos, space_w_pos_shift, False)
 
         # If no block has been intersected up to max_distance:
-        return None
+        return BlockSelection(None, None, False)
 
     # ==== CHECK BOOLEANS ====
 
     @staticmethod
-    def _is_pos_in_bounds(w_pos, bounds: WBounds(WDimBounds, WDimBounds)):
+    def _is_pos_in_bounds(w_pos, bounds: WBounds(WDimBounds, WDimBounds)) -> bool:
         return (bounds.x.min <= w_pos[0] <= bounds.x.max
                 and bounds.y.min <= w_pos[1] <= bounds.y.max)
 

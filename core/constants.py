@@ -2,7 +2,7 @@ import os
 
 import pygame as pg
 
-from core.classes import PixVec, SVec, WVec
+from core.classes import PixVec, SVec, WVec, WBounds, WDimBounds
 
 # ==== TECHNICAL DIMENSIONS ====
 PLAYER_S_POS = SVec(0.5, 0.333)
@@ -10,6 +10,7 @@ BLOCK_PIX_SIZE = 16  # Should stay equal to block texture size resolution. That 
 CHUNK_W_SIZE = WVec(8, 8)
 CHUNK_PIX_SIZE = PixVec(*[BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_W_SIZE])
 WORLD_HEIGHT_BOUNDS = (0, 2**8)
+BLOCK_BOUND_SHIFTS = WBounds(WDimBounds(0, 1), WDimBounds(0, 1))
 
 # ==== COLORS ====
 C_KEY = pg.Color(255, 0, 0)
@@ -57,7 +58,16 @@ CURRENT_SAVE_DIR = "save_002"
 CURRENT_SAVE_PATH = os.path.join(CWD, SAVES_DIR, CURRENT_SAVE_DIR)
 RESOURCES_PATH = os.path.join(CWD, "resources")
 TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
+GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 
 # ==== GAME DYNAMICS ====
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
 ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
+
+# ==== UTILITIES ====
+DIR_TO_ANGLE = {
+    WVec(1, 0): 0,
+    WVec(0, 1): 90,
+    WVec(-1, 0): 180,
+    WVec(0, -1): 270,
+    }
