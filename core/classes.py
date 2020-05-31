@@ -12,6 +12,7 @@ CView = namedtuple("CView", ("pos_0", "pos_1"))
 WDimBounds = namedtuple("WDimBounds", ("min", "max"))
 WBounds = namedtuple("WBounds", ("x", "y"))
 
+BlockSelection = namedtuple("BlockSelection", ("block_w_pos", "space_w_pos_shift", "space_only"))
 
 class Result(Enum):
     success = 0

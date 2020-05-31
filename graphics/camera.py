@@ -1,13 +1,14 @@
 import math
+import os
 from math import floor
 
 import numpy as np
 import pygame as pg
 
-from core.classes import WVec, WView
+from core.classes import WVec, WView, BlockSelection
 from core.funcs import w_to_pix_shift, pix_to_w_shift
 from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
-    CAM_SCALE_BOUNDS
+    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH
 
 SELECTION_MAX_DISTANCE = 5
 
@@ -33,8 +34,10 @@ class Camera:
 
         self.selected_block_w_pos = np.array(self._pos)
         self.selected_space_w_pos = np.array(self._pos)
-        self._block_selector_surf = pg.image.load("resources/gui/block_selector.png")
+        self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png"))
         self._block_selector_surf.set_colorkey(C_KEY)
+        self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png"))
+        self._block_selector_space_only_surf.set_colorkey(C_KEY)
 
         if FULLSCREEN:
             self._screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
@@ -85,30 +88,34 @@ class Camera:
     def is_zooming(self):
         return not math.isclose(self._zoom_vel, 1)
 
-    def _select_block(self, action_w_pos, world, *, c_radius=1, threshold=0.01, max_rays=3):
+    def _select_block(self, action_w_pos, world, *, c_radius=1, substeps=20, max_rays=3) -> BlockSelection:
         """Return selection based on player position and mouse position.
         Selection is one selected block and one selected space.
         """
+        selection: BlockSelection
         selection = world.get_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
+            SELECTION_MAX_DISTANCE,
             c_radius=c_radius,
-            threshold=threshold,
-            max_rays=max_rays
+            substeps=substeps,
+            max_rays=max_rays,
             )
 
-        if selection is not None:
+        if selection.block_w_pos is not None:
             return selection
+        else:
+            space_only = selection.space_only
 
         selection = world.get_intersected_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
             SELECTION_MAX_DISTANCE,
+            substeps=substeps,
             c_radius=c_radius,
-            threshold=threshold,
             )
 
-        return selection
+        return BlockSelection(selection.block_w_pos, selection.space_w_pos_shift, space_only)
 
     # ==== DRAW ====
 
@@ -151,18 +158,26 @@ class Camera:
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    def draw_block_selector(self, action_w_pos, world, *, c_radius=1, threshold=0.01):
-        selection = self._select_block(action_w_pos, world, c_radius=c_radius, threshold=threshold)
-        if selection is None:
+    def draw_block_selector(self, action_w_pos, world):
+        selection: BlockSelection
+        selection = self._select_block(action_w_pos, world)
+        if selection.block_w_pos is None:
             self.selected_block_w_pos = None
             self.selected_space_w_pos = None
             return
 
-        self.selected_block_w_pos = selection[0]
-        self.selected_space_w_pos = selection[1]
+        self.selected_block_w_pos = selection.block_w_pos
+        self.selected_space_w_pos = WVec(
+            *(block_w_pos_dim + space_pos_shift_dim for block_w_pos_dim, space_pos_shift_dim in zip(self.selected_block_w_pos, selection.space_w_pos_shift))
+            )
 
         surf_pix_size = (floor(self._scale), floor(self._scale))
-        surf = pg.transform.scale(self._block_selector_surf, surf_pix_size)
+        if not selection.space_only:
+            surf = self._block_selector_surf
+        else:
+            surf = self._block_selector_space_only_surf
+        surf = pg.transform.scale(surf, surf_pix_size)
+        surf = pg.transform.rotate(surf, DIR_TO_ANGLE[selection.space_w_pos_shift])
 
         w_shift = np.array(
             tuple(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(
@@ -170,6 +185,10 @@ class Camera:
                 self._pos
                 ))
             )
+
+        if selection.space_only:
+            self.selected_block_w_pos = None
+
         pix_shift = w_to_pix_shift(
             w_shift,
             surf_pix_size,

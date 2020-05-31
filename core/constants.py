@@ -58,7 +58,16 @@ CURRENT_SAVE_DIR = "save_002"
 CURRENT_SAVE_PATH = os.path.join(CWD, SAVES_DIR, CURRENT_SAVE_DIR)
 RESOURCES_PATH = os.path.join(CWD, "resources")
 TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
+GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 
 # ==== GAME DYNAMICS ====
 GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
 ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
+
+# ==== UTILITIES ====
+DIR_TO_ANGLE = {
+    WVec(1, 0): 0,
+    WVec(0, 1): 90,
+    WVec(-1, 0): 180,
+    WVec(0, -1): 270,
+    }
