@@ -45,7 +45,12 @@ class Vec:
                 y = 0.0
             
         if vec_like is None and "vec_like" in kwargs:
-            vec_like = kwargs["vec_like"]
+            if isinstance(kwargs["vec_like"], np.ndarray):
+                vec_like = kwargs["vec_like"]
+            elif isinstance(kwargs["vec_like"], Vec):
+                vec_like = np.array(kwargs["vec_like"].coords)
+            elif isinstance(kwargs["vec_like"], Iterable):
+                vec_like = np.array(kwargs["vec_like"])
             
         if vec_like is None:
             self.coords = np.array((x, y))

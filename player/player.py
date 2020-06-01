@@ -1,9 +1,6 @@
 import json
 import os
 from math import floor
-from copy import copy
-
-# import numpy as np
 
 from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_POS_MIN_HEIGHT, RESOURCES_PATH, \
     BLOCK_BOUND_SHIFTS
@@ -13,14 +10,14 @@ from core.classes import WVec, WBounds, WDimBounds
 
 
 class Player:
-    _ACC = copy(GRAVITY)
+    _ACC = WVec(GRAVITY)
     _ACTION_POS_RATIO = 0.75
     _MAIN_PLAYER_DIR = "steve"
 
     def __init__(self, name, spawn_pos):
         self.name = name
 
-        self._spawn_pos = copy(spawn_pos)
+        self._spawn_pos = WVec(spawn_pos)
 
         self.pos = WVec()
         self._req_pos = WVec()

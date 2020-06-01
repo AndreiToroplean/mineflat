@@ -137,11 +137,11 @@ class World:
         hits = 0
         for pos_to_check in poss_to_check:
             w_vel_iter = pos_to_check - start_w_pos
-            w_speed_iter = np.linalg.norm(w_vel_iter)
+            w_speed_iter = w_vel_iter.norm()
             w_vel_step = w_vel_iter / (w_speed_iter * substeps)
             max_mult = floor(w_speed_iter * substeps)
             for mult in range(max_mult + 1):
-                w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
+                w_pos = floor(start_w_pos + w_vel_step * mult)
                 if w_pos in blocks_map and not w_pos == block_w_pos:
                     break
             else:
