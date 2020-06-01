@@ -136,7 +136,7 @@ class Camera:
             scale=self._scale
             )
 
-        self._screen.blit(max_surf_scaled, pix_shift)
+        self._screen.blit(max_surf_scaled, tuple(pix_shift))
 
     def draw_player(self, anim_surf, player_pos):
         surf = anim_surf.get_surf_and_tick()
@@ -156,7 +156,7 @@ class Camera:
             scale=self._scale
             )
 
-        self._screen.blit(surf_scaled, pix_shift)
+        self._screen.blit(surf_scaled, tuple(pix_shift))
 
     def draw_block_selector(self, action_w_pos, world):
         selection: BlockSelection

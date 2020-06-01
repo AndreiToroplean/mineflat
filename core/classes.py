@@ -1,10 +1,12 @@
 from collections import namedtuple
 from enum import Enum
 
-PixVec = namedtuple("PixVec", ("x", "y"))
-SVec = namedtuple("SVec", ("x", "y"))
-WVec = namedtuple("WVec", ("x", "y"))
-CVec = namedtuple("CVec", ("x", "y"))
+from core.vec import Vec
+
+class WVec(Vec): pass
+class CVec(Vec): pass
+class SVec(Vec): pass
+class PixVec(Vec): pass
 
 WView = namedtuple("WView", ("pos_0", "pos_1"))
 CView = namedtuple("CView", ("pos_0", "pos_1"))
@@ -13,6 +15,7 @@ WDimBounds = namedtuple("WDimBounds", ("min", "max"))
 WBounds = namedtuple("WBounds", ("x", "y"))
 
 BlockSelection = namedtuple("BlockSelection", ("block_w_pos", "space_w_pos_shift", "space_only"))
+
 
 class Result(Enum):
     success = 0

@@ -17,7 +17,7 @@ from world.generation import Material
 class World:
     _SAVE_FILE_NAME = "world.json"
 
-    _empty_chunk_surf = pg.Surface(CHUNK_PIX_SIZE)
+    _empty_chunk_surf = pg.Surface(tuple(CHUNK_PIX_SIZE))
     _empty_chunk_surf.fill(C_KEY)
 
     def __init__(self):
@@ -239,7 +239,7 @@ class World:
         blit_sequence = []
         for chunk_w_pos, chunk in self._chunks_visible_map.items():
             pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
-            blit_sequence.append((chunk.surf, pix_shift))
+            blit_sequence.append((chunk.surf, tuple(pix_shift)))
         self._max_surf.blits(blit_sequence, doreturn=False)
 
     def _resize_max_surf(self, camera):
