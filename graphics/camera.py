@@ -197,7 +197,7 @@ class Camera:
             dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
             scale=self._scale)
 
-        self._screen.blit(surf, pix_shift)
+        self._screen.blit(surf, tuple(pix_shift))
 
     def draw_debug_info(self):
         fps_surf = self._font.render(f"{self._clock.get_fps():.1f}", True, (255, 255, 255))

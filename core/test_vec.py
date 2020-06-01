@@ -2,7 +2,14 @@ from math import floor
 
 from core.vec import Vec
 
-a = Vec(-1.1, 2)
-b = Vec(3, 4)
+pos = (-1, 2)
+a = Vec(*pos)
 
-print((a))
+# print(hash(a))
+# print(hash(tuple(a)))
+# print(hash(pos))
+
+test = {a: 0}
+print(tuple(a) in test)
+print(hash(a) == hash(tuple(a)))
+print(a == pos)

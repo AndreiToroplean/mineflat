@@ -37,13 +37,13 @@ class Chunk:
     def _update_colliders(self):
         self.colliders = Colliders()
         for block_w_pos in self.blocks_map:
-            if not (block_w_pos[0]-1, block_w_pos[1]) in self.blocks_map:
+            if not WVec(block_w_pos[0]-1, block_w_pos[1]) in self.blocks_map:
                 self.colliders.left.append(block_w_pos)
-            if not (block_w_pos[0]+1, block_w_pos[1]) in self.blocks_map:
+            if not WVec(block_w_pos[0]+1, block_w_pos[1]) in self.blocks_map:
                 self.colliders.right.append(block_w_pos)
-            if not (block_w_pos[0], block_w_pos[1]-1) in self.blocks_map:
+            if not WVec(block_w_pos[0], block_w_pos[1]-1) in self.blocks_map:
                 self.colliders.bottom.append(block_w_pos)
-            if not (block_w_pos[0], block_w_pos[1]+1) in self.blocks_map:
+            if not WVec(block_w_pos[0], block_w_pos[1]+1) in self.blocks_map:
                 self.colliders.top.append(block_w_pos)
 
     def _block_pos_to_pix_shift(self, block_w_pos):

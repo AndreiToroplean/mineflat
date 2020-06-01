@@ -48,6 +48,9 @@ class Vec:
     def __iter__(self):
         return iter((self.x, self.y))
 
+    def __hash__(self):
+        return hash(tuple(self))
+
     def __add__(self, other):
         return Vec(coords=self.coords + other.coords)
 
@@ -92,7 +95,10 @@ class Vec:
         return Vec(coords=abs(self.coords))
 
     def __round__(self, ndigits=0):
-        return Vec(*(round(dim, ndigits) for dim in self.coords))
+        return Vec(*(round(coord, ndigits) for coord in self.coords))
 
     def __floor__(self):
-        return Vec(*(floor(dim) for dim in self.coords))
+        return Vec(*(floor(coord) for coord in self.coords))
+
+    def __eq__(self, other):
+        return all(self_coord == other_coord for self_coord, other_coord in zip(self, other))
