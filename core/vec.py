@@ -1,24 +1,57 @@
 from typing import overload
 from math import floor
+from collections.abc import Iterable
 
 import numpy as np
 
 
 class Vec:
     @overload
-    def __init__(self, x: int or float, y: int or float):
+    def __init__(self, x: int or float = 0.0, y: int or float = 0.0):
         pass
 
     @overload
-    def __init__(self, *, coords: np.ndarray):
+    def __init__(self, vec_like):
         pass
 
     def __init__(self, *args, **kwargs):
-        if "coords" in kwargs:
-            self.coords = kwargs["coords"]
-            return
-        coords = args + tuple(kwargs.values())
-        self.coords = np.array(coords)
+        # FIXME: There are still lots of usage patterns which shouldn't be legal but don't throw exceptions.
+        
+        x = None
+        y = None
+        vec_like = None
+        if len(args) > 0:
+            if isinstance(args[0], np.ndarray):
+                vec_like = args[0]
+            elif isinstance(args[0], Vec):
+                vec_like = np.array(args[0].coords)
+            elif isinstance(args[0], Iterable):
+                vec_like = np.array(args[0])
+            else:
+                x = args[0]
+        if len(args) > 1:
+            y = args[1]
+            
+        if x is None:
+            if "x" in kwargs:
+                x = kwargs["x"]
+            else:
+                x = 0.0
+            
+        if y is None:
+            if "y" in kwargs:
+                y = kwargs["y"]
+            else:
+                y = 0.0
+            
+        if vec_like is None and "vec_like" in kwargs:
+            vec_like = kwargs["vec_like"]
+            
+        if vec_like is None:
+            self.coords = np.array((x, y))
+        else:
+            self.coords = vec_like
+            
 
     @property
     def x(self):
@@ -52,47 +85,73 @@ class Vec:
         return hash(tuple(self))
 
     def __add__(self, other):
-        return Vec(coords=self.coords + other.coords)
+        if isinstance(other, Vec):
+            return Vec(self.coords + other.coords)
+        return Vec(self.coords + other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
 
     def __sub__(self, other):
-        return Vec(coords=self.coords - other.coords)
+        if isinstance(other, Vec):
+            return Vec(self.coords - other.coords)
+        return Vec(self.coords - other)
+
+    def __rsub__(self, other):
+        return self.__sub__(other)
 
     def __mul__(self, other):
         if isinstance(other, Vec):
-            return Vec(coords=self.coords * other.coords)
-        return Vec(coords=self.coords * other)
+            return Vec(self.coords * other.coords)
+        return Vec(self.coords * other)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __truediv__(self, other):
         if isinstance(other, Vec):
-            return Vec(coords=self.coords / other.coords)
-        return Vec(coords=self.coords / other)
+            return Vec(self.coords / other.coords)
+        return Vec(self.coords / other)
 
     def __rtruediv__(self, other):
         return self.__truediv__(other)
 
     def __iadd__(self, other):
-        self.coords += other.coords
+        if isinstance(other, Vec):
+            self.coords += other.coords
+        else:
+            self.coords += other
+        return self
 
     def __isub__(self, other):
-        self.coords -= other.coords
+        if isinstance(other, Vec):
+            self.coords -= other.coords
+        else:
+            self.coords -= other
+        return self
 
     def __imul__(self, other):
-        self.coords *= other.coords
+        if isinstance(other, Vec):
+            self.coords *= other.coords
+        else:
+            self.coords *= other
+        return self
 
     def __itruediv__(self, other):
-        self.coords /= other.coords
+        if isinstance(other, Vec):
+            self.coords /= other.coords
+        else:
+            self.coords /= other
+        return self
 
     def __neg__(self):
-        return Vec(coords=-self.coords)
+        return Vec(-self.coords)
 
     def __pos__(self):
         return self
 
     def __abs__(self):
-        return Vec(coords=abs(self.coords))
+        return Vec(abs(self.coords))
 
     def __round__(self, ndigits=0):
         return Vec(*(round(coord, ndigits) for coord in self.coords))
@@ -102,3 +161,6 @@ class Vec:
 
     def __eq__(self, other):
         return all(self_coord == other_coord for self_coord, other_coord in zip(self, other))
+
+    def norm(self):
+        return np.linalg.norm(self.coords)

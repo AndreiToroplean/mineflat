@@ -2,7 +2,6 @@ import math
 import os
 from math import floor
 
-import numpy as np
 import pygame as pg
 
 from core.classes import WVec, WView, BlockSelection
@@ -21,19 +20,19 @@ class Camera:
     _SCALE_COLLISION_DAMPING_FACTOR = 0.75
 
     def __init__(self):
-        self._pos = np.array((0.0, 0.0))
-        self._req_pos = np.array(self._pos)
+        self._pos = WVec()
+        self._req_pos = WVec(self._pos)
 
-        self._vel = np.array((0.0, 0.0))
-        self._req_vel = np.array(self._vel)
+        self._vel = WVec()
+        self._req_vel = WVec(self._vel)
 
         self._zoom_vel = 1.0
         self._req_zoom_vel = 1.0
 
         self._scale = CAM_DEFAULT_SCALE
 
-        self.selected_block_w_pos = np.array(self._pos)
-        self.selected_space_w_pos = np.array(self._pos)
+        self.selected_block_w_pos = WVec(self._pos)
+        self.selected_space_w_pos = WVec(self._pos)
         self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png"))
         self._block_selector_surf.set_colorkey(C_KEY)
         self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png"))
@@ -79,7 +78,7 @@ class Camera:
             dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
             scale=self._scale,
             )
-        mouse_w_pos = np.array(
+        mouse_w_pos = WVec(
             tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
             )
         return mouse_w_pos
@@ -179,7 +178,7 @@ class Camera:
         surf = pg.transform.scale(surf, surf_pix_size)
         surf = pg.transform.rotate(surf, DIR_TO_ANGLE[selection.space_w_pos_shift])
 
-        w_shift = np.array(
+        w_shift = WVec(
             tuple(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(
                 self.selected_block_w_pos,
                 self._pos
@@ -224,11 +223,11 @@ class Camera:
     # ==== APPLY MOVEMENTS ====
 
     def set_transforms(self, pos, vel=(0.0, 0.0)):
-        self._pos = np.array(pos)
-        self._req_pos = np.array(self._pos)
+        self._pos = WVec(pos)
+        self._req_pos = WVec(self._pos)
 
-        self._vel = np.array(vel)
-        self._req_vel = np.array(self._vel)
+        self._vel = WVec(vel)
+        self._req_vel = WVec(self._vel)
 
     def move(self, threshold=0.001):
         self._vel += (self._req_vel - self._vel) * self._VEL_DAMPING_FACTOR

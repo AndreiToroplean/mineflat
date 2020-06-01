@@ -5,7 +5,6 @@ from enum import Enum
 from math import floor
 
 import pygame as pg
-import numpy as np
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
@@ -91,7 +90,7 @@ class World:
         blocks_map = self._get_blocks_around(end_w_pos, c_radius=c_radius)
 
         w_vel = end_w_pos - start_w_pos
-        w_speed = np.linalg.norm(w_vel)
+        w_speed = w_vel.norm()
         w_dir = WVec(
             *(vel_dim / abs(vel_dim) for vel_dim in w_vel)
             )
@@ -163,7 +162,7 @@ class World:
     def get_intersected_block_pos_and_space_pos(self, start_w_pos, end_w_pos, max_distance, *, c_radius=1, substeps=5) -> BlockSelection:
         blocks_map = self._get_blocks_around(start_w_pos, c_radius=c_radius)
         w_vel = end_w_pos - start_w_pos
-        w_speed = np.linalg.norm(w_vel)
+        w_speed = w_vel.norm()
         w_dir = WVec(
             *(vel_dim / abs(vel_dim) for vel_dim in w_vel)
             )
@@ -175,7 +174,7 @@ class World:
             space_w_pos_shifts.reverse()
 
         for mult in range(max_mult + 1):
-            w_pos = WVec(*(np.floor(start_w_pos + w_vel_step * mult)))
+            w_pos = floor(start_w_pos + w_vel_step * mult)
             if w_pos in blocks_map:
                 space_w_pos_shift = space_w_pos_shifts[0]
                 space_w_pos = WVec(

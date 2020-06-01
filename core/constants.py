@@ -48,7 +48,7 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
     ))
 
 # ==== GAME PARAMS ====
-FULLSCREEN = True
+FULLSCREEN = False
 DEBUG = True
 
 # ==== PATHS ====
@@ -61,7 +61,7 @@ TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
 GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 
 # ==== GAME DYNAMICS ====
-GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
+GRAVITY = WVec(0.0, -22 / (CAM_FPS ** 2))
 ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
 
 # ==== UTILITIES ====

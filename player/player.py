@@ -1,8 +1,9 @@
 import json
 import os
 from math import floor
+from copy import copy
 
-import numpy as np
+# import numpy as np
 
 from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_POS_MIN_HEIGHT, RESOURCES_PATH, \
     BLOCK_BOUND_SHIFTS
@@ -12,19 +13,19 @@ from core.classes import WVec, WBounds, WDimBounds
 
 
 class Player:
-    _ACC = np.array(GRAVITY)
+    _ACC = copy(GRAVITY)
     _ACTION_POS_RATIO = 0.75
     _MAIN_PLAYER_DIR = "steve"
 
     def __init__(self, name, spawn_pos):
         self.name = name
 
-        self._spawn_pos = np.array(spawn_pos)
+        self._spawn_pos = copy(spawn_pos)
 
-        self.pos = np.array((0.0, 0.0))
-        self._req_pos = np.array((0.0, 0.0))
-        self._vel = np.array((0.0, 0.0))
-        self._req_vel = np.array((0.0, 0.0))
+        self.pos = WVec()
+        self._req_pos = WVec()
+        self._vel = WVec()
+        self._req_vel = WVec()
 
         self.spawn()
 
@@ -70,7 +71,7 @@ class Player:
     def action_w_pos(self):
         """Getter for the position from which the player acts upon its environment.
         """
-        action_w_pos = np.array(self.pos)
+        action_w_pos = WVec(self.pos)
         action_w_pos[1] += self._w_size[1] * self._ACTION_POS_RATIO
         return action_w_pos
 
@@ -130,11 +131,11 @@ class Player:
     def set_transforms(self, pos, vel=(0.0, 0.0)):
         """Set the transforms directly without going through a request.
         """
-        self.pos = np.array(pos)
-        self._req_pos = np.array(self.pos)
+        self.pos = WVec(pos)
+        self._req_pos = WVec(self.pos)
 
-        self._vel = np.array(vel)
-        self._req_vel = np.array(self._vel)
+        self._vel = WVec(vel)
+        self._req_vel = WVec(self._vel)
 
     def spawn(self):
         """Set or reset the player to its spawning state.
@@ -191,13 +192,13 @@ class Player:
         self._vel[1] += self._req_vel[1]
 
         self._vel += self._ACC
-        self._req_pos[:] = self.pos
+        self._req_pos = WVec(self.pos)
         # Making more collision steps when the player is moving faster than 1 block per frame:
-        collision_steps = floor(np.linalg.norm(self._vel)) + 1
+        collision_steps = floor(self._vel.norm()) + 1
         for _ in range(collision_steps):
             self._req_pos += self._vel / collision_steps
             self._collide(world)
-        self.pos[:] = self._req_pos
+        self.pos = WVec(self._req_pos)
 
     # ==== SAVE AND LOAD ====
 
