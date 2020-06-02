@@ -42,7 +42,7 @@ class World:
 
     # ==== GET DATA ====
 
-    def _get_chunks_at_w_pos(self, w_pos):
+    def _get_chunk_map_at_w_pos(self, w_pos):
         chunk_w_pos = w_to_c_to_w_vec(w_pos)
         try:
             chunk = self.chunks_existing_map[chunk_w_pos]
@@ -63,8 +63,7 @@ class World:
                     floor(w_pos[1] + (c_radius+1) * CHUNK_W_SIZE.y),
                     CHUNK_W_SIZE.y
                     ):
-                chunk_w_pos = WVec(pos_x, pos_y)
-                chunk_map = self._get_chunks_at_w_pos(chunk_w_pos)
+                chunk_map = self._get_chunk_map_at_w_pos(WVec(pos_x, pos_y))
                 if chunk_map is None:
                     continue
                 chunks_map.update((chunk_map,))
@@ -260,8 +259,8 @@ class World:
 
     def _redraw_chunk(self, chunk_w_pos, chunk_surf):
         pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
-        self._max_surf.blit(self._empty_chunk_surf, pix_shift)
-        self._max_surf.blit(chunk_surf, pix_shift)
+        self._max_surf.blit(self._empty_chunk_surf, tuple(pix_shift))
+        self._max_surf.blit(chunk_surf, tuple(pix_shift))
 
     # ==== MODIFY ====
 
@@ -302,7 +301,7 @@ class World:
         """Request breaking of the block at block_w_pos to the relevant chunk.
         Then update the world in consequence.
         """
-        chunk_map = self._get_chunks_at_w_pos(block_w_pos)
+        chunk_map = self._get_chunk_map_at_w_pos(block_w_pos)
         if chunk_map is None:
             return
 
@@ -317,7 +316,7 @@ class World:
         """Request placing of the block of the given material at block_w_pos to the relevant chunk.
         Then update the world in consequence.
         """
-        chunk_map = self._get_chunks_at_w_pos(block_w_pos)
+        chunk_map = self._get_chunk_map_at_w_pos(block_w_pos)
         if chunk_map is None:
             return
 

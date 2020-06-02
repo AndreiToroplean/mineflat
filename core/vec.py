@@ -113,6 +113,14 @@ class Vec:
     def __rmul__(self, other):
         return self.__mul__(other)
 
+    def __floordiv__(self, other):
+        if isinstance(other, Vec):
+            return Vec(self.coords // other.coords)
+        return Vec(self.coords // other)
+
+    def __rfloordiv__(self, other):
+        return self.__floordiv__(other)
+
     def __truediv__(self, other):
         if isinstance(other, Vec):
             return Vec(self.coords / other.coords)
@@ -140,6 +148,13 @@ class Vec:
             self.coords *= other.coords
         else:
             self.coords *= other
+        return self
+
+    def __ifloordiv__(self, other):
+        if isinstance(other, Vec):
+            self.coords //= other.coords
+        else:
+            self.coords //= other
         return self
 
     def __itruediv__(self, other):

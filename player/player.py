@@ -137,7 +137,7 @@ class Player:
     def spawn(self):
         """Set or reset the player to its spawning state.
         """
-        self.set_transforms(self._spawn_pos, (0.0, -200.0/CAM_FPS))
+        self.set_transforms(self._spawn_pos, (0.0, 0.0))
 
     def _collide(self, world, threshold=0.001):
         """Check for collisions with the world and update the transforms accordingly.
@@ -182,7 +182,7 @@ class Player:
                     self._vel[0] = 0
                     break
 
-    def move(self, world):
+    def move(self, world, substeps=2):
         """Apply requested and physics-induced movements.
         """
         self._vel[0] += (self._req_vel[0] - self._vel[0]) * PLAYER_POS_DAMPING_FACTOR
@@ -191,7 +191,7 @@ class Player:
         self._vel += self._ACC
         self._req_pos = WVec(self.pos)
         # Making more collision steps when the player is moving faster than 1 block per frame:
-        collision_steps = floor(self._vel.norm()) + 1
+        collision_steps = floor(self._vel.norm()) * substeps
         for _ in range(collision_steps):
             self._req_pos += self._vel / collision_steps
             self._collide(world)

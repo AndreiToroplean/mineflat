@@ -62,7 +62,7 @@ class Chunk:
 
     def _redraw_block(self, block_w_pos, block_surf):
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
-        self.surf.blit(block_surf, pix_shift)
+        self.surf.blit(block_surf, tuple(pix_shift))
 
     # ==== MODIFY ====
 
