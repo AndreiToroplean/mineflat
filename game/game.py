@@ -120,15 +120,15 @@ class Game:
         except FileExistsError:
             pass
 
-        # self.world.load_from_disk(CURRENT_SAVE_PATH)
-        # self.main_player.load_from_disk(CURRENT_SAVE_PATH)
+        self.world.load_from_disk(CURRENT_SAVE_PATH)
+        self.main_player.load_from_disk(CURRENT_SAVE_PATH)
 
         self.camera.set_transforms(self.main_player.pos)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # self.world.save_to_disk(CURRENT_SAVE_PATH)
-        # self.main_player.save_to_disk(CURRENT_SAVE_PATH)
+        self.world.save_to_disk(CURRENT_SAVE_PATH)
+        self.main_player.save_to_disk(CURRENT_SAVE_PATH)
         pg.quit()
 
     def draw_sky(self):

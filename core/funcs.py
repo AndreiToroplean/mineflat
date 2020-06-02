@@ -5,15 +5,18 @@ from core.constants import CHUNK_W_SIZE, BLOCK_PIX_SIZE
 
 
 def w_to_c_vec(w_vec):
-    return CVec(*(int(dim // chunk_size_dim) for dim, chunk_size_dim in zip(w_vec, CHUNK_W_SIZE)))
+    assert CVec(*(int(dim // chunk_size_dim) for dim, chunk_size_dim in zip(w_vec, CHUNK_W_SIZE))) == floor(w_vec // CHUNK_W_SIZE)
+    return floor(w_vec // CHUNK_W_SIZE)
 
 
-def c_to_w_vec(chunk_vec):
-    return WVec(*(dim * chunk_size_dim for dim, chunk_size_dim in zip(chunk_vec, CHUNK_W_SIZE)))
+def c_to_w_vec(c_vec):
+    assert WVec(*(dim * chunk_size_dim for dim, chunk_size_dim in zip(c_vec, CHUNK_W_SIZE))) == c_vec * CHUNK_W_SIZE
+    return c_vec * CHUNK_W_SIZE
 
 
 def w_to_c_to_w_vec(w_vec):
-    return WVec(*(int(dim // chunk_size_dim) * chunk_size_dim for dim, chunk_size_dim in zip(w_vec, CHUNK_W_SIZE)))
+    assert WVec(*(int(dim // chunk_size_dim) * chunk_size_dim for dim, chunk_size_dim in zip(w_vec, CHUNK_W_SIZE))) == floor(w_vec // CHUNK_W_SIZE) * CHUNK_W_SIZE
+    return floor(w_vec // CHUNK_W_SIZE) * CHUNK_W_SIZE
 
 
 def w_to_pix_shift(w_shift, source_surf_pix_size, dest_surf_pix_size, source_pivot=(0, 0), dest_pivot=(0, 0), *, scale=BLOCK_PIX_SIZE):
