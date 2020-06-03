@@ -12,7 +12,7 @@ class Chunk:
     _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
     _empty_block_surf.fill(C_KEY)
 
-    def __init__(self, w_pos, seed, blocks_map=None):
+    def __init__(self, w_pos: WVec, seed, blocks_map=None):
         self._w_pos = w_pos
 
         self._seed = seed
@@ -22,10 +22,7 @@ class Chunk:
         else:
             self.blocks_map = self._generator.load_chunk_blocks(blocks_map)
 
-        self.surf = pg.Surface((
-            BLOCK_PIX_SIZE * CHUNK_W_SIZE[0],
-            BLOCK_PIX_SIZE * CHUNK_W_SIZE[1],
-            ))
+        self.surf = pg.Surface(BLOCK_PIX_SIZE * CHUNK_W_SIZE)
         self.surf.set_colorkey(C_KEY)
         self._draw()
 
@@ -37,19 +34,17 @@ class Chunk:
     def _update_colliders(self):
         self.colliders = Colliders()
         for block_w_pos in self.blocks_map:
-            if not (block_w_pos[0]-1, block_w_pos[1]) in self.blocks_map:
+            if not (block_w_pos + WVec(-1, 0)) in self.blocks_map:
                 self.colliders.left.append(block_w_pos)
-            if not (block_w_pos[0]+1, block_w_pos[1]) in self.blocks_map:
+            if not (block_w_pos + WVec(+1, 0)) in self.blocks_map:
                 self.colliders.right.append(block_w_pos)
-            if not (block_w_pos[0], block_w_pos[1]-1) in self.blocks_map:
+            if not (block_w_pos + WVec(0, -1)) in self.blocks_map:
                 self.colliders.bottom.append(block_w_pos)
-            if not (block_w_pos[0], block_w_pos[1]+1) in self.blocks_map:
+            if not (block_w_pos + WVec(0, +1)) in self.blocks_map:
                 self.colliders.top.append(block_w_pos)
 
-    def _block_pos_to_pix_shift(self, block_w_pos):
-        w_shift = WVec(
-            *(block_dim - chunk_dim for block_dim, chunk_dim in zip(block_w_pos, self._w_pos))
-            )
+    def _block_pos_to_pix_shift(self, block_w_pos: WVec):
+        w_shift = block_w_pos - self._w_pos
         return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self.surf.get_size())
 
     def _draw(self):
@@ -60,13 +55,13 @@ class Chunk:
             blit_sequence.append((block.surf, pix_shift))
         self.surf.blits(blit_sequence, doreturn=False)
 
-    def _redraw_block(self, block_w_pos, block_surf):
+    def _redraw_block(self, block_w_pos: WVec, block_surf):
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
         self.surf.blit(block_surf, pix_shift)
 
     # ==== MODIFY ====
 
-    def req_break_block(self, block_w_pos):
+    def req_break_block(self, block_w_pos: WVec):
         """
         Break block at block_w_pos if it exists and return result (success or failure).
         Then, update the chunk in consequence.
@@ -80,7 +75,7 @@ class Chunk:
         self._update_colliders()
         return Result.success
 
-    def req_place_block(self, block_w_pos, material):
+    def req_place_block(self, block_w_pos: WVec, material: Material):
         """
         Place block at block_w_pos if the space is free and return result (success or failure).
         Then, update the chunk in consequence.

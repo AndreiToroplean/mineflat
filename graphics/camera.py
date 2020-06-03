@@ -2,10 +2,9 @@ import math
 import os
 from math import floor
 
-import numpy as np
 import pygame as pg
 
-from core.classes import WVec, WView, BlockSelection
+from core.classes import WVec, WBounds, BlockSelection, WBounds, PixVec
 from core.funcs import w_to_pix_shift, pix_to_w_shift
 from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
     CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH
@@ -21,19 +20,19 @@ class Camera:
     _SCALE_COLLISION_DAMPING_FACTOR = 0.75
 
     def __init__(self):
-        self._pos = np.array((0.0, 0.0))
-        self._req_pos = np.array(self._pos)
+        self._pos = WVec()
+        self._req_pos = WVec(self._pos)
 
-        self._vel = np.array((0.0, 0.0))
-        self._req_vel = np.array(self._vel)
+        self._vel = WVec()
+        self._req_vel = WVec(self._vel)
 
         self._zoom_vel = 1.0
         self._req_zoom_vel = 1.0
 
         self._scale = CAM_DEFAULT_SCALE
 
-        self.selected_block_w_pos = np.array(self._pos)
-        self.selected_space_w_pos = np.array(self._pos)
+        self.selected_block_w_pos = WVec(self._pos)
+        self.selected_space_w_pos = WVec(self._pos)
         self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png"))
         self._block_selector_surf.set_colorkey(C_KEY)
         self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png"))
@@ -43,7 +42,7 @@ class Camera:
             self._screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
         else:
             self._screen = pg.display.set_mode((1280, 720))
-        self._pix_size = self._screen.get_size()
+        self._pix_size = PixVec(self._screen.get_size())
 
         self._clock = pg.time.Clock()
         self._font = pg.font.SysFont(pg.font.get_default_font(), 24)
@@ -52,43 +51,34 @@ class Camera:
 
     @property
     def w_size(self):
-        # TODO: add memoization
-        return WVec(*(dim / self._scale for dim in self._pix_size))
+        return self._pix_size / self._scale
 
     @property
     def w_view(self):
         """World referred part of the world visible on screen. """
-        return WView(
-            pos_0=WVec(
-                x=self._pos[0] - self.w_size.x * PLAYER_S_POS.x,
-                y=self._pos[1] - self.w_size.y * PLAYER_S_POS.y,
-                ),
-            pos_1=WVec(
-                x=self._pos[0] + self.w_size.x * (1 - PLAYER_S_POS.x),
-                y=self._pos[1] + self.w_size.y * (1 - PLAYER_S_POS.y),
-                ),
+        return WBounds(
+            min=self._pos - self.w_size * PLAYER_S_POS,
+            max=self._pos + self.w_size * (1-PLAYER_S_POS),
             )
 
     @property
     def _mouse_w_pos(self):
-        mouse_pix_shift = pg.mouse.get_pos()
+        mouse_pix_shift = PixVec(pg.mouse.get_pos())
         mouse_w_shift = pix_to_w_shift(
             mouse_pix_shift,
             (0, 0),
             self._pix_size,
-            dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
+            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
             scale=self._scale,
             )
-        mouse_w_pos = np.array(
-            tuple(w_shift_dim + cam_pos_dim for w_shift_dim, cam_pos_dim in zip(mouse_w_shift, self._pos))
-            )
+        mouse_w_pos = mouse_w_shift + self._pos
         return mouse_w_pos
 
     @property
     def is_zooming(self):
         return not math.isclose(self._zoom_vel, 1)
 
-    def _select_block(self, action_w_pos, world, *, c_radius=1, substeps=20, max_rays=3) -> BlockSelection:
+    def _select_block(self, action_w_pos: WVec, world, *, c_radius=1, substeps=20, max_rays=3) -> BlockSelection:
         """Return selection based on player position and mouse position.
         Selection is one selected block and one selected space.
         """
@@ -122,43 +112,39 @@ class Camera:
     def draw_sky(self):
         self._screen.fill(C_SKY)
 
-    def draw_world(self, max_surf, max_view_pos):
-        max_surf_scaled_pix_size = tuple(floor(dim * (self._scale / BLOCK_PIX_SIZE)) for dim in max_surf.get_size())
+    def draw_world(self, max_surf, max_view_pos: WVec):
+        max_surf_scaled_pix_size = floor(PixVec(max_surf.get_size()) * (self._scale / BLOCK_PIX_SIZE))
         max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size)
-        w_shift = WVec(
-            *(max_pos_dim - pos_dim for pos_dim, max_pos_dim in zip(self._pos, max_view_pos))
-            )
+        w_shift = max_view_pos - self._pos
         pix_shift = w_to_pix_shift(
             w_shift,
             max_surf_scaled_pix_size,
             self._pix_size,
-            dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
+            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
             scale=self._scale
             )
 
         self._screen.blit(max_surf_scaled, pix_shift)
 
-    def draw_player(self, anim_surf, player_pos):
+    def draw_player(self, anim_surf, player_pos: WVec):
         surf = anim_surf.get_surf_and_tick()
 
-        surf_scaled_pix_size = tuple(floor(dim * self._scale) for dim in anim_surf.w_size)
+        surf_scaled_pix_size = floor(anim_surf.w_size * self._scale)
         surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)
 
-        w_shift = WVec(
-            *(player_pos_dim - pos_dim for player_pos_dim, pos_dim in zip(player_pos, self._pos))
-            )
+        w_shift = player_pos - self._pos
         pix_shift = w_to_pix_shift(
             w_shift,
             surf_scaled_pix_size,
             self._pix_size,
-            source_pivot=(surf_scaled_pix_size[0] / 2, 0),
-            dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
+            source_pivot=(surf_scaled_pix_size.x / 2, 0),
+            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
             scale=self._scale
             )
 
         self._screen.blit(surf_scaled, pix_shift)
 
-    def draw_block_selector(self, action_w_pos, world):
+    def draw_block_selector(self, action_w_pos: WVec, world):
         selection: BlockSelection
         selection = self._select_block(action_w_pos, world)
         if selection.block_w_pos is None:
@@ -167,9 +153,7 @@ class Camera:
             return
 
         self.selected_block_w_pos = selection.block_w_pos
-        self.selected_space_w_pos = WVec(
-            *(block_w_pos_dim + space_pos_shift_dim for block_w_pos_dim, space_pos_shift_dim in zip(self.selected_block_w_pos, selection.space_w_pos_shift))
-            )
+        self.selected_space_w_pos = self.selected_block_w_pos + selection.space_w_pos_shift
 
         surf_pix_size = (floor(self._scale), floor(self._scale))
         if not selection.space_only:
@@ -179,12 +163,7 @@ class Camera:
         surf = pg.transform.scale(surf, surf_pix_size)
         surf = pg.transform.rotate(surf, DIR_TO_ANGLE[selection.space_w_pos_shift])
 
-        w_shift = np.array(
-            tuple(floor(mouse_pos_dim) - pos_dim for mouse_pos_dim, pos_dim in zip(
-                self.selected_block_w_pos,
-                self._pos
-                ))
-            )
+        w_shift = floor(self.selected_block_w_pos) - self._pos
 
         if selection.space_only:
             self.selected_block_w_pos = None
@@ -194,7 +173,7 @@ class Camera:
             surf_pix_size,
             self._pix_size,
             source_pivot=(-1, 1),
-            dest_pivot=(self._pix_size[0] * PLAYER_S_POS.x, self._pix_size[1] * PLAYER_S_POS.y),
+            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
             scale=self._scale)
 
         self._screen.blit(surf, pix_shift)
@@ -223,16 +202,16 @@ class Camera:
 
     # ==== APPLY MOVEMENTS ====
 
-    def set_transforms(self, pos, vel=(0.0, 0.0)):
-        self._pos = np.array(pos)
-        self._req_pos = np.array(self._pos)
+    def set_transforms(self, pos: WVec, vel: WVec = WVec()):
+        self._pos = WVec(pos)
+        self._req_pos = WVec(self._pos)
 
-        self._vel = np.array(vel)
-        self._req_vel = np.array(self._vel)
+        self._vel = WVec(vel)
+        self._req_vel = WVec(self._vel)
 
     def move(self, threshold=0.001):
         self._vel += (self._req_vel - self._vel) * self._VEL_DAMPING_FACTOR
-        self._pos += [vel_dim * self._POS_DAMPING_FACTOR ** (1 / (1 + abs(vel_dim))) for vel_dim in self._vel]
+        self._pos += self._vel * self._POS_DAMPING_FACTOR ** (1 / (1 + abs(self._vel)))
         # (1/(1+speed)) is 1 when speed is 0 and is 0 when speed is +inf.
         # This is so that the CAM_POS_DAMPING_FACTOR is only applied at low speeds.
 

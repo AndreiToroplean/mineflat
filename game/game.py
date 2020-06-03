@@ -3,7 +3,7 @@ from enum import Enum
 
 import pygame as pg
 
-from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, CURRENT_SAVE_PATH
+from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, CURRENT_SAVE_PATH, LOAD, SAVE
 from game.controls import Controls, Mods
 from world.generation import Material
 from graphics.camera import Camera
@@ -114,21 +114,24 @@ class Game:
         self.action = GameAction.quit
 
     def __enter__(self):
-        # Create SAVES_CURRENT_DIR if it doesn't already exist.
-        try:
-            os.makedirs(CURRENT_SAVE_PATH)
-        except FileExistsError:
-            pass
+        if LOAD:
+            # Create SAVES_CURRENT_DIR if it doesn't already exist.
+            try:
+                os.makedirs(CURRENT_SAVE_PATH)
+            except FileExistsError:
+                pass
 
-        self.world.load_from_disk(CURRENT_SAVE_PATH)
-        self.main_player.load_from_disk(CURRENT_SAVE_PATH)
+            self.world.load_from_disk(CURRENT_SAVE_PATH)
+            self.main_player.load_from_disk(CURRENT_SAVE_PATH)
 
         self.camera.set_transforms(self.main_player.pos)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.world.save_to_disk(CURRENT_SAVE_PATH)
-        self.main_player.save_to_disk(CURRENT_SAVE_PATH)
+        if SAVE:
+            self.world.save_to_disk(CURRENT_SAVE_PATH)
+            self.main_player.save_to_disk(CURRENT_SAVE_PATH)
+
         pg.quit()
 
     def draw_sky(self):

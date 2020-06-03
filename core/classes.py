@@ -1,18 +1,36 @@
-from collections import namedtuple
+from typing import NamedTuple
 from enum import Enum
 
-PixVec = namedtuple("PixVec", ("x", "y"))
-SVec = namedtuple("SVec", ("x", "y"))
-WVec = namedtuple("WVec", ("x", "y"))
-CVec = namedtuple("CVec", ("x", "y"))
+from core.vec import Vec
 
-WView = namedtuple("WView", ("pos_0", "pos_1"))
-CView = namedtuple("CView", ("pos_0", "pos_1"))
 
-WDimBounds = namedtuple("WDimBounds", ("min", "max"))
-WBounds = namedtuple("WBounds", ("x", "y"))
+class WVec(Vec): pass
 
-BlockSelection = namedtuple("BlockSelection", ("block_w_pos", "space_w_pos_shift", "space_only"))
+
+class CVec(Vec): pass
+
+
+class SVec(Vec): pass
+
+
+class PixVec(Vec): pass
+
+
+class WBounds(NamedTuple):
+    min: WVec = WVec()
+    max: WVec = WVec()
+
+
+class CBounds(NamedTuple):
+    min: CVec = CVec()
+    max: CVec = CVec()
+
+
+class BlockSelection(NamedTuple):
+    block_w_pos: WVec or None
+    space_w_pos_shift: WVec or None
+    space_only: bool
+
 
 class Result(Enum):
     success = 0

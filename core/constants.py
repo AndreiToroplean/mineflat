@@ -2,15 +2,15 @@ import os
 
 import pygame as pg
 
-from core.classes import PixVec, SVec, WVec, WBounds, WDimBounds
+from core.classes import PixVec, SVec, WVec, WBounds
 
 # ==== TECHNICAL DIMENSIONS ====
 PLAYER_S_POS = SVec(0.5, 0.333)
 BLOCK_PIX_SIZE = 16  # Should stay equal to block texture size resolution. That is, 16.
 CHUNK_W_SIZE = WVec(8, 8)
-CHUNK_PIX_SIZE = PixVec(*[BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_W_SIZE])
-WORLD_HEIGHT_BOUNDS = (0, 2**8)
-BLOCK_BOUND_SHIFTS = WBounds(WDimBounds(0, 1), WDimBounds(0, 1))
+CHUNK_PIX_SIZE = PixVec(*(BLOCK_PIX_SIZE * chunk_size_dim for chunk_size_dim in CHUNK_W_SIZE))
+WORLD_HEIGHT_BOUNDS = WVec(0, 2**8)
+BLOCK_BOUND_SHIFTS = WBounds(WVec(0, 0), WVec(1, 1))
 
 # ==== COLORS ====
 C_KEY = pg.Color(255, 0, 0)
@@ -23,9 +23,9 @@ CAM_DEFAULT_SCALE = 64.0
 CAM_SCALE_BOUNDS = (32.0, 128.0)
 
 # ==== PLAYER PARAMS ====
-PLAYER_DEFAULT_SPAWN_POS = (0.5, WORLD_HEIGHT_BOUNDS[1])
+PLAYER_DEFAULT_SPAWN_POS = WVec(0.5, WORLD_HEIGHT_BOUNDS.y)
 PLAYER_POS_DAMPING_FACTOR = 0.5
-PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS[0] - 50
+PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS.x - 50
 
 # ==== CURSOR ====
 CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
@@ -48,8 +48,10 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
     ))
 
 # ==== GAME PARAMS ====
-FULLSCREEN = True
+FULLSCREEN = False
 DEBUG = True
+SAVE = True
+LOAD = True
 
 # ==== PATHS ====
 CWD = os.getcwd()
@@ -61,7 +63,7 @@ TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
 GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 
 # ==== GAME DYNAMICS ====
-GRAVITY = (0.0, -22 / (CAM_FPS ** 2))
+GRAVITY = WVec(0.0, -22 / (CAM_FPS ** 2))
 ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
 
 # ==== UTILITIES ====
