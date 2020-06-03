@@ -95,7 +95,7 @@ class Vec:
         return Vec(self.coords + other)
 
     def __radd__(self, other):
-        return self.__add__(other)
+        return self + other
 
     def __sub__(self, other):
         if isinstance(other, Vec):
@@ -103,7 +103,7 @@ class Vec:
         return Vec(self.coords - other)
 
     def __rsub__(self, other):
-        return self.__sub__(other)
+        return -self + other
 
     def __mul__(self, other):
         if isinstance(other, Vec):
@@ -111,7 +111,7 @@ class Vec:
         return Vec(self.coords * other)
 
     def __rmul__(self, other):
-        return self.__mul__(other)
+        return self * other
 
     def __floordiv__(self, other):
         if isinstance(other, Vec):
@@ -119,7 +119,7 @@ class Vec:
         return Vec(self.coords // other)
 
     def __rfloordiv__(self, other):
-        return self.__floordiv__(other)
+        return Vec(other // self.coords)
 
     def __truediv__(self, other):
         if isinstance(other, Vec):
@@ -127,7 +127,7 @@ class Vec:
         return Vec(self.coords / other)
 
     def __rtruediv__(self, other):
-        return self.__truediv__(other)
+        return Vec(other / self.coords)
 
     def __iadd__(self, other):
         if isinstance(other, Vec):
