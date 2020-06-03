@@ -150,9 +150,8 @@ class Player:
         tested_vert_pos = (self.pos[0], self._req_pos[1])
         tested_vert_pos_bounds = self.get_bounds(tested_vert_pos)
 
-        self._is_on_ground = False
         for pos_x in range(tested_vert_pos_bounds.x.min, tested_vert_pos_bounds.x.max+1):
-            if self._vel[1] < 0:
+            if self._vel[1] <= 0:
                 pos_y = tested_vert_pos_bounds.y.min
                 if (pos_x, pos_y) in world_colliders.top:
                     self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.y.max - self._bounds_w_shift.y.min + threshold
@@ -168,7 +167,7 @@ class Player:
                     break
 
         for pos_y in range(tested_horiz_pos_bounds.y.min, tested_horiz_pos_bounds.y.max+1):
-            if self._vel[0] < 0:
+            if self._vel[0] <= 0:
                 pos_x = tested_horiz_pos_bounds.x.min
                 if (pos_x, pos_y) in world_colliders.right:
                     self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.x.max - self._bounds_w_shift.x.min + threshold
@@ -182,14 +181,16 @@ class Player:
                     self._vel[0] = 0
                     break
 
-    def move(self, world, substeps=2):
+    def move(self, world, substeps=1):
         """Apply requested and physics-induced movements.
         """
         self._vel[0] += (self._req_vel[0] - self._vel[0]) * PLAYER_POS_DAMPING_FACTOR
         self._vel[1] += self._req_vel[1]
 
         self._vel += self._ACC
-        # Making more collision steps when the player is moving faster than 1 block per frame:
+
+        self._is_on_ground = False  # Assumption, to be corrected inside self._collide.
+
         collision_steps = (floor(self._vel.norm()) + 1) * substeps
         for _ in range(collision_steps):
             self._req_pos = self.pos + self._vel / collision_steps

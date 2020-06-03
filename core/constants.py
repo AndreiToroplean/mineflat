@@ -52,7 +52,7 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
 FULLSCREEN = False
 DEBUG = True
 SAVE = True
-LOAD = False
+LOAD = True
 
 # ==== PATHS ====
 CWD = os.getcwd()
