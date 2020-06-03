@@ -8,7 +8,7 @@ import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
-from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, BlockSelection
+from core.classes import CBounds, WBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection
 from world.chunk import Chunk
 from world.generation import Material
 
@@ -25,8 +25,8 @@ class World:
         self.chunks_existing_map = {}
         self._chunks_visible_map = {}
 
-        self._c_view = CView(CVec(0, 0), CVec(0, 0))
-        self._max_view = WView(WVec(0, 0), WVec(0, 0))
+        self._c_view = CBounds(CVec(0, 0), CVec(0, 0))
+        self._max_view = WBounds(WVec(0, 0), WVec(0, 0))
 
         self._max_surf = pg.Surface((1, 1))
         self._max_surf.set_colorkey(C_KEY)
@@ -197,9 +197,9 @@ class World:
 
     def _update_c_view(self, camera):
         """Updates c_view and returns True if there are new chunks to load, False otherwise. """
-        new_c_view = CView(
-            w_to_c_vec(camera.w_view.pos_0),
-            w_to_c_vec(camera.w_view.pos_1),
+        new_c_view = CBounds(
+            w_to_c_vec(camera.w_view.min),
+            w_to_c_vec(camera.w_view.max),
             )
 
         if new_c_view == self._c_view:
@@ -209,14 +209,14 @@ class World:
         return True
 
     def _update_chunks_visible(self):
-        self._max_view = WView(
-            WVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(self._c_view.pos_0, CHUNK_W_SIZE)]),
-            WVec(*[(dim + 1) * chunk_size_dim for dim, chunk_size_dim in zip(self._c_view.pos_1, CHUNK_W_SIZE)]),
+        self._max_view = WBounds(
+            WVec(*[dim * chunk_size_dim for dim, chunk_size_dim in zip(self._c_view.min, CHUNK_W_SIZE)]),
+            WVec(*[(dim + 1) * chunk_size_dim for dim, chunk_size_dim in zip(self._c_view.max, CHUNK_W_SIZE)]),
             )
 
         self._chunks_visible_map = {}
-        for chunk_w_pos_x in range(self._max_view.pos_0.x, self._max_view.pos_1.x, CHUNK_W_SIZE.x):
-            for chunk_w_pos_y in range(self._max_view.pos_0.y, self._max_view.pos_1.y, CHUNK_W_SIZE.y):
+        for chunk_w_pos_x in range(self._max_view.min.x, self._max_view.max.x, CHUNK_W_SIZE.x):
+            for chunk_w_pos_y in range(self._max_view.min.y, self._max_view.max.y, CHUNK_W_SIZE.y):
                 chunk_w_pos = WVec(chunk_w_pos_x, chunk_w_pos_y)
                 if chunk_w_pos in self.chunks_existing_map:
                     chunk_to_load = self.chunks_existing_map[chunk_w_pos]
@@ -227,7 +227,7 @@ class World:
                 self._chunks_visible_map[chunk_w_pos] = chunk_to_load
 
     def _chunk_w_pos_to_pix_shift(self, chunk_w_pos):
-        max_view_w_shift = WVec(*(pos - shift for pos, shift in zip(chunk_w_pos, self._max_view.pos_0)))
+        max_view_w_shift = WVec(*(pos - shift for pos, shift in zip(chunk_w_pos, self._max_view.min)))
         return w_to_pix_shift(max_view_w_shift, CHUNK_PIX_SIZE, self._max_surf.get_size())
 
     def _draw_max_surf(self):
@@ -254,7 +254,7 @@ class World:
             self._force_draw = False
         if are_new_chunks or needs_redrawing:
             self._draw_max_surf()
-        camera.draw_world(self._max_surf, self._max_view.pos_0)
+        camera.draw_world(self._max_surf, self._max_view.min)
         self._tick()
 
     def _redraw_chunk(self, chunk_w_pos, chunk_surf):

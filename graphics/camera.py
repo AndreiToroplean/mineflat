@@ -4,7 +4,7 @@ from math import floor
 
 import pygame as pg
 
-from core.classes import WVec, WView, BlockSelection
+from core.classes import WVec, WBounds, BlockSelection, WBounds
 from core.funcs import w_to_pix_shift, pix_to_w_shift
 from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
     CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH
@@ -57,12 +57,12 @@ class Camera:
     @property
     def w_view(self):
         """World referred part of the world visible on screen. """
-        return WView(
-            pos_0=WVec(
+        return WBounds(
+            min=WVec(
                 x=self._pos[0] - self.w_size.x * PLAYER_S_POS.x,
                 y=self._pos[1] - self.w_size.y * PLAYER_S_POS.y,
                 ),
-            pos_1=WVec(
+            max=WVec(
                 x=self._pos[0] + self.w_size.x * (1 - PLAYER_S_POS.x),
                 y=self._pos[1] + self.w_size.y * (1 - PLAYER_S_POS.y),
                 ),

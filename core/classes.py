@@ -5,15 +5,19 @@ from core.vec import Vec
 
 
 class WVec(Vec): pass
+
+
 class CVec(Vec): pass
+
+
 class SVec(Vec): pass
+
+
 class PixVec(Vec): pass
 
 
-WView = namedtuple("WView", ("pos_0", "pos_1"))
-CView = namedtuple("CView", ("pos_0", "pos_1"))
-
 WBounds = namedtuple("WBounds", ("min", "max"))
+CBounds = namedtuple("CBounds", ("min", "max"))
 
 BlockSelection = namedtuple("BlockSelection", ("block_w_pos", "space_w_pos_shift", "space_only"))
 
