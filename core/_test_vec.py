@@ -1,10 +1,11 @@
 from copy import copy
 from math import floor
 
+from core.classes import WVec
 from core.vec import Vec
 
 pos = (-1, 2)
-a = Vec(*pos)
+a = WVec(*pos)
 
 print(a + a)
 print(a - a)

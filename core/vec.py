@@ -129,6 +129,14 @@ class Vec:
     def __rtruediv__(self, other):
         return type(self)(other / self.coords)
 
+    def __pow__(self, other):
+        if isinstance(other, Vec):
+            return type(self)(self.coords ** other.coords)
+        return type(self)(self.coords ** other)
+
+    def __rpow__(self, other):
+        return type(self)(other ** self.coords)
+
     def __iadd__(self, other):
         if isinstance(other, Vec):
             self.coords += other.coords
@@ -162,6 +170,13 @@ class Vec:
             self.coords /= other.coords
         else:
             self.coords /= other
+        return self
+
+    def __ipow__(self, other):
+        if isinstance(other, Vec):
+            self.coords **= other.coords
+        else:
+            self.coords **= other
         return self
 
     def __neg__(self):
