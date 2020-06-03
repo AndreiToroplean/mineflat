@@ -6,7 +6,7 @@ from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_P
     BLOCK_BOUND_SHIFTS
 from core.funcs import get_bounds
 from graphics.animated_surface import AnimAction, AnimatedSurface
-from core.classes import WVec, WBounds, WDimBounds
+from core.classes import WVec, WBounds
 
 
 class Player:
@@ -30,8 +30,8 @@ class Player:
 
         self._w_size = WVec(0.6, 1.8)
         self._bounds_w_shift = WBounds(
-            x=WDimBounds(-self._w_size[0] / 2, self._w_size[0] / 2),
-            y=WDimBounds(0.0, self._w_size[1]),
+            min=WVec(-self._w_size[0] / 2, 0.0),
+            max=WVec(self._w_size[0] / 2, self._w_size[1]),
             )
 
         self._anim_surf_walking = AnimatedSurface(
@@ -150,34 +150,34 @@ class Player:
         tested_vert_pos = (self.pos[0], self._req_pos[1])
         tested_vert_pos_bounds = self.get_bounds(tested_vert_pos)
 
-        for pos_x in range(tested_vert_pos_bounds.x.min, tested_vert_pos_bounds.x.max+1):
+        for pos_x in range(tested_vert_pos_bounds.min.x, tested_vert_pos_bounds.max.x+1):
             if self._vel[1] < 0:
-                pos_y = tested_vert_pos_bounds.y.min
+                pos_y = tested_vert_pos_bounds.min.y
                 if (pos_x, pos_y) in world_colliders.top:
-                    self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.y.max - self._bounds_w_shift.y.min + threshold
+                    self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.max.y - self._bounds_w_shift.min.y + threshold
                     self._vel[1] = 0
                     self._is_on_ground = True
                     break
 
             else:
-                pos_y = tested_vert_pos_bounds.y.max
+                pos_y = tested_vert_pos_bounds.max.y
                 if (pos_x, pos_y) in world_colliders.bottom:
-                    self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.y.min - self._bounds_w_shift.y.max - threshold
+                    self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.min.y - self._bounds_w_shift.max.y - threshold
                     self._vel[1] = 0
                     break
 
-        for pos_y in range(tested_horiz_pos_bounds.y.min, tested_horiz_pos_bounds.y.max+1):
-            if self._vel[0] < 0:
-                pos_x = tested_horiz_pos_bounds.x.min
+        for pos_y in range(tested_horiz_pos_bounds.min.y, tested_horiz_pos_bounds.max.y+1):
+            if self._vel[0] <= 0:
+                pos_x = tested_horiz_pos_bounds.min.x
                 if (pos_x, pos_y) in world_colliders.right:
-                    self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.x.max - self._bounds_w_shift.x.min + threshold
+                    self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.max.x - self._bounds_w_shift.min.x + threshold
                     self._vel[0] = 0
                     break
 
             else:
-                pos_x = tested_horiz_pos_bounds.x.max
+                pos_x = tested_horiz_pos_bounds.max.x
                 if (pos_x, pos_y) in world_colliders.left:
-                    self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.x.min - self._bounds_w_shift.x.max - threshold
+                    self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.min.x - self._bounds_w_shift.max.x - threshold
                     self._vel[0] = 0
                     break
 

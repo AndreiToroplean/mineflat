@@ -1,21 +1,18 @@
 from math import floor
 
-from core.classes import CVec, WVec, PixVec, WBounds, WDimBounds
+from core.classes import CVec, WVec, PixVec, WBounds
 from core.constants import CHUNK_W_SIZE, BLOCK_PIX_SIZE
 
 
 def w_to_c_vec(w_vec):
-    assert CVec(*(int(dim // chunk_size_dim) for dim, chunk_size_dim in zip(w_vec, CHUNK_W_SIZE))) == floor(w_vec // CHUNK_W_SIZE)
     return floor(w_vec // CHUNK_W_SIZE)
 
 
 def c_to_w_vec(c_vec):
-    assert WVec(*(dim * chunk_size_dim for dim, chunk_size_dim in zip(c_vec, CHUNK_W_SIZE))) == c_vec * CHUNK_W_SIZE
     return c_vec * CHUNK_W_SIZE
 
 
 def w_to_c_to_w_vec(w_vec):
-    assert WVec(*(int(dim // chunk_size_dim) * chunk_size_dim for dim, chunk_size_dim in zip(w_vec, CHUNK_W_SIZE))) == floor(w_vec // CHUNK_W_SIZE) * CHUNK_W_SIZE
     return floor(w_vec // CHUNK_W_SIZE) * CHUNK_W_SIZE
 
 
@@ -33,14 +30,5 @@ def pix_to_w_shift(pix_shift, source_surf_pix_size, dest_surf_pix_size, source_p
         )
 
 
-def get_bounds(w_pos, bounds_w_shift: WBounds(WDimBounds, WDimBounds)) -> WDimBounds(WDimBounds, WDimBounds):
-    return WBounds(
-        x=WDimBounds(
-            min=floor(w_pos[0] + bounds_w_shift.x.min),
-            max=floor(w_pos[0] + bounds_w_shift.x.max),
-            ),
-        y=WDimBounds(
-            min=floor(w_pos[1] + bounds_w_shift.y.min),
-            max=floor(w_pos[1] + bounds_w_shift.y.max),
-            ),
-        )
+def get_bounds(w_pos: WVec, bounds_w_shift: WBounds) -> WBounds:
+    return WBounds(min=floor(w_pos + bounds_w_shift.min), max=floor(w_pos + bounds_w_shift.max))

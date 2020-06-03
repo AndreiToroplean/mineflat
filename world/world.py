@@ -8,7 +8,7 @@ import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
-from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, WDimBounds, BlockSelection
+from core.classes import CView, WView, CVec, WVec, Colliders, Result, WBounds, BlockSelection
 from world.chunk import Chunk
 from world.generation import Material
 
@@ -103,13 +103,13 @@ class World:
 
         block_pos_shift = []
         if round(w_dir[0]) == 1:
-            block_pos_shift.append(BLOCK_BOUND_SHIFTS.x.min)
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.min.x)
         else:
-            block_pos_shift.append(BLOCK_BOUND_SHIFTS.x.max)
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.max.x)
         if round(w_dir[1]) == 1:
-            block_pos_shift.append(BLOCK_BOUND_SHIFTS.y.min)
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.min.y)
         else:
-            block_pos_shift.append(BLOCK_BOUND_SHIFTS.y.max)
+            block_pos_shift.append(BLOCK_BOUND_SHIFTS.max.y)
 
         poss_to_check = set()
         for ray_index in range(max_rays):
@@ -189,9 +189,9 @@ class World:
     # ==== CHECK BOOLEANS ====
 
     @staticmethod
-    def _is_pos_in_bounds(w_pos, bounds: WBounds(WDimBounds, WDimBounds)) -> bool:
-        return (bounds.x.min <= w_pos[0] <= bounds.x.max
-                and bounds.y.min <= w_pos[1] <= bounds.y.max)
+    def _is_pos_in_bounds(w_pos: WVec, bounds: WBounds) -> bool:
+        return (bounds.min.x <= w_pos[0] <= bounds.max.x
+                and bounds.min.y <= w_pos[1] <= bounds.max.y)
 
     # ==== GENERATE AND DRAW ====
 
