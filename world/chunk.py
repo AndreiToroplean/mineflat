@@ -57,12 +57,12 @@ class Chunk:
         blit_sequence = []
         for block_w_pos, block in self.blocks_map.items():
             pix_shift = self._block_pos_to_pix_shift(block_w_pos)
-            blit_sequence.append((block.surf, tuple(pix_shift)))
+            blit_sequence.append((block.surf, pix_shift))
         self.surf.blits(blit_sequence, doreturn=False)
 
     def _redraw_block(self, block_w_pos, block_surf):
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
-        self.surf.blit(block_surf, tuple(pix_shift))
+        self.surf.blit(block_surf, pix_shift)
 
     # ==== MODIFY ====
 

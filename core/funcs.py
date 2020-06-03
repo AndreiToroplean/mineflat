@@ -4,15 +4,15 @@ from core.classes import CVec, WVec, PixVec, WBounds
 from core.constants import CHUNK_W_SIZE, BLOCK_PIX_SIZE
 
 
-def w_to_c_vec(w_vec):
+def w_to_c_vec(w_vec: WVec):
     return floor(w_vec // CHUNK_W_SIZE)
 
 
-def c_to_w_vec(c_vec):
+def c_to_w_vec(c_vec: CVec):
     return c_vec * CHUNK_W_SIZE
 
 
-def w_to_c_to_w_vec(w_vec):
+def w_to_c_to_w_vec(w_vec: WVec):
     return floor(w_vec // CHUNK_W_SIZE) * CHUNK_W_SIZE
 
 

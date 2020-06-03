@@ -182,5 +182,14 @@ class Vec:
     def __eq__(self, other):
         return all(self_coord == other_coord for self_coord, other_coord in zip(self, other))
 
+    def __len__(self):
+        return 2
+
     def norm(self):
         return np.linalg.norm(self.coords)
+
+    def normalized(self):
+        return self / self.norm()
+
+    def dir_(self):
+        return self / abs(self)

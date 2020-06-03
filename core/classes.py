@@ -1,4 +1,4 @@
-from collections import namedtuple
+from typing import NamedTuple
 from enum import Enum
 
 from core.vec import Vec
@@ -16,10 +16,20 @@ class SVec(Vec): pass
 class PixVec(Vec): pass
 
 
-WBounds = namedtuple("WBounds", ("min", "max"))
-CBounds = namedtuple("CBounds", ("min", "max"))
+class WBounds(NamedTuple):
+    min: WVec = WVec()
+    max: WVec = WVec()
 
-BlockSelection = namedtuple("BlockSelection", ("block_w_pos", "space_w_pos_shift", "space_only"))
+
+class CBounds(NamedTuple):
+    min: CVec = CVec()
+    max: CVec = CVec()
+
+
+class BlockSelection(NamedTuple):
+    block_w_pos: WVec or None
+    space_w_pos_shift: WVec or None
+    space_only: bool
 
 
 class Result(Enum):
