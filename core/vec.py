@@ -91,43 +91,43 @@ class Vec:
 
     def __add__(self, other):
         if isinstance(other, Vec):
-            return Vec(self.coords + other.coords)
-        return Vec(self.coords + other)
+            return type(self)(self.coords + other.coords)
+        return type(self)(self.coords + other)
 
     def __radd__(self, other):
         return self + other
 
     def __sub__(self, other):
         if isinstance(other, Vec):
-            return Vec(self.coords - other.coords)
-        return Vec(self.coords - other)
+            return type(self)(self.coords - other.coords)
+        return type(self)(self.coords - other)
 
     def __rsub__(self, other):
         return -self + other
 
     def __mul__(self, other):
         if isinstance(other, Vec):
-            return Vec(self.coords * other.coords)
-        return Vec(self.coords * other)
+            return type(self)(self.coords * other.coords)
+        return type(self)(self.coords * other)
 
     def __rmul__(self, other):
         return self * other
 
     def __floordiv__(self, other):
         if isinstance(other, Vec):
-            return Vec(self.coords // other.coords)
-        return Vec(self.coords // other)
+            return type(self)(self.coords // other.coords)
+        return type(self)(self.coords // other)
 
     def __rfloordiv__(self, other):
-        return Vec(other // self.coords)
+        return type(self)(other // self.coords)
 
     def __truediv__(self, other):
         if isinstance(other, Vec):
-            return Vec(self.coords / other.coords)
-        return Vec(self.coords / other)
+            return type(self)(self.coords / other.coords)
+        return type(self)(self.coords / other)
 
     def __rtruediv__(self, other):
-        return Vec(other / self.coords)
+        return type(self)(other / self.coords)
 
     def __iadd__(self, other):
         if isinstance(other, Vec):
@@ -165,19 +165,19 @@ class Vec:
         return self
 
     def __neg__(self):
-        return Vec(-self.coords)
+        return type(self)(-self.coords)
 
     def __pos__(self):
         return self
 
     def __abs__(self):
-        return Vec(abs(self.coords))
+        return type(self)(abs(self.coords))
 
     def __round__(self, ndigits=0):
-        return Vec(*(round(coord, ndigits) for coord in self.coords))
+        return type(self)(*(round(coord, ndigits) for coord in self.coords))
 
     def __floor__(self):
-        return Vec(*(floor(coord) for coord in self.coords))
+        return type(self)(*(floor(coord) for coord in self.coords))
 
     def __eq__(self, other):
         return all(self_coord == other_coord for self_coord, other_coord in zip(self, other))
