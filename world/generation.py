@@ -64,7 +64,7 @@ class WorldGenerator:
             return None
         return material
 
-    def gen_chunk_blocks(self, chunk_w_pos):
+    def gen_chunk_blocks(self, chunk_w_pos: WVec):
         blocks_map = {}
         for w_shift_x in range(CHUNK_W_SIZE[0]):
             for w_shift_y in range(CHUNK_W_SIZE[1]):

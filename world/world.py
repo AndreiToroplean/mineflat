@@ -8,7 +8,6 @@ import pygame as pg
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
 from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection
-from graphics.camera import Camera
 from world.chunk import Chunk
 from world.generation import Material  # Needed for loading.
 
@@ -229,11 +228,11 @@ class World:
             blit_sequence.append((chunk.surf, pix_shift))
         self._max_surf.blits(blit_sequence, doreturn=False)
 
-    def _resize_max_surf(self, camera: Camera):
+    def _resize_max_surf(self, camera):
         max_surf_pix_size = (w_to_c_vec(camera.w_size) + 2) * CHUNK_PIX_SIZE
         self._max_surf = pg.transform.scale(self._max_surf, max_surf_pix_size)
 
-    def draw_and_tick(self, camera: Camera):
+    def draw_and_tick(self, camera):
         are_new_chunks = self._update_c_view(camera)
         if needs_redrawing := (camera.is_zooming or self._force_draw):
             self._resize_max_surf(camera)
