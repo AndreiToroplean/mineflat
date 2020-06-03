@@ -48,7 +48,7 @@ CURSOR = (16, 16), (8, 8), *pg.cursors.compile((
     ))
 
 # ==== GAME PARAMS ====
-FULLSCREEN = False
+FULLSCREEN = True
 DEBUG = True
 SAVE = True
 LOAD = True
