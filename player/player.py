@@ -151,7 +151,7 @@ class Player:
         tested_vert_pos_bounds = self.get_bounds(tested_vert_pos)
 
         for pos_x in range(tested_vert_pos_bounds.x.min, tested_vert_pos_bounds.x.max+1):
-            if self._vel[1] <= 0:
+            if self._vel[1] < 0:
                 pos_y = tested_vert_pos_bounds.y.min
                 if (pos_x, pos_y) in world_colliders.top:
                     self._req_pos[1] = pos_y + BLOCK_BOUND_SHIFTS.y.max - self._bounds_w_shift.y.min + threshold
@@ -167,7 +167,7 @@ class Player:
                     break
 
         for pos_y in range(tested_horiz_pos_bounds.y.min, tested_horiz_pos_bounds.y.max+1):
-            if self._vel[0] <= 0:
+            if self._vel[0] < 0:
                 pos_x = tested_horiz_pos_bounds.x.min
                 if (pos_x, pos_y) in world_colliders.right:
                     self._req_pos[0] = pos_x + BLOCK_BOUND_SHIFTS.x.max - self._bounds_w_shift.x.min + threshold
