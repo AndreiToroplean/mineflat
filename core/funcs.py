@@ -32,3 +32,7 @@ def pix_to_w_shift(pix_shift, source_surf_pix_size, dest_surf_pix_size, source_p
 
 def get_bounds(w_pos: WVec, bounds_w_shift: WBounds) -> WBounds:
     return WBounds(min=floor(w_pos + bounds_w_shift.min), max=floor(w_pos + bounds_w_shift.max))
+
+
+def color_float_to_int(color_float):
+    return min(floor(color_float * 256), 255)

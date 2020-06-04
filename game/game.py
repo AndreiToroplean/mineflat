@@ -96,7 +96,6 @@ class Game:
             self.camera.move()
 
             # Graphics
-            self.draw_sky()
             self.world.draw_and_tick(self.camera)
             self.main_player.draw(self.camera)
             self.draw_gui()

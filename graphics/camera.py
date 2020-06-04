@@ -107,9 +107,6 @@ class Camera:
 
     # ==== DRAW ====
 
-    def draw_sky(self):
-        self._screen.fill(C_SKY)
-
     def draw_world(self, max_surf, max_view_pos: WVec):
         max_surf_scaled_pix_size = floor(PixVec(max_surf.get_size()) * (self._scale / BLOCK_PIX_SIZE))
         max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size)
