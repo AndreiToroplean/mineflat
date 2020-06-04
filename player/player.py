@@ -208,12 +208,14 @@ class Player:
 
         self.set_transforms(data["pos"], data["vel"])
         self._is_on_ground = data["is_on_ground"]
+        self._anim_surf.is_reversed = data["is_reversed"]
 
     def save_to_disk(self, dir_path):
         data = {
             "pos": tuple(self.pos),
             "vel": tuple(self._vel),
-            "is_on_ground": self._is_on_ground
+            "is_on_ground": self._is_on_ground,
+            "is_reversed": self._anim_surf.is_reversed,
             }
         with open(os.path.join(dir_path, f"{self.name}.json"), "w") as file:
             json.dump(data, file, indent=4)

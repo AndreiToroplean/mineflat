@@ -3,7 +3,8 @@ from enum import Enum
 
 import pygame as pg
 
-from core.constants import CURSOR, DEBUG, PLAYER_DEFAULT_SPAWN_POS, CURRENT_SAVE_PATH, LOAD, SAVE
+from core.constants import DEBUG, PLAYER_DEFAULT_SPAWN_POS, CURRENT_SAVE_PATH, LOAD, SAVE
+from graphics.cursor import CURSOR
 from game.controls import Controls, Mods
 from world.generation import Material
 from graphics.camera import Camera
