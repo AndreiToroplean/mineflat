@@ -78,7 +78,7 @@ class Camera:
     def is_zooming(self):
         return not math.isclose(self._zoom_vel, 1)
 
-    def _select_block(self, action_w_pos: WVec, world, *, c_radius=1, substeps=20, max_rays=3) -> BlockSelection:
+    def _select_block(self, action_w_pos: WVec, world, *, substeps=5, max_rays=3) -> BlockSelection:
         """Return selection based on player position and mouse position.
         Selection is one selected block and one selected space.
         """
@@ -87,7 +87,6 @@ class Camera:
             action_w_pos,
             self._mouse_w_pos,
             SELECTION_MAX_DISTANCE,
-            c_radius=c_radius,
             substeps=substeps,
             max_rays=max_rays,
             )
@@ -102,7 +101,6 @@ class Camera:
             self._mouse_w_pos,
             SELECTION_MAX_DISTANCE,
             substeps=substeps,
-            c_radius=c_radius,
             )
 
         return BlockSelection(selection.block_w_pos, selection.space_w_pos_shift, space_only)

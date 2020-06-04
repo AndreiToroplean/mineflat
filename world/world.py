@@ -6,7 +6,7 @@ from math import floor
 import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS, DIR_TO_ANGLE
 from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection
 from world.chunk import Chunk
 from world.generation import Material  # Needed for loading.
@@ -50,7 +50,7 @@ class World:
 
         return chunk_w_pos, chunk
 
-    def _get_chunks_around(self, w_pos, *, c_radius=1):
+    def _get_chunks_around(self, w_pos, c_radius):
         chunks_map = {}
         for pos_x in range(
                 floor(w_pos.x - c_radius * CHUNK_W_SIZE.x),
@@ -68,34 +68,40 @@ class World:
                 chunks_map.update((chunk_map,))
         return chunks_map
 
-    def _get_blocks_around(self, w_pos, *, c_radius=1):
+    def _get_blocks_around(self, w_pos, c_radius):
         blocks_map = {}
-        for chunk in self._get_chunks_around(w_pos, c_radius=c_radius).values():
+        for chunk in self._get_chunks_around(w_pos, c_radius).values():
             blocks_map.update(chunk.blocks_map)
         return blocks_map
 
-    def get_colliders_around(self, w_pos, *, c_radius=1):
+    def get_colliders_around(self, w_pos, c_radius):
         colliders = Colliders()
-        for chunk in self._get_chunks_around(w_pos, c_radius=c_radius).values():
+        for chunk in self._get_chunks_around(w_pos, c_radius).values():
             for colliders_dir, chunk_colliders_dir in zip(colliders, chunk.colliders):
                 colliders_dir += chunk_colliders_dir
         return colliders
 
-    def get_block_pos_and_space_pos(self, start_w_pos: WVec, end_w_pos: WVec, max_distance, *, c_radius=1, substeps=5, max_rays=3) -> BlockSelection:
-        block_w_pos: WVec
-        block_w_pos = floor(end_w_pos)
-        blocks_map = self._get_blocks_around(end_w_pos, c_radius=c_radius)
-
+    def get_block_pos_and_space_pos(self, start_w_pos: WVec, end_w_pos: WVec, max_distance, *, substeps=5, max_rays=3) -> BlockSelection:
         w_vel = end_w_pos - start_w_pos
         w_speed = w_vel.norm()
         w_dir = w_vel.dir_()
 
-        # Return early if there's no block at block_w_pos:
-        if block_w_pos not in blocks_map:
-            return BlockSelection(None, None, space_only=True)
+        c_radius = min(w_speed, max_distance) // max(CHUNK_W_SIZE) + 1
+
+        block_w_pos: WVec
+        block_w_pos = floor(end_w_pos)
+        blocks_map = self._get_blocks_around(end_w_pos, c_radius)
+
         # Return early if block_w_pos is too far:
         if w_speed > max_distance:
             return BlockSelection(None, None, space_only=False)
+
+        # Return early if there's no block at block_w_pos:
+        if block_w_pos not in blocks_map:
+            for dir_ in DIR_TO_ANGLE:
+                if block_w_pos + dir_ in blocks_map:
+                    return BlockSelection(block_w_pos + dir_, -dir_, space_only=True)
+            return BlockSelection(None, None, space_only=True)
 
         block_pos_shift = WVec()
         if round(w_dir.x) == 1:
@@ -110,16 +116,10 @@ class World:
         poss_to_check = set()
         for ray_index in range(max_rays):
             poss_to_check.add(
-                WVec(
-                    x=block_w_pos.x + block_pos_shift.x,
-                    y=block_w_pos.y + ray_index / (max_rays - 1),
-                    )
+                block_w_pos + WVec(block_pos_shift.x, ray_index / (max_rays-1))
                 )
             poss_to_check.add(
-                WVec(
-                    x=block_w_pos.x + ray_index / (max_rays - 1),
-                    y=block_w_pos.y + block_pos_shift.y,
-                    )
+                block_w_pos + WVec(ray_index / (max_rays-1), block_pos_shift.y)
                 )
 
         block_center_rel_w_pos = end_w_pos - block_w_pos - WVec(0.5, 0.5)
@@ -150,13 +150,16 @@ class World:
         # If no ray from the start_w_pos has reached the block:
         return BlockSelection(None, None, space_only=False)
 
-    def get_intersected_block_pos_and_space_pos(self, start_w_pos: WVec, end_w_pos: WVec, max_distance, *, c_radius=1, substeps=5) -> BlockSelection:
-        blocks_map = self._get_blocks_around(start_w_pos, c_radius=c_radius)
+    def get_intersected_block_pos_and_space_pos(self, start_w_pos: WVec, end_w_pos: WVec, max_distance, *, substeps=5) -> BlockSelection:
         w_vel = end_w_pos - start_w_pos
         w_speed = w_vel.norm()
         w_dir = w_vel.dir_()
         w_vel_step = w_vel / (w_speed * substeps)
         max_mult = max_distance * substeps
+
+        c_radius = min(w_speed, max_distance) // max(CHUNK_W_SIZE) + 1
+
+        blocks_map = self._get_blocks_around(start_w_pos, c_radius)
 
         space_w_pos_shifts = [WVec(0, -w_dir.y), WVec(-w_dir.x, 0)]
         if abs(w_vel.x) > abs(w_vel.y):

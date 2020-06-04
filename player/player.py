@@ -142,7 +142,7 @@ class Player:
     def _collide(self, world, threshold=0.001):
         """Check for collisions with the world and update the transforms accordingly.
         """
-        world_colliders = world.get_colliders_around(self.pos)
+        world_colliders = world.get_colliders_around(self.pos, c_radius=1)
 
         tested_horiz_pos = (self._req_pos.x, self.pos.y)
         tested_horiz_pos_bounds = self.get_bounds(tested_horiz_pos)
