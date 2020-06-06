@@ -3,6 +3,7 @@ from enum import Enum
 
 import pygame as pg
 
+from core.classes import LoadResult
 from core.constants import DEBUG, PLAYER_DEFAULT_SPAWN_POS, CURRENT_SAVE_PATH, LOAD, SAVE
 from graphics.cursor import CURSOR
 from game.controls import Controls, Mods
@@ -16,6 +17,7 @@ class GameAction(Enum):
     play = 1
     respawn = 0
     quit = -1
+    quit_without_saving = -2
 
 
 class Game:
@@ -35,7 +37,10 @@ class Game:
             keys_pressed = pg.key.get_pressed()
             mods_pressed = pg.key.get_mods()
 
-            if keys_pressed[Controls.quit] or pg.event.peek(pg.QUIT) or self.action == GameAction.quit:
+            if (keys_pressed[Controls.quit]
+                    or pg.event.peek(pg.QUIT)
+                    or self.action == GameAction.quit
+                    or self.action == GameAction.quit_without_saving):
                 return
 
             # Requesting horizontal movements
@@ -121,21 +126,22 @@ class Game:
             except FileExistsError:
                 pass
 
-            self.world.load_from_disk(CURRENT_SAVE_PATH)
-            self.main_player.load_from_disk(CURRENT_SAVE_PATH)
+            world_load_result = self.world.load_from_disk(CURRENT_SAVE_PATH)
+            player_load_result = self.main_player.load_from_disk(CURRENT_SAVE_PATH)
+
+            if world_load_result == LoadResult.incompatible or player_load_result == LoadResult.incompatible:
+                self.action = GameAction.quit_without_saving
+                print("Error: incompatible save file.")
 
         self.camera.set_transforms(self.main_player.pos)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if SAVE:
+        if SAVE and not self.action == GameAction.quit_without_saving:
             self.world.save_to_disk(CURRENT_SAVE_PATH)
             self.main_player.save_to_disk(CURRENT_SAVE_PATH)
 
         pg.quit()
-
-    def draw_sky(self):
-        self.camera.draw_sky()
 
     def draw_gui(self):
         self.camera.draw_block_selector(self.main_player.action_w_pos, self.world)

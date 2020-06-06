@@ -6,7 +6,7 @@ from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_P
     BLOCK_BOUND_SHIFTS
 from core.funcs import get_bounds
 from graphics.animated_surface import AnimAction, AnimatedSurface
-from core.classes import WVec, WBounds
+from core.classes import WVec, WBounds, LoadResult
 
 
 class Player:
@@ -204,11 +204,12 @@ class Player:
             with open(os.path.join(dir_path, f"{self.name}.json")) as file:
                 data = json.load(file)
         except FileNotFoundError:
-            return
+            return LoadResult.no_file
 
         self.set_transforms(data["pos"], data["vel"])
         self._is_on_ground = data["is_on_ground"]
         self._anim_surf.is_reversed = data["is_reversed"]
+        return LoadResult.success
 
     def save_to_disk(self, dir_path):
         data = {

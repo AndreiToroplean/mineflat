@@ -7,7 +7,7 @@ import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
-from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir
+from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir, LoadResult
 from world.chunk import Chunk
 from world.generation import Material  # Needed for loading.
 
@@ -347,12 +347,16 @@ class World:
 
     # ==== SAVE AND LOAD ====
 
-    def load_from_disk(self, dir_path):
+    def load_from_disk(self, dir_path) -> LoadResult:
         try:
             with open(os.path.join(dir_path, self._SAVE_FILE_NAME)) as file:
                 data = json.load(file)
         except FileNotFoundError:
-            return
+            return LoadResult.no_file
+
+        if data["chunk_w_size"] != CHUNK_W_SIZE:
+            return LoadResult.incompatible
+
         self._seed = data["seed"]
         for chunk_w_pos_str, blocks_data_str in data["chunks_data"].items():
             chunk_w_pos = eval(chunk_w_pos_str)
@@ -360,9 +364,14 @@ class World:
             for block_w_pos_str, material_str in blocks_data_str.items():
                 blocks_map[eval(block_w_pos_str)] = eval(material_str)
             self.chunks_existing_map[chunk_w_pos] = self._create_chunk(chunk_w_pos, blocks_map)
+        return LoadResult.success
 
     def save_to_disk(self, dir_path):
-        data = {"seed": self._seed, "chunks_data": {}}
+        data = {
+            "seed": self._seed,
+            "chunk_w_size": tuple(int(x) for x in CHUNK_W_SIZE),
+            "chunks_data": {},
+            }
         for chunk in self.chunks_existing_map.values():
             data["chunks_data"].update(chunk.collect_data())
 

@@ -37,6 +37,12 @@ class Result(Enum):
     failure = -1
 
 
+class LoadResult(Enum):
+    success = 0
+    no_file = -1
+    incompatible = -2
+
+
 class DirMeta(type):
     def __iter__(self):
         return iter((self.right, self.top, self.left, self.bottom))
