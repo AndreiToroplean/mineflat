@@ -25,9 +25,9 @@ class Game:
         pg.init()
         pg.mouse.set_cursor(*CURSOR)
 
+        self.camera = Camera()
         self.world = World()
         self.main_player = Player("main_player", spawn_pos=PLAYER_DEFAULT_SPAWN_POS)
-        self.camera = Camera()
 
         self.action = GameAction.play
 

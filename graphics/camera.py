@@ -31,18 +31,23 @@ class Camera:
 
         self._scale = CAM_DEFAULT_SCALE
 
-        self.selected_block_w_pos = WVec(self._pos)
-        self.selected_space_w_pos = WVec(self._pos)
-        self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png"))
-        self._block_selector_surf.set_colorkey(C_KEY)
-        self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png"))
-        self._block_selector_space_only_surf.set_colorkey(C_KEY)
-
         if FULLSCREEN:
             self._screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
         else:
             self._screen = pg.display.set_mode((1280, 720))
         self._pix_size = PixVec(self._screen.get_size())
+
+        self.selected_block_w_pos = WVec(self._pos)
+        self.selected_space_w_pos = WVec(self._pos)
+        self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png")).convert()
+        self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png")).convert()
+
+        # Scaled surfs to reuse
+        self.world_max_surf_scaled = pg.Surface((0, 0))
+        self.player_surf_scaled = pg.Surface((0, 0))
+        self.player_surf_scaled.set_colorkey(C_KEY)
+        self._block_selector_surf_scaled = pg.Surface((0, 0))
+        self._block_selector_surf_scaled.set_colorkey(C_KEY)
 
         self._clock = pg.time.Clock()
         self._font = pg.font.SysFont(pg.font.get_default_font(), 24)
@@ -109,7 +114,10 @@ class Camera:
 
     def draw_world(self, max_surf, max_view_pos: WVec):
         max_surf_scaled_pix_size = floor(PixVec(max_surf.get_size()) * (self._scale / BLOCK_PIX_SIZE))
-        max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size)
+        if self.world_max_surf_scaled.get_size() != max_surf_scaled_pix_size:
+            self.world_max_surf_scaled = pg.transform.scale(self.world_max_surf_scaled, max_surf_scaled_pix_size)
+        self.world_max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size, self.world_max_surf_scaled)
+
         w_shift = max_view_pos - self._pos
         pix_shift = w_to_pix_shift(
             w_shift,
@@ -119,13 +127,15 @@ class Camera:
             scale=self._scale
             )
 
-        self._screen.blit(max_surf_scaled, pix_shift)
+        self._screen.blit(self.world_max_surf_scaled, pix_shift)
 
     def draw_player(self, anim_surf, player_pos: WVec):
         surf = anim_surf.get_surf_and_tick()
 
         surf_scaled_pix_size = floor(anim_surf.w_size * self._scale)
-        surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size)
+        if self.player_surf_scaled.get_size() != surf_scaled_pix_size:
+            self.player_surf_scaled = pg.transform.scale(self.player_surf_scaled, surf_scaled_pix_size)
+        self.player_surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size, self.player_surf_scaled)
 
         w_shift = player_pos - self._pos
         pix_shift = w_to_pix_shift(
@@ -137,7 +147,7 @@ class Camera:
             scale=self._scale
             )
 
-        self._screen.blit(surf_scaled, pix_shift)
+        self._screen.blit(self.player_surf_scaled, pix_shift)
 
     def draw_block_selector(self, action_w_pos: WVec, world):
         selection: BlockSelection
@@ -155,8 +165,11 @@ class Camera:
             surf = self._block_selector_surf
         else:
             surf = self._block_selector_space_only_surf
-        surf = pg.transform.scale(surf, surf_pix_size)
-        surf = pg.transform.rotate(surf, DIR_TO_ANGLE[selection.space_w_pos_shift])
+
+        if self._block_selector_surf_scaled.get_size() != surf_pix_size:
+            self._block_selector_surf_scaled = pg.transform.scale(self._block_selector_surf_scaled, surf_pix_size)
+        self._block_selector_surf_scaled = pg.transform.scale(surf, surf_pix_size, self._block_selector_surf_scaled)
+        self._block_selector_surf_scaled = pg.transform.rotate(self._block_selector_surf_scaled, DIR_TO_ANGLE[selection.space_w_pos_shift])
 
         w_shift = floor(self.selected_block_w_pos) - self._pos
 
@@ -171,7 +184,7 @@ class Camera:
             dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
             scale=self._scale)
 
-        self._screen.blit(surf, pix_shift)
+        self._screen.blit(self._block_selector_surf_scaled, pix_shift)
 
     def draw_debug_info(self):
         fps_surf = self._font.render(f"{self._clock.get_fps():.1f}", True, (255, 255, 255))

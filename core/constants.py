@@ -18,7 +18,7 @@ C_KEY = pg.Color(255, 0, 0)
 C_SKY = pg.Color(120, 190, 225)
 
 # ==== CAM ====
-CAM_FPS = 30
+CAM_FPS = 60
 CAM_DEFAULT_SCALE = 64.0
 CAM_SCALE_BOUNDS = (32.0, 128.0)
 

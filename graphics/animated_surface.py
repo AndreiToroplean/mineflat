@@ -22,8 +22,7 @@ class AnimatedSurface:
         self.images = []
         self.images_reversed = []
         for file in sorted(os.scandir(dir_path), key=lambda x: x.name):
-            image = pg.image.load(file.path)
-            image.set_colorkey(C_KEY)
+            image = pg.image.load(file.path).convert()
             self.images.append(image)
             self.images_reversed.append(pg.transform.flip(image, True, False))
 
@@ -50,11 +49,11 @@ class AnimatedSurface:
 
     def get_surf_and_tick(self):
         if not self.is_reversed:
-            rtn = self.images[self.rtn_frame]
+            surf_frame = self.images[self.rtn_frame]
         else:
-            rtn = self.images_reversed[self.rtn_frame]
+            surf_frame = self.images_reversed[self.rtn_frame]
         self._tick()
-        return rtn
+        return surf_frame
 
     def sync(self, other):
         self.frame = len(self.images) * other.frame/len(other.images)

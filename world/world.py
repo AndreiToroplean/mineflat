@@ -27,8 +27,7 @@ class World:
         self._c_view = CBounds(CVec(0, 0), CVec(0, 0))  # Needs to keep the arguments, in order to remain of type int.
         self._max_view = WBounds(WVec(0, 0), WVec(0, 0))  # This too.
 
-        self._max_surf = pg.Surface((1, 1))
-        self._max_surf.set_colorkey(C_KEY)
+        self._max_surf = pg.Surface((0, 0))
         self._force_draw = True
 
         self._action_cooldown_remaining = 0

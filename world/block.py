@@ -21,7 +21,7 @@ class Block:
         else:
             file_name = name
         file_path = os.path.join(TEXTURES_PATH, self._BLOCK_DIR, f"{file_name}.png")
-        self.surf = pg.transform.scale(pg.image.load(file_path), self._pix_size)
+        self.surf = pg.transform.scale(pg.image.load(file_path), self._pix_size).convert()
 
     def __repr__(self):
         return f"Block({self.material})"
