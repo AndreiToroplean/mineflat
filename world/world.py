@@ -6,8 +6,8 @@ from math import floor
 import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS, DIR_TO_ANGLE
-from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
+from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir
 from world.chunk import Chunk
 from world.generation import Material  # Needed for loading.
 
@@ -50,7 +50,17 @@ class World:
 
         return chunk_w_pos, chunk
 
-    def _get_chunks_around(self, w_pos, c_radius):
+    def _get_chunk_on(self, w_pos: WVec, dir_):
+        return self._get_chunk_map_at_w_pos(w_pos + dir_ * CHUNK_W_SIZE)
+
+    def _get_neighboring_chunks(self, w_pos: WVec):
+        neighboring_chunks = {}
+        for dir_ in Dir:
+            neighboring_chunks[dir_] = self._get_chunk_on(w_pos, dir_)
+
+        return neighboring_chunks
+
+    def _get_chunk_maps_around(self, w_pos: WVec, c_radius):
         chunks_map = {}
         for pos_x in range(
                 floor(w_pos.x - c_radius * CHUNK_W_SIZE.x),
@@ -68,15 +78,15 @@ class World:
                 chunks_map.update((chunk_map,))
         return chunks_map
 
-    def _get_blocks_around(self, w_pos, c_radius):
+    def _get_blocks_map_around(self, w_pos: WVec, c_radius):
         blocks_map = {}
-        for chunk in self._get_chunks_around(w_pos, c_radius).values():
+        for chunk in self._get_chunk_maps_around(w_pos, c_radius).values():
             blocks_map.update(chunk.blocks_map)
         return blocks_map
 
-    def get_colliders_around(self, w_pos, c_radius):
+    def get_colliders_around(self, w_pos: WVec, c_radius):
         colliders = Colliders()
-        for chunk in self._get_chunks_around(w_pos, c_radius).values():
+        for chunk in self._get_chunk_maps_around(w_pos, c_radius).values():
             for colliders_dir, chunk_colliders_dir in zip(colliders, chunk.colliders):
                 colliders_dir += chunk_colliders_dir
         return colliders
@@ -90,7 +100,7 @@ class World:
 
         block_w_pos: WVec
         block_w_pos = floor(end_w_pos)
-        blocks_map = self._get_blocks_around(end_w_pos, c_radius)
+        blocks_map = self._get_blocks_map_around(end_w_pos, c_radius)
 
         # Return early if block_w_pos is too far:
         if w_speed > max_distance:
@@ -98,7 +108,7 @@ class World:
 
         # Return early if there's no block at block_w_pos:
         if block_w_pos not in blocks_map:
-            for dir_ in DIR_TO_ANGLE:
+            for dir_ in Dir:
                 if block_w_pos + dir_ in blocks_map:
                     return BlockSelection(block_w_pos + dir_, -dir_, space_only=True)
             return BlockSelection(None, None, space_only=True)
@@ -159,7 +169,7 @@ class World:
 
         c_radius = min(w_speed, max_distance) // max(CHUNK_W_SIZE) + 1
 
-        blocks_map = self._get_blocks_around(start_w_pos, c_radius)
+        blocks_map = self._get_blocks_map_around(start_w_pos, c_radius)
 
         space_w_pos_shifts = [WVec(0, -w_dir.y), WVec(-w_dir.x, 0)]
         if abs(w_vel.x) > abs(w_vel.y):
@@ -199,6 +209,23 @@ class World:
         self._c_view = new_c_view
         return True
 
+    def _light_chunk(self, chunk_map):
+        """Lights the chunk and recursively calls itself to light surrounding chunks if needed.
+        """
+        chunk_w_pos, chunk = chunk_map
+        req_relight = chunk.draw(self._get_neighboring_chunks(chunk_w_pos))
+        for dir_ in req_relight:
+            neighbor_chunk = self._get_chunk_on(chunk_w_pos, dir_)
+            if neighbor_chunk is not None:
+                self._light_chunk(neighbor_chunk)
+
+    def _create_chunk(self, chunk_w_pos, blocks_map=None):
+        """Instantiates a new Chunk, draws it, lights it, updates surrounding chunks' lighting if needed and returns it.
+        """
+        chunk = Chunk(chunk_w_pos, self._seed, blocks_map)
+        self._light_chunk((chunk_w_pos, chunk))
+        return chunk
+
     def _update_chunks_visible(self):
         self._max_view = WBounds(
             self._c_view.min * CHUNK_W_SIZE,
@@ -210,12 +237,12 @@ class World:
             for chunk_w_pos_y in range(self._max_view.min.y, self._max_view.max.y, CHUNK_W_SIZE.y):
                 chunk_w_pos = WVec(chunk_w_pos_x, chunk_w_pos_y)
                 if chunk_w_pos in self.chunks_existing_map:
-                    chunk_to_load = self.chunks_existing_map[chunk_w_pos]
+                    chunk_visible = self.chunks_existing_map[chunk_w_pos]
                 else:
-                    chunk_to_load = Chunk(chunk_w_pos, self._seed)
-                    self.chunks_existing_map[chunk_w_pos] = chunk_to_load
+                    chunk_visible = self._create_chunk(chunk_w_pos)
+                    self.chunks_existing_map[chunk_w_pos] = chunk_visible
 
-                self._chunks_visible_map[chunk_w_pos] = chunk_to_load
+                self._chunks_visible_map[chunk_w_pos] = chunk_visible
 
     def _chunk_w_pos_to_pix_shift(self, chunk_w_pos: WVec):
         max_view_w_shift = chunk_w_pos - self._max_view.min
@@ -245,10 +272,13 @@ class World:
         camera.draw_world(self._max_surf, self._max_view.min)
         self._tick()
 
-    def _redraw_chunk(self, chunk_w_pos: WVec, chunk_surf):
+    def _redraw_chunk(self, chunk_map):
+        self._light_chunk(chunk_map)
+
+        chunk_w_pos, chunk = chunk_map
         pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
         self._max_surf.blit(self._empty_chunk_surf, pix_shift)
-        self._max_surf.blit(chunk_surf, pix_shift)
+        self._max_surf.blit(chunk.surf, pix_shift)
 
     # ==== MODIFY ====
 
@@ -298,7 +328,7 @@ class World:
         if result == Result.failure:
             return
 
-        self._redraw_chunk(chunk_w_pos, chunk.surf)
+        self._redraw_chunk(chunk_map)
 
     def _place_block(self, block_w_pos: WVec, material: Material):
         """Request placing of the block of the given material at block_w_pos to the relevant chunk.
@@ -313,7 +343,7 @@ class World:
         if result == Result.failure:
             return
 
-        self._redraw_chunk(chunk_w_pos, chunk.surf)
+        self._redraw_chunk(chunk_map)
 
     # ==== SAVE AND LOAD ====
 
@@ -329,7 +359,7 @@ class World:
             blocks_map = {}
             for block_w_pos_str, material_str in blocks_data_str.items():
                 blocks_map[eval(block_w_pos_str)] = eval(material_str)
-            self.chunks_existing_map[chunk_w_pos] = Chunk(chunk_w_pos, self._seed, blocks_map)
+            self.chunks_existing_map[chunk_w_pos] = self._create_chunk(chunk_w_pos, blocks_map)
 
     def save_to_disk(self, dir_path):
         data = {"seed": self._seed, "chunks_data": {}}

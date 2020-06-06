@@ -2,7 +2,7 @@ import os
 
 import pygame as pg
 
-from core.classes import PixVec, SVec, WVec, WBounds
+from core.classes import PixVec, SVec, WVec, WBounds, Dir
 
 # ==== TECHNICAL DIMENSIONS ====
 PLAYER_S_POS = SVec(0.5, 0.333)
@@ -45,11 +45,13 @@ GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 # ==== GAME DYNAMICS ====
 GRAVITY = WVec(0.0, -22 / (CAM_FPS ** 2))
 ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
+MAX_LIGHT_LEVEL = 15
 
 # ==== UTILITIES ====
+
 DIR_TO_ANGLE = {
-    WVec(1, 0): 0,
-    WVec(0, 1): 90,
-    WVec(-1, 0): 180,
-    WVec(0, -1): 270,
+    Dir.right: 0,
+    Dir.top: 90,
+    Dir.left: 180,
+    Dir.bottom: 270,
     }

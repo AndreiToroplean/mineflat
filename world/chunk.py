@@ -4,7 +4,7 @@ import pygame as pg
 import numpy as np
 
 from core.funcs import w_to_pix_shift, color_float_to_int
-from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY, CHUNK_PIX_SIZE, C_SKY
+from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY, CHUNK_PIX_SIZE, C_SKY, MAX_LIGHT_LEVEL
 from core.classes import WVec, Colliders, Result
 from world.generation import WorldGenerator, Material
 
@@ -27,10 +27,10 @@ class Chunk:
         self.sky_light_surf = pg.Surface(CHUNK_W_SIZE)
         self.sky_light_surf_array = pg.surfarray.pixels2d(self.sky_light_surf)
 
-        self._block_surf = pg.Surface(CHUNK_PIX_SIZE)
+        self._blocks_surf = pg.Surface(CHUNK_PIX_SIZE)
+        self._draw_blocks_surf()
 
         self.surf = pg.Surface(CHUNK_PIX_SIZE)
-        self._draw()
 
         self.colliders = Colliders()
         self._update_colliders()
@@ -38,7 +38,7 @@ class Chunk:
     # ==== GENERATE AND DRAW ====
     def _block_pos_to_pix_shift(self, block_w_pos: WVec):
         w_shift = block_w_pos - self._w_pos
-        return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self.surf.get_size())
+        return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self._blocks_surf.get_size())
 
     def _update_colliders(self):
         self.colliders = Colliders()
@@ -52,38 +52,38 @@ class Chunk:
             if not (block_w_pos + WVec(0, +1)) in self.blocks_map:
                 self.colliders.top.append(block_w_pos)
 
-    def _update_sky_light(self):
-        self.sky_light_grid.fill(1)
-
-        with np.nditer(self.sky_light_surf_array, flags=["multi_index"], op_flags=["writeonly"]) as it:
-            for cell in it:
-                value = color_float_to_int(self.sky_light_grid[it.multi_index])
-                cell[...] = self.sky_light_surf.map_rgb((value, value, value))
-
-    def _light_surf(self):
-        self._update_sky_light()
-        scaled_sky_light_surf = pg.transform.scale(self.sky_light_surf, CHUNK_PIX_SIZE)
-        self.surf.blit(scaled_sky_light_surf, (0, 0), special_flags=pg.BLEND_MULT)
-
-    def _draw(self):
-        self._block_surf.fill(C_SKY)
+    def _draw_blocks_surf(self):
+        """Draw the blocks, unlit.
+        """
+        self._blocks_surf.fill(C_SKY)
         blit_sequence = []
         for block_w_pos, block in self.blocks_map.items():
             pix_shift = self._block_pos_to_pix_shift(block_w_pos)
             blit_sequence.append((block.surf, pix_shift))
-        self._block_surf.blits(blit_sequence, doreturn=False)
+        self._blocks_surf.blits(blit_sequence, doreturn=False)
 
-        self.surf = self._block_surf.copy()
+    def _update_sky_light(self):
+        self.sky_light_grid.fill(MAX_LIGHT_LEVEL)
 
-        self._light_surf()
+        with np.nditer(self.sky_light_surf_array, flags=["multi_index"], op_flags=["writeonly"]) as it:
+            for cell in it:
+                value = color_float_to_int(self.sky_light_grid[it.multi_index] / MAX_LIGHT_LEVEL)
+                cell[...] = self.sky_light_surf.map_rgb((value, value, value))
 
-    def _redraw_block(self, block_w_pos: WVec, block_surf):
+    def draw(self, neighboring_chunks):
+        """Update lighting and draw the chunk's surf.
+        """
+        self._update_sky_light()
+        scaled_sky_light_surf = pg.transform.scale(self.sky_light_surf, CHUNK_PIX_SIZE)
+
+        self.surf = self._blocks_surf.copy()
+        self.surf.blit(scaled_sky_light_surf, (0, 0), special_flags=pg.BLEND_MULT)
+
+        return ()
+
+    def _draw_block(self, block_w_pos: WVec, block_surf):
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)
-        self._block_surf.blit(block_surf, pix_shift)
-
-        self.surf = self._block_surf.copy()
-
-        self._light_surf()
+        self._blocks_surf.blit(block_surf, pix_shift)
 
     # ==== MODIFY ====
 
@@ -97,7 +97,7 @@ class Chunk:
             return Result.failure
 
         self.blocks_map.pop(block_w_pos, None)
-        self._redraw_block(block_w_pos, self._empty_block_surf)
+        self._draw_block(block_w_pos, self._empty_block_surf)
         self._update_colliders()
         return Result.success
 
@@ -112,7 +112,7 @@ class Chunk:
 
         block = self._generator.get_block(material)
         self.blocks_map[block_w_pos] = block
-        self._redraw_block(block_w_pos, block.surf)
+        self._draw_block(block_w_pos, block.surf)
         self._update_colliders()
         return Result.success
 

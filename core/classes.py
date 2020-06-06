@@ -37,6 +37,18 @@ class Result(Enum):
     failure = -1
 
 
+class DirMeta(type):
+    def __iter__(self):
+        return iter((self.right, self.top, self.left, self.bottom))
+
+
+class Dir(metaclass=DirMeta):
+    right = WVec(1, 0)
+    top = WVec(0, 1)
+    left = WVec(-1, 0)
+    bottom = WVec(0, -1)
+
+
 class Colliders:
     def __init__(self):
         self.left = []
@@ -48,14 +60,4 @@ class Colliders:
         return f"left: {self.left}, \nright: {self.right}, \nbottom: {self.bottom}, \ntop: {self.top}"
 
     def __iter__(self):
-        self.i = 0
-        return self
-
-    def __next__(self):
-        try:
-            rtn = (self.left, self.right, self.bottom, self.top)[self.i]
-        except IndexError:
-            raise StopIteration
-        else:
-            self.i += 1
-            return rtn
+        return iter((self.left, self.right, self.bottom, self.top))
