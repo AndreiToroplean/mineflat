@@ -153,7 +153,7 @@ class Player:
         for pos_x in range(tested_vert_pos_bounds.min.x, tested_vert_pos_bounds.max.x+1):
             if self._vel.y < 0:
                 pos_y = tested_vert_pos_bounds.min.y
-                if (pos_x, pos_y) in world_colliders.top:
+                if (pos_x, pos_y) in world_colliders.up:
                     self._req_pos.y = pos_y + BLOCK_BOUND_SHIFTS.max.y - self._bounds_w_shift.min.y + threshold
                     self._vel.y = 0
                     self._is_on_ground = True
@@ -161,7 +161,7 @@ class Player:
 
             else:
                 pos_y = tested_vert_pos_bounds.max.y
-                if (pos_x, pos_y) in world_colliders.bottom:
+                if (pos_x, pos_y) in world_colliders.down:
                     self._req_pos.y = pos_y + BLOCK_BOUND_SHIFTS.min.y - self._bounds_w_shift.max.y - threshold
                     self._vel.y = 0
                     break

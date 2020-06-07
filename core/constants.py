@@ -28,7 +28,7 @@ PLAYER_POS_DAMPING_FACTOR = 0.5
 PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS.x - 50
 
 # ==== GAME PARAMS ====
-FULLSCREEN = True
+FULLSCREEN = False
 DEBUG = True
 SAVE = True
 LOAD = True
@@ -45,13 +45,15 @@ GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 # ==== GAME DYNAMICS ====
 GRAVITY = WVec(0.0, -22 / (CAM_FPS ** 2))
 ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
-MAX_LIGHT_LEVEL = 15
+LIGHT_MAX_LEVEL = 15
+LIGHT_BLOCK_ATTENUATION = 8
+
 
 # ==== UTILITIES ====
 
 DIR_TO_ANGLE = {
     Dir.right: 0,
-    Dir.top: 90,
+    Dir.up: 90,
     Dir.left: 180,
-    Dir.bottom: 270,
+    Dir.down: 270,
     }
