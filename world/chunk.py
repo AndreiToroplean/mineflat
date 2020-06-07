@@ -47,13 +47,27 @@ class Chunk:
 
     def get_sky_light_border_for(self, dir_):
         if dir_ == Dir.right:
-            return self._sky_light_grid[1:-1, 1], self._is_block_grid[1:-1, 1]
+            light_in = self._sky_light_grid[1:-1, 1]
+            light_out = self._sky_light_grid[0:-1, 1]
+            is_block_border = self._is_block_grid[1:-1, 1]
         elif dir_ == Dir.up:
-            return self._sky_light_grid[-2, 1:-1], self._is_block_grid[-2, 1:-1]
+            light_in = self._sky_light_grid[-2, 1:-1]
+            light_out = self._sky_light_grid[-1, 1:-1]
+            is_block_border = self._is_block_grid[-2, 1:-1]
         elif dir_ == Dir.left:
-            return self._sky_light_grid[1:-1, -2], self._is_block_grid[1:-1, -2]
-        else:  # if dir_ == Dir.bottom:
-            return self._sky_light_grid[1, 1:-1], self._is_block_grid[1, 1:-1]
+            light_in = self._sky_light_grid[1:-1, -2]
+            light_out = self._sky_light_grid[1:-1, -1]
+            is_block_border = self._is_block_grid[1:-1, -2]
+        else:  # if dir_ == Dir.down:
+            light_in = self._sky_light_grid[1, 1:-1]
+            light_out = self._sky_light_grid[0, 1:-1]
+            is_block_border = self._is_block_grid[1, 1:-1]
+
+        if dir_ == Dir.down:
+            is_source = [x > y for x, y in zip(light_in, light_out)]
+        else:
+            is_source = [x >= y for x, y in zip(light_in, light_out)]
+        return light_in, is_source, is_block_border
 
     def cell_index_to_block_w_pos(self, ij):
         i, j = ij
@@ -133,7 +147,7 @@ class Chunk:
                 value = color_float_to_int(self._sky_light_grid[it.multi_index[1] + 1, it.multi_index[0] + 1] / LIGHT_MAX_LEVEL)
                 cell[...] = self._sky_light_surf.map_rgb((value, value, value))
 
-    def light(self, neighboring_sky_light_data: dict, *, force_update_neighbors=False):
+    def light(self, neigh_sky_light_data: dict):
         def cell_neigh_index_gen(ij):
             visited_cells.append(ij)
 
@@ -158,11 +172,8 @@ class Chunk:
         cells_priority_queue = []
         neighbors_to_update = set()
 
-        if force_update_neighbors:
-            neighbors_to_update.update(neighboring_sky_light_data)
-
         ignore_neighbors = False
-        if Dir.up not in neighboring_sky_light_data and not self._has_been_highest_lit:
+        if Dir.up not in neigh_sky_light_data and not self._has_been_highest_lit:
             ignore_neighbors = True
             self._has_been_highest_lit = True
 
@@ -171,10 +182,10 @@ class Chunk:
         # Filling borders
         for dir_ in Dir:
             for neigh_index, index in enumerate(self._border_indices_gen(dir_)):
-                if dir_ in neighboring_sky_light_data:
-                    neighboring_sky_light, neighboring_is_block = neighboring_sky_light_data[dir_]
-                    value = neighboring_sky_light[neigh_index] if not ignore_neighbors else 0
-                    is_block = neighboring_is_block[neigh_index]
+                if dir_ in neigh_sky_light_data:
+                    neigh_sky_light, neigh_is_source, neigh_is_block = neigh_sky_light_data[dir_]
+                    value = neigh_sky_light[neigh_index] if not ignore_neighbors and neigh_is_source[neigh_index] else 0
+                    is_block = neigh_is_block[neigh_index]
                 else:
                     value = LIGHT_MAX_LEVEL if dir_ == Dir.up else 0
                     is_block = False if dir_ == Dir.up else True
@@ -185,7 +196,7 @@ class Chunk:
                     visited_cells.append(index)
                 if value > 1:
                     heappush(cells_priority_queue, (-value, index))
-        a = 1
+
         # Computing lighting
         while len(cells_priority_queue) > 0:
             source_value, index = heappop(cells_priority_queue)
@@ -204,22 +215,11 @@ class Chunk:
                     if cell_value > 1:
                         heappush(cells_priority_queue, (-cell_value, cell_index))
 
-                    if (cell_index[1] == CHUNK_W_SIZE.x+2-1
-                            and 1 <= cell_index[0] < CHUNK_W_SIZE.y+2-1
-                            and Dir.right in neighboring_sky_light_data):
-                        neighbors_to_update.add(Dir.right)
-                    if (cell_index[0] == 0
-                            and 1 <= cell_index[1] < CHUNK_W_SIZE.x+2-1
-                            and Dir.up in neighboring_sky_light_data):
-                        neighbors_to_update.add(Dir.up)
-                    if (cell_index[1] == 0
-                            and 1 <= cell_index[0] < CHUNK_W_SIZE.y+2-1
-                            and Dir.left in neighboring_sky_light_data):
-                        neighbors_to_update.add(Dir.left)
-                    if (cell_index[0] == CHUNK_W_SIZE.y+2-1
-                            and 1 <= cell_index[1] < CHUNK_W_SIZE.x+2-1
-                            and Dir.down in neighboring_sky_light_data):
-                        neighbors_to_update.add(Dir.down)
+        for dir_ in neigh_sky_light_data:
+            for neigh_index, index in enumerate(self._border_indices_gen(dir_)):
+                neigh_sky_light, _, _ = neigh_sky_light_data[dir_]
+                if neigh_sky_light[neigh_index] != self._sky_light_grid[index]:
+                    neighbors_to_update.add(dir_)
 
         self._apply_sky_light_grid()
 

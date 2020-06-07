@@ -222,20 +222,28 @@ class World:
         self._c_view = new_c_view
         return True
 
-    def _light_chunk(self, chunk_map, recursion_level=0, *, force_update_neighbors=False):
+    def _light_chunk(self, chunk_map, recursion_level=0):
         """Lights the chunk and recursively calls itself to light surrounding chunks if needed.
         """
         chunk_w_pos, chunk = chunk_map
 
-        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos), force_update_neighbors=force_update_neighbors)
+        updated_chunk_poss = {chunk_w_pos}
+
+        if recursion_level > 5:  # Maybe this can be removed...
+            return updated_chunk_poss
+
+        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos))
         for dir_ in req_relight:
             neighbor_chunk_map = self._get_chunk_map_on(chunk_w_pos, dir_)
             if neighbor_chunk_map is not None:
-                self._light_chunk(neighbor_chunk_map, recursion_level+1)
+                recursively_updated_chunk_poss = self._light_chunk(neighbor_chunk_map, recursion_level+1)
+                updated_chunk_poss.update(recursively_updated_chunk_poss)
+        return updated_chunk_poss
 
-    def _draw_chunk(self, chunk_map, *, force_update_neighbors=False):
-        self._light_chunk(chunk_map, force_update_neighbors=force_update_neighbors)
-        chunk_map[1].draw()
+    def _draw_chunk(self, chunk_map):
+        updated_chunk_poss = self._light_chunk(chunk_map)
+        for chunk_w_pos in updated_chunk_poss:
+            self.chunks_existing_map[chunk_w_pos].draw()
 
     def _create_chunk(self, chunk_w_pos, blocks_map=None):
         """Instantiates a new Chunk, draws it, lights it, updates surrounding chunks' lighting if needed and returns it.
@@ -291,11 +299,8 @@ class World:
         self._tick()
 
     def _redraw_chunk(self, chunk_map):
-        self._draw_chunk(chunk_map, force_update_neighbors=True)  # Don't know if forcing is helpful.
-        chunk_w_pos, chunk = chunk_map
-
-        pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
-        self._max_surf.blit(chunk.surf, pix_shift)
+        self._draw_chunk(chunk_map)
+        self._force_draw = True
 
     # ==== MODIFY ====
 
