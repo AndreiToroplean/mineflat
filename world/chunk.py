@@ -33,6 +33,8 @@ class Chunk:
         self._sky_light_surf = pg.Surface(CHUNK_W_SIZE)
         self._sky_light_surf_array = pg.surfarray.pixels2d(self._sky_light_surf)
 
+        self._has_been_highest_lit = False
+
         self._blocks_surf = pg.Surface(CHUNK_PIX_SIZE)
         self._draw_blocks_surf()
 
@@ -131,12 +133,10 @@ class Chunk:
                 value = color_float_to_int(self._sky_light_grid[it.multi_index[1] + 1, it.multi_index[0] + 1] / LIGHT_MAX_LEVEL)
                 cell[...] = self._sky_light_surf.map_rgb((value, value, value))
 
-    def light(self, neighboring_sky_light_data, is_highest):
-        visited_cells = []
-        cells_priority_queue = []
-        neighbors_to_update = set()
-
+    def light(self, neighboring_sky_light_data: dict, *, force_update_neighbors=False):
         def cell_neigh_index_gen(ij):
+            visited_cells.append(ij)
+
             i, j = ij
             candidates = (
                 ((i, j + 1), Dir.right),
@@ -152,8 +152,19 @@ class Chunk:
                         and 0 <= candidate[0][1] < CHUNK_W_SIZE.x + 2):
                     continue
 
-                visited_cells.append(candidate[0])
                 yield candidate
+
+        visited_cells = []
+        cells_priority_queue = []
+        neighbors_to_update = set()
+
+        if force_update_neighbors:
+            neighbors_to_update.update(neighboring_sky_light_data)
+
+        ignore_neighbors = False
+        if Dir.up not in neighboring_sky_light_data and not self._has_been_highest_lit:
+            ignore_neighbors = True
+            self._has_been_highest_lit = True
 
         self._sky_light_grid.fill(0)
 
@@ -162,10 +173,10 @@ class Chunk:
             for neigh_index, index in enumerate(self._border_indices_gen(dir_)):
                 if dir_ in neighboring_sky_light_data:
                     neighboring_sky_light, neighboring_is_block = neighboring_sky_light_data[dir_]
-                    value = neighboring_sky_light[neigh_index] if not is_highest else 0
+                    value = neighboring_sky_light[neigh_index] if not ignore_neighbors else 0
                     is_block = neighboring_is_block[neigh_index]
                 else:
-                    value = LIGHT_MAX_LEVEL if dir_ == Dir.up and is_highest else 0
+                    value = LIGHT_MAX_LEVEL if dir_ == Dir.up else 0
                     is_block = False if dir_ == Dir.up else True
 
                 self._sky_light_grid[index] = value
@@ -174,7 +185,7 @@ class Chunk:
                     visited_cells.append(index)
                 if value > 1:
                     heappush(cells_priority_queue, (-value, index))
-
+        a = 1
         # Computing lighting
         while len(cells_priority_queue) > 0:
             source_value, index = heappop(cells_priority_queue)

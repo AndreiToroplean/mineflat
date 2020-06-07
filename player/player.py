@@ -3,7 +3,7 @@ import os
 from math import floor
 
 from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_POS_MIN_HEIGHT, RESOURCES_PATH, \
-    BLOCK_BOUND_SHIFTS
+    BLOCK_BOUND_SHIFTS, PLAYER_ABILITY_FACTOR
 from core.funcs import get_bounds
 from graphics.animated_surface import AnimAction, AnimatedSurface
 from core.classes import WVec, WBounds, LoadResult
@@ -46,9 +46,9 @@ class Player:
             )
         self._anim_surf = self._anim_surf_walking
 
-        self._walking_speed = 4.5 / CAM_FPS
-        self._sprinting_speed = 7.5 / CAM_FPS
-        self._jumping_speed = 7.75 / CAM_FPS
+        self._walking_speed = PLAYER_ABILITY_FACTOR * 4.5 / CAM_FPS
+        self._sprinting_speed = PLAYER_ABILITY_FACTOR * 7.5 / CAM_FPS
+        self._jumping_speed = PLAYER_ABILITY_FACTOR * 7.75 / CAM_FPS
 
     # ==== GET DATA ====
 

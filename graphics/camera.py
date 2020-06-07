@@ -4,12 +4,10 @@ from math import floor
 
 import pygame as pg
 
-from core.classes import WVec, WBounds, BlockSelection, WBounds, PixVec
+from core.classes import WVec, BlockSelection, WBounds, PixVec
 from core.funcs import w_to_pix_shift, pix_to_w_shift
-from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
-    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH
-
-SELECTION_MAX_DISTANCE = 5
+from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, CAM_DEFAULT_SCALE, \
+    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH, ACTION_MAX_DISTANCE
 
 
 class Camera:
@@ -91,7 +89,7 @@ class Camera:
         selection = world.get_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
-            SELECTION_MAX_DISTANCE,
+            ACTION_MAX_DISTANCE,
             substeps=substeps,
             max_rays=max_rays,
             )
@@ -104,7 +102,7 @@ class Camera:
         selection = world.get_intersected_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
-            SELECTION_MAX_DISTANCE,
+            ACTION_MAX_DISTANCE,
             substeps=substeps,
             )
 

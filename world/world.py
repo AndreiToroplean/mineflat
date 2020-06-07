@@ -24,8 +24,6 @@ class World:
         self.chunks_existing_map = {}
         self._chunks_visible_map = {}
 
-        self._highest_lit_chunk_map = {}
-
         self._c_view = CBounds(CVec(0, 0), CVec(0, 0))  # Needs to keep the arguments, in order to remain of type int.
         self._max_view = WBounds(WVec(0, 0), WVec(0, 0))  # This too.
 
@@ -224,39 +222,26 @@ class World:
         self._c_view = new_c_view
         return True
 
-    def _light_chunk(self, chunk_map, recursion_level=0):
+    def _light_chunk(self, chunk_map, recursion_level=0, *, force_update_neighbors=False):
         """Lights the chunk and recursively calls itself to light surrounding chunks if needed.
         """
-        if recursion_level > 5:  # TODO: make sure it's really needed.
-            return
-
         chunk_w_pos, chunk = chunk_map
 
-        is_highest = True
-        try:
-            highest = self._highest_lit_chunk_map[chunk_w_pos.x]
-        except KeyError:
-            new_highest = chunk_w_pos.y
-        else:
-            new_highest = max(highest, chunk_w_pos.y)
-            if new_highest == highest:
-                is_highest = False
-        self._highest_lit_chunk_map[chunk_w_pos.x] = new_highest
-
-        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos), is_highest)
+        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos), force_update_neighbors=force_update_neighbors)
         for dir_ in req_relight:
             neighbor_chunk_map = self._get_chunk_map_on(chunk_w_pos, dir_)
             if neighbor_chunk_map is not None:
                 self._light_chunk(neighbor_chunk_map, recursion_level+1)
 
-    def _draw_chunk(self, chunk_map):
-        self._light_chunk(chunk_map)
+    def _draw_chunk(self, chunk_map, *, force_update_neighbors=False):
+        self._light_chunk(chunk_map, force_update_neighbors=force_update_neighbors)
         chunk_map[1].draw()
 
     def _create_chunk(self, chunk_w_pos, blocks_map=None):
         """Instantiates a new Chunk, draws it, lights it, updates surrounding chunks' lighting if needed and returns it.
         """
         chunk = Chunk(chunk_w_pos, self._seed, blocks_map)
+        self.chunks_existing_map[chunk_w_pos] = chunk
         self._draw_chunk((chunk_w_pos, chunk))
         return chunk
 
@@ -274,7 +259,6 @@ class World:
                     chunk_visible = self.chunks_existing_map[chunk_w_pos]
                 else:
                     chunk_visible = self._create_chunk(chunk_w_pos)
-                    self.chunks_existing_map[chunk_w_pos] = chunk_visible
 
                 self._chunks_visible_map[chunk_w_pos] = chunk_visible
 
@@ -307,11 +291,10 @@ class World:
         self._tick()
 
     def _redraw_chunk(self, chunk_map):
-        self._draw_chunk(chunk_map)
+        self._draw_chunk(chunk_map, force_update_neighbors=True)  # Don't know if forcing is helpful.
         chunk_w_pos, chunk = chunk_map
 
         pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
-        # self._max_surf.blit(self._empty_chunk_surf, pix_shift)  # No longer needed, since the sky is included in the chunk surf.
         self._max_surf.blit(chunk.surf, pix_shift)
 
     # ==== MODIFY ====
