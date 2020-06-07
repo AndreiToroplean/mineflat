@@ -24,6 +24,8 @@ class World:
         self.chunks_existing_map = {}
         self._chunks_visible_map = {}
 
+        self._highest_lit_chunk_map = {}
+
         self._c_view = CBounds(CVec(0, 0), CVec(0, 0))  # Needs to keep the arguments, in order to remain of type int.
         self._max_view = WBounds(WVec(0, 0), WVec(0, 0))  # This too.
 
@@ -229,13 +231,23 @@ class World:
             return
 
         chunk_w_pos, chunk = chunk_map
-        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos))
+
+        is_highest = True
+        try:
+            highest = self._highest_lit_chunk_map[chunk_w_pos.x]
+        except KeyError:
+            new_highest = chunk_w_pos.y
+        else:
+            new_highest = max(highest, chunk_w_pos.y)
+            if new_highest == highest:
+                is_highest = False
+        self._highest_lit_chunk_map[chunk_w_pos.x] = new_highest
+
+        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos), is_highest)
         for dir_ in req_relight:
             neighbor_chunk_map = self._get_chunk_map_on(chunk_w_pos, dir_)
             if neighbor_chunk_map is not None:
-                print(w := (neighbor_chunk_map[0]//CHUNK_W_SIZE))  # debug
                 self._light_chunk(neighbor_chunk_map, recursion_level+1)
-        print()
 
     def _draw_chunk(self, chunk_map):
         self._light_chunk(chunk_map)
@@ -380,11 +392,16 @@ class World:
             return LoadResult.incompatible
 
         self._seed = data["seed"]
+
+        chunks_map = {}
         for chunk_w_pos_str, blocks_data_str in data["chunks_data"].items():
             chunk_w_pos = eval(chunk_w_pos_str)
             blocks_map = {}
             for block_w_pos_str, material_str in blocks_data_str.items():
                 blocks_map[eval(block_w_pos_str)] = eval(material_str)
+            chunks_map[chunk_w_pos] = blocks_map
+
+        for chunk_w_pos, blocks_map in sorted(chunks_map.items(), key=lambda x: -x[0][1]):
             self.chunks_existing_map[chunk_w_pos] = self._create_chunk(chunk_w_pos, blocks_map)
         return LoadResult.success
 
