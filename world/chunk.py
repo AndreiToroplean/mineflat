@@ -23,7 +23,7 @@ class Chunk:
         else:
             self.blocks_map = self._generator.load_chunk_blocks(blocks_map)
 
-        self.sky_light_grid = np.zeros(CHUNK_W_SIZE, dtype=float)
+        self.sky_light_grid = np.zeros(CHUNK_W_SIZE+2, dtype=int)
         self.sky_light_surf = pg.Surface(CHUNK_W_SIZE)
         self.sky_light_surf_array = pg.surfarray.pixels2d(self.sky_light_surf)
 
@@ -62,24 +62,27 @@ class Chunk:
             blit_sequence.append((block.surf, pix_shift))
         self._blocks_surf.blits(blit_sequence, doreturn=False)
 
-    def _update_sky_light(self):
-        self.sky_light_grid.fill(MAX_LIGHT_LEVEL)
-
+    def _apply_sky_light_grid(self):
         with np.nditer(self.sky_light_surf_array, flags=["multi_index"], op_flags=["writeonly"]) as it:
             for cell in it:
-                value = color_float_to_int(self.sky_light_grid[it.multi_index] / MAX_LIGHT_LEVEL)
+                value = color_float_to_int(self.sky_light_grid[tuple(i+1 for i in it.multi_index)] / MAX_LIGHT_LEVEL)
                 cell[...] = self.sky_light_surf.map_rgb((value, value, value))
 
-    def draw(self, neighboring_chunks):
-        """Update lighting and draw the chunk's surf.
-        """
-        self._update_sky_light()
-        scaled_sky_light_surf = pg.transform.scale(self.sky_light_surf, CHUNK_PIX_SIZE)
+    def light(self, neighboring_chunks):
+        for i in range(CHUNK_W_SIZE[0]):
+            for j in range(CHUNK_W_SIZE[1]):
+                self.sky_light_grid[i+1, j+1] = 15
 
-        self.surf = self._blocks_surf.copy()
-        self.surf.blit(scaled_sky_light_surf, (0, 0), special_flags=pg.BLEND_MULT)
+        self._apply_sky_light_grid()
 
         return ()
+
+    def draw(self):
+        """Update lighting and draw the chunk's surf.
+        """
+        scaled_sky_light_surf = pg.transform.scale(self.sky_light_surf, CHUNK_PIX_SIZE)
+        self.surf = self._blocks_surf.copy()
+        self.surf.blit(scaled_sky_light_surf, (0, 0), special_flags=pg.BLEND_MULT)
 
     def _draw_block(self, block_w_pos: WVec, block_surf):
         pix_shift = self._block_pos_to_pix_shift(block_w_pos)

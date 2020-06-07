@@ -212,7 +212,7 @@ class World:
         """Lights the chunk and recursively calls itself to light surrounding chunks if needed.
         """
         chunk_w_pos, chunk = chunk_map
-        req_relight = chunk.draw(self._get_neighboring_chunks(chunk_w_pos))
+        req_relight = chunk.light(self._get_neighboring_chunks(chunk_w_pos))
         for dir_ in req_relight:
             neighbor_chunk = self._get_chunk_on(chunk_w_pos, dir_)
             if neighbor_chunk is not None:
@@ -223,6 +223,7 @@ class World:
         """
         chunk = Chunk(chunk_w_pos, self._seed, blocks_map)
         self._light_chunk((chunk_w_pos, chunk))
+        chunk.draw()
         return chunk
 
     def _update_chunks_visible(self):
