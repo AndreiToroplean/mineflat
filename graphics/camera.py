@@ -5,9 +5,9 @@ from math import floor
 import pygame as pg
 
 from core.classes import WVec, BlockSelection, WBounds, PixVec
-from core.funcs import w_to_pix_shift, pix_to_w_shift
+from core.funcs import w_to_pix_shift, pix_to_w_shift, light_level_to_color_int
 from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, CAM_DEFAULT_SCALE, \
-    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH, ACTION_MAX_DISTANCE
+    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH, ACTION_MAX_DISTANCE, PIX_ORIGIN
 
 
 class Camera:
@@ -40,7 +40,7 @@ class Camera:
         self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png")).convert()
         self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png")).convert()
 
-        # Scaled surfs to reuse
+        # Surfs to reuse
         self._world_max_surf_scaled = pg.Surface((0, 0))
         self._player_surf_scaled = pg.Surface((0, 0))
         self._player_surf_scaled.set_colorkey(C_KEY)
@@ -127,13 +127,13 @@ class Camera:
 
         self._screen.blit(self._world_max_surf_scaled, pix_shift)
 
-    def draw_player(self, anim_surf, player_pos: WVec):
-        surf = anim_surf.get_surf_and_tick()
+    def draw_player(self, anim_surf, player_pos: WVec, sky_light):
+        anim_surf.draw_and_tick(sky_light)
 
         surf_scaled_pix_size = floor(anim_surf.w_size * self._scale)
         if self._player_surf_scaled.get_size() != surf_scaled_pix_size:
             self._player_surf_scaled = pg.transform.scale(self._player_surf_scaled, surf_scaled_pix_size)
-        self._player_surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size, self._player_surf_scaled)
+        self._player_surf_scaled = pg.transform.scale(anim_surf.surf, surf_scaled_pix_size, self._player_surf_scaled)
 
         w_shift = player_pos - self._pos
         pix_shift = w_to_pix_shift(

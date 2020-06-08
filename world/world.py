@@ -50,13 +50,13 @@ class World:
 
         return chunk_w_pos, chunk
 
-    def _get_chunk_map_on(self, w_pos: WVec, dir_):
+    def _get_chunk_map_in_dir(self, w_pos: WVec, dir_):
         return self._get_chunk_map_at_w_pos(w_pos + dir_ * CHUNK_W_SIZE)
 
     def _get_neighboring_sky_light_data(self, chunk_w_pos: WVec):
         neighboring_sky_light = {}
         for dir_ in Dir:
-            dir_chunk_map = self._get_chunk_map_on(chunk_w_pos, dir_)
+            dir_chunk_map = self._get_chunk_map_in_dir(chunk_w_pos, dir_)
             if dir_chunk_map is None:
                 continue
 
@@ -64,6 +64,10 @@ class World:
             neighboring_sky_light[dir_] = dir_chunk.get_sky_light_border_for(dir_)
 
         return neighboring_sky_light
+
+    def get_sky_light_at_w_pos(self, w_pos: WVec):
+        _, chunk = self._get_chunk_map_at_w_pos(w_pos)
+        return chunk.get_sky_light_at_w_pos(floor(w_pos))
 
     def _get_chunk_maps_around(self, w_pos: WVec, c_radius):
         chunks_map = {}
@@ -239,7 +243,7 @@ class World:
 
         req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos))
         for dir_ in req_relight:
-            neighbor_chunk_map = self._get_chunk_map_on(chunk_w_pos, dir_)
+            neighbor_chunk_map = self._get_chunk_map_in_dir(chunk_w_pos, dir_)
             if neighbor_chunk_map is not None:
                 recursively_updated_chunk_poss = self._light_chunk(neighbor_chunk_map, recursion_level+1)
                 updated_chunk_poss.update(recursively_updated_chunk_poss)

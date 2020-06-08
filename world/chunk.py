@@ -4,7 +4,7 @@ from math import floor
 import pygame as pg
 import numpy as np
 
-from core.funcs import w_to_pix_shift, color_float_to_int
+from core.funcs import w_to_pix_shift, light_level_to_color_int
 from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY, CHUNK_PIX_SIZE, C_SKY, LIGHT_MAX_LEVEL, \
     LIGHT_BLOCK_ATTENUATION, C_BLACK, DEBUG, C_WHITE, WHITE_WORLD, PIX_ORIGIN, CHUNK_BORDERS
 from core.classes import WVec, Colliders, Result, Dir
@@ -115,6 +115,10 @@ class Chunk:
         w_shift = self._block_w_pos_to_w_shift(block_w_pos)
         return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self._blocks_surf.get_size())
 
+    def get_sky_light_at_w_pos(self, w_pos: WVec):
+        index = self.block_w_pos_to_cell_index(w_pos)
+        return self._sky_light_grid[index]
+
     # ==== GENERATE AND DRAW ====
 
     def _update_is_block_grid(self):
@@ -147,7 +151,7 @@ class Chunk:
     def _apply_sky_light_grid(self):
         with np.nditer(self._sky_light_surf_array, flags=["multi_index"], op_flags=["writeonly"]) as it:
             for cell in it:
-                value = color_float_to_int(self._sky_light_grid[it.multi_index[1] + 1, it.multi_index[0] + 1] / LIGHT_MAX_LEVEL)
+                value = light_level_to_color_int(self._sky_light_grid[it.multi_index[1] + 1, it.multi_index[0] + 1])
                 cell[...] = self._sky_light_surf.map_rgb((value, value, value))
 
     def light(self, neigh_sky_light_data: dict):

@@ -1,7 +1,7 @@
 from math import floor
 
 from core.classes import CVec, WVec, PixVec, WBounds
-from core.constants import CHUNK_W_SIZE, BLOCK_PIX_SIZE
+from core.constants import CHUNK_W_SIZE, BLOCK_PIX_SIZE, LIGHT_MAX_LEVEL
 
 
 def w_to_c_vec(w_vec: WVec):
@@ -36,3 +36,7 @@ def get_bounds(w_pos: WVec, bounds_w_shift: WBounds) -> WBounds:
 
 def color_float_to_int(color_float):
     return min(floor(color_float * 256), 255)
+
+
+def light_level_to_color_int(light_level):
+    return color_float_to_int(light_level / LIGHT_MAX_LEVEL)
