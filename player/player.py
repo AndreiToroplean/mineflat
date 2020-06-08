@@ -3,7 +3,7 @@ import os
 from math import floor
 
 from core.constants import CAM_FPS, PLAYER_POS_DAMPING_FACTOR, GRAVITY, PLAYER_POS_MIN_HEIGHT, RESOURCES_PATH, \
-    BLOCK_BOUND_SHIFTS
+    BLOCK_BOUND_SHIFTS, PLAYER_ABILITY_FACTOR
 from core.funcs import get_bounds
 from graphics.animated_surface import AnimAction, AnimatedSurface
 from core.classes import WVec, WBounds, LoadResult
@@ -46,9 +46,9 @@ class Player:
             )
         self._anim_surf = self._anim_surf_walking
 
-        self._walking_speed = 4.5 / CAM_FPS
-        self._sprinting_speed = 7.5 / CAM_FPS
-        self._jumping_speed = 7.75 / CAM_FPS
+        self._walking_speed = PLAYER_ABILITY_FACTOR * 4.5 / CAM_FPS
+        self._sprinting_speed = PLAYER_ABILITY_FACTOR * 7.5 / CAM_FPS
+        self._jumping_speed = PLAYER_ABILITY_FACTOR * 7.75 / CAM_FPS
 
     # ==== GET DATA ====
 
@@ -74,8 +74,9 @@ class Player:
 
     # ==== DRAW ====
 
-    def draw(self, camera):
-        camera.draw_player(self._anim_surf, self.pos)
+    def draw(self, camera, world):
+        sky_light = world.get_sky_light_at_w_pos(self.pos)
+        camera.draw_player(self._anim_surf, self.pos, sky_light)
 
     # ==== REQUEST MOVEMENTS ====
 
@@ -83,28 +84,28 @@ class Player:
         self._anim_surf_walking.sync(self._anim_surf)
         self._anim_surf = self._anim_surf_walking
         self._anim_surf.action = AnimAction.play
-        self._anim_surf.is_reversed = False
+        self._anim_surf.is_flipped = False
         self._req_vel.x = self._walking_speed
 
     def req_move_left(self):
         self._anim_surf_walking.sync(self._anim_surf)
         self._anim_surf = self._anim_surf_walking
         self._anim_surf.action = AnimAction.play
-        self._anim_surf.is_reversed = True
+        self._anim_surf.is_flipped = True
         self._req_vel.x = -self._walking_speed
 
     def req_sprint_right(self):
         self._anim_surf_sprinting.sync(self._anim_surf)
         self._anim_surf = self._anim_surf_sprinting
         self._anim_surf.action = AnimAction.play
-        self._anim_surf.is_reversed = False
+        self._anim_surf.is_flipped = False
         self._req_vel.x = self._sprinting_speed
 
     def req_sprint_left(self):
         self._anim_surf_sprinting.sync(self._anim_surf)
         self._anim_surf = self._anim_surf_sprinting
         self._anim_surf.action = AnimAction.play
-        self._anim_surf.is_reversed = True
+        self._anim_surf.is_flipped = True
         self._req_vel.x = -self._sprinting_speed
 
     def req_h_move_stop(self):
@@ -153,7 +154,7 @@ class Player:
         for pos_x in range(tested_vert_pos_bounds.min.x, tested_vert_pos_bounds.max.x+1):
             if self._vel.y < 0:
                 pos_y = tested_vert_pos_bounds.min.y
-                if (pos_x, pos_y) in world_colliders.top:
+                if (pos_x, pos_y) in world_colliders.up:
                     self._req_pos.y = pos_y + BLOCK_BOUND_SHIFTS.max.y - self._bounds_w_shift.min.y + threshold
                     self._vel.y = 0
                     self._is_on_ground = True
@@ -161,7 +162,7 @@ class Player:
 
             else:
                 pos_y = tested_vert_pos_bounds.max.y
-                if (pos_x, pos_y) in world_colliders.bottom:
+                if (pos_x, pos_y) in world_colliders.down:
                     self._req_pos.y = pos_y + BLOCK_BOUND_SHIFTS.min.y - self._bounds_w_shift.max.y - threshold
                     self._vel.y = 0
                     break
@@ -208,7 +209,7 @@ class Player:
 
         self.set_transforms(data["pos"], data["vel"])
         self._is_on_ground = data["is_on_ground"]
-        self._anim_surf.is_reversed = data["is_reversed"]
+        self._anim_surf.is_flipped = data["is_reversed"]
         return LoadResult.success
 
     def save_to_disk(self, dir_path):
@@ -216,7 +217,7 @@ class Player:
             "pos": tuple(self.pos),
             "vel": tuple(self._vel),
             "is_on_ground": self._is_on_ground,
-            "is_reversed": self._anim_surf.is_reversed,
+            "is_reversed": self._anim_surf.is_flipped,
             }
         with open(os.path.join(dir_path, f"{self.name}.json"), "w") as file:
             json.dump(data, file, indent=4)

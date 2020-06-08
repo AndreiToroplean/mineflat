@@ -6,7 +6,8 @@ from math import floor
 import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS, DEBUG, \
+    LIGHT_MAX_RECURSION
 from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir, LoadResult
 from world.chunk import Chunk
 from world.generation import Material  # Needed for loading.
@@ -49,15 +50,24 @@ class World:
 
         return chunk_w_pos, chunk
 
-    def _get_chunk_on(self, w_pos: WVec, dir_):
+    def _get_chunk_map_in_dir(self, w_pos: WVec, dir_):
         return self._get_chunk_map_at_w_pos(w_pos + dir_ * CHUNK_W_SIZE)
 
-    def _get_neighboring_chunks(self, w_pos: WVec):
-        neighboring_chunks = {}
+    def _get_neighboring_sky_light_data(self, chunk_w_pos: WVec):
+        neighboring_sky_light = {}
         for dir_ in Dir:
-            neighboring_chunks[dir_] = self._get_chunk_on(w_pos, dir_)
+            dir_chunk_map = self._get_chunk_map_in_dir(chunk_w_pos, dir_)
+            if dir_chunk_map is None:
+                continue
 
-        return neighboring_chunks
+            _, dir_chunk = dir_chunk_map
+            neighboring_sky_light[dir_] = dir_chunk.get_sky_light_border_for(dir_)
+
+        return neighboring_sky_light
+
+    def get_sky_light_at_w_pos(self, w_pos: WVec):
+        _, chunk = self._get_chunk_map_at_w_pos(w_pos)
+        return chunk.get_sky_light_at_w_pos(floor(w_pos))
 
     def _get_chunk_maps_around(self, w_pos: WVec, c_radius):
         chunks_map = {}
@@ -105,12 +115,17 @@ class World:
         if w_speed > max_distance:
             return BlockSelection(None, None, space_only=False)
 
-        # Return early if there's no block at block_w_pos:
+        got_block = True
+        block_w_pos_shift = Dir.right
         if block_w_pos not in blocks_map:
+            got_block = False
             for dir_ in Dir:
                 if block_w_pos + dir_ in blocks_map:
-                    return BlockSelection(block_w_pos + dir_, -dir_, space_only=True)
-            return BlockSelection(None, None, space_only=True)
+                    block_w_pos_shift = dir_
+                    break
+            else:
+                # Return early if there's no block at block_w_pos:
+                return BlockSelection(None, None, space_only=True)
 
         block_pos_shift = WVec()
         if round(w_dir.x) == 1:
@@ -131,12 +146,8 @@ class World:
                 block_w_pos + WVec(ray_index / (max_rays-1), block_pos_shift.y)
                 )
 
-        block_center_rel_w_pos = end_w_pos - block_w_pos - WVec(0.5, 0.5)
-        space_w_pos_shifts = [WVec(0, -w_dir.y), WVec(-w_dir.x, 0)]
-        if -w_dir.x * block_center_rel_w_pos.x > -w_dir.y * block_center_rel_w_pos.y:
-            space_w_pos_shifts.reverse()
-
         hits = 0
+        found_ray = False
         for pos_to_check in poss_to_check:
             w_vel_iter = pos_to_check - start_w_pos
             w_speed_iter = w_vel_iter.norm()
@@ -150,14 +161,24 @@ class World:
                 hits += 1
                 if hits < 2:  # This is to avoid selecting blocks for which only 1 corner is visible.
                     continue
-                space_w_pos_shift = space_w_pos_shifts[0]
-                space_w_pos = block_w_pos + space_w_pos_shift
-                if space_w_pos in blocks_map:
-                    space_w_pos_shift = space_w_pos_shifts[1]
-                return BlockSelection(block_w_pos, space_w_pos_shift, space_only=False)
+                found_ray = True
+                break
 
-        # If no ray from the start_w_pos has reached the block:
-        return BlockSelection(None, None, space_only=False)
+        if not found_ray:
+            return BlockSelection(None, None, space_only=False)
+
+        if not got_block:
+            return BlockSelection(block_w_pos + block_w_pos_shift, -block_w_pos_shift, space_only=True)
+
+        block_center_rel_w_pos = end_w_pos - block_w_pos - WVec(0.5, 0.5)
+        space_w_pos_shifts = [WVec(0, -w_dir.y), WVec(-w_dir.x, 0)]
+        if -w_dir.x * block_center_rel_w_pos.x > -w_dir.y * block_center_rel_w_pos.y:
+            space_w_pos_shifts.reverse()
+        space_w_pos_shift = space_w_pos_shifts[0]
+        space_w_pos = block_w_pos + space_w_pos_shift
+        if space_w_pos in blocks_map:
+            space_w_pos_shift = space_w_pos_shifts[1]
+        return BlockSelection(block_w_pos, space_w_pos_shift, space_only=False)
 
     def get_intersected_block_pos_and_space_pos(self, start_w_pos: WVec, end_w_pos: WVec, max_distance, *, substeps=5) -> BlockSelection:
         w_vel = end_w_pos - start_w_pos
@@ -208,21 +229,37 @@ class World:
         self._c_view = new_c_view
         return True
 
-    def _light_chunk(self, chunk_map):
+    def _light_chunk(self, chunk_map, recursion_level=0):
         """Lights the chunk and recursively calls itself to light surrounding chunks if needed.
         """
         chunk_w_pos, chunk = chunk_map
-        req_relight = chunk.draw(self._get_neighboring_chunks(chunk_w_pos))
+
+        updated_chunk_poss = {chunk_w_pos}
+
+        if recursion_level > LIGHT_MAX_RECURSION:
+            if DEBUG:
+                print("Max lighting recursion reached.")
+            return updated_chunk_poss
+
+        req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos))
         for dir_ in req_relight:
-            neighbor_chunk = self._get_chunk_on(chunk_w_pos, dir_)
-            if neighbor_chunk is not None:
-                self._light_chunk(neighbor_chunk)
+            neighbor_chunk_map = self._get_chunk_map_in_dir(chunk_w_pos, dir_)
+            if neighbor_chunk_map is not None:
+                recursively_updated_chunk_poss = self._light_chunk(neighbor_chunk_map, recursion_level+1)
+                updated_chunk_poss.update(recursively_updated_chunk_poss)
+        return updated_chunk_poss
+
+    def _draw_chunk(self, chunk_map):
+        updated_chunk_poss = self._light_chunk(chunk_map)
+        for chunk_w_pos in updated_chunk_poss:
+            self.chunks_existing_map[chunk_w_pos].draw()
 
     def _create_chunk(self, chunk_w_pos, blocks_map=None):
         """Instantiates a new Chunk, draws it, lights it, updates surrounding chunks' lighting if needed and returns it.
         """
         chunk = Chunk(chunk_w_pos, self._seed, blocks_map)
-        self._light_chunk((chunk_w_pos, chunk))
+        self.chunks_existing_map[chunk_w_pos] = chunk
+        self._draw_chunk((chunk_w_pos, chunk))
         return chunk
 
     def _update_chunks_visible(self):
@@ -239,7 +276,6 @@ class World:
                     chunk_visible = self.chunks_existing_map[chunk_w_pos]
                 else:
                     chunk_visible = self._create_chunk(chunk_w_pos)
-                    self.chunks_existing_map[chunk_w_pos] = chunk_visible
 
                 self._chunks_visible_map[chunk_w_pos] = chunk_visible
 
@@ -272,12 +308,8 @@ class World:
         self._tick()
 
     def _redraw_chunk(self, chunk_map):
-        self._light_chunk(chunk_map)
-
-        chunk_w_pos, chunk = chunk_map
-        pix_shift = self._chunk_w_pos_to_pix_shift(chunk_w_pos)
-        self._max_surf.blit(self._empty_chunk_surf, pix_shift)
-        self._max_surf.blit(chunk.surf, pix_shift)
+        self._draw_chunk(chunk_map)
+        self._force_draw = True
 
     # ==== MODIFY ====
 
@@ -357,11 +389,16 @@ class World:
             return LoadResult.incompatible
 
         self._seed = data["seed"]
+
+        chunks_map = {}
         for chunk_w_pos_str, blocks_data_str in data["chunks_data"].items():
             chunk_w_pos = eval(chunk_w_pos_str)
             blocks_map = {}
             for block_w_pos_str, material_str in blocks_data_str.items():
                 blocks_map[eval(block_w_pos_str)] = eval(material_str)
+            chunks_map[chunk_w_pos] = blocks_map
+
+        for chunk_w_pos, blocks_map in sorted(chunks_map.items(), key=lambda x: -x[0][1]):
             self.chunks_existing_map[chunk_w_pos] = self._create_chunk(chunk_w_pos, blocks_map)
         return LoadResult.success
 

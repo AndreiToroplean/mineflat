@@ -4,12 +4,10 @@ from math import floor
 
 import pygame as pg
 
-from core.classes import WVec, WBounds, BlockSelection, WBounds, PixVec
-from core.funcs import w_to_pix_shift, pix_to_w_shift
-from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, C_SKY, CAM_DEFAULT_SCALE, \
-    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH
-
-SELECTION_MAX_DISTANCE = 5
+from core.classes import WVec, BlockSelection, WBounds, PixVec
+from core.funcs import w_to_pix_shift, pix_to_w_shift, light_level_to_color_int
+from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, CAM_DEFAULT_SCALE, \
+    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH, ACTION_MAX_DISTANCE, PIX_ORIGIN
 
 
 class Camera:
@@ -42,10 +40,10 @@ class Camera:
         self._block_selector_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector.png")).convert()
         self._block_selector_space_only_surf = pg.image.load(os.path.join(GUI_PATH, "block_selector_space_only.png")).convert()
 
-        # Scaled surfs to reuse
-        self.world_max_surf_scaled = pg.Surface((0, 0))
-        self.player_surf_scaled = pg.Surface((0, 0))
-        self.player_surf_scaled.set_colorkey(C_KEY)
+        # Surfs to reuse
+        self._world_max_surf_scaled = pg.Surface((0, 0))
+        self._player_surf_scaled = pg.Surface((0, 0))
+        self._player_surf_scaled.set_colorkey(C_KEY)
         self._block_selector_surf_scaled = pg.Surface((0, 0))
         self._block_selector_surf_scaled.set_colorkey(C_KEY)
 
@@ -91,7 +89,7 @@ class Camera:
         selection = world.get_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
-            SELECTION_MAX_DISTANCE,
+            ACTION_MAX_DISTANCE,
             substeps=substeps,
             max_rays=max_rays,
             )
@@ -104,7 +102,7 @@ class Camera:
         selection = world.get_intersected_block_pos_and_space_pos(
             action_w_pos,
             self._mouse_w_pos,
-            SELECTION_MAX_DISTANCE,
+            ACTION_MAX_DISTANCE,
             substeps=substeps,
             )
 
@@ -114,9 +112,9 @@ class Camera:
 
     def draw_world(self, max_surf, max_view_pos: WVec):
         max_surf_scaled_pix_size = floor(PixVec(max_surf.get_size()) * (self._scale / BLOCK_PIX_SIZE))
-        if self.world_max_surf_scaled.get_size() != max_surf_scaled_pix_size:
-            self.world_max_surf_scaled = pg.transform.scale(self.world_max_surf_scaled, max_surf_scaled_pix_size)
-        self.world_max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size, self.world_max_surf_scaled)
+        if self._world_max_surf_scaled.get_size() != max_surf_scaled_pix_size:
+            self._world_max_surf_scaled = pg.transform.scale(self._world_max_surf_scaled, max_surf_scaled_pix_size)
+        self._world_max_surf_scaled = pg.transform.scale(max_surf, max_surf_scaled_pix_size, self._world_max_surf_scaled)
 
         w_shift = max_view_pos - self._pos
         pix_shift = w_to_pix_shift(
@@ -127,15 +125,15 @@ class Camera:
             scale=self._scale
             )
 
-        self._screen.blit(self.world_max_surf_scaled, pix_shift)
+        self._screen.blit(self._world_max_surf_scaled, pix_shift)
 
-    def draw_player(self, anim_surf, player_pos: WVec):
-        surf = anim_surf.get_surf_and_tick()
+    def draw_player(self, anim_surf, player_pos: WVec, sky_light):
+        anim_surf.draw_and_tick(sky_light)
 
         surf_scaled_pix_size = floor(anim_surf.w_size * self._scale)
-        if self.player_surf_scaled.get_size() != surf_scaled_pix_size:
-            self.player_surf_scaled = pg.transform.scale(self.player_surf_scaled, surf_scaled_pix_size)
-        self.player_surf_scaled = pg.transform.scale(surf, surf_scaled_pix_size, self.player_surf_scaled)
+        if self._player_surf_scaled.get_size() != surf_scaled_pix_size:
+            self._player_surf_scaled = pg.transform.scale(self._player_surf_scaled, surf_scaled_pix_size)
+        self._player_surf_scaled = pg.transform.scale(anim_surf.surf, surf_scaled_pix_size, self._player_surf_scaled)
 
         w_shift = player_pos - self._pos
         pix_shift = w_to_pix_shift(
@@ -147,7 +145,7 @@ class Camera:
             scale=self._scale
             )
 
-        self._screen.blit(self.player_surf_scaled, pix_shift)
+        self._screen.blit(self._player_surf_scaled, pix_shift)
 
     def draw_block_selector(self, action_w_pos: WVec, world):
         selection: BlockSelection

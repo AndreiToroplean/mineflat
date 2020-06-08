@@ -102,7 +102,7 @@ class Game:
 
             # Graphics
             self.world.draw_and_tick(self.camera)
-            self.main_player.draw(self.camera)
+            self.main_player.draw(self.camera, self.world)
             self.draw_gui()
 
             if DEBUG:

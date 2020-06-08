@@ -45,25 +45,25 @@ class LoadResult(Enum):
 
 class DirMeta(type):
     def __iter__(self):
-        return iter((self.right, self.top, self.left, self.bottom))
+        return iter((self.right, self.up, self.left, self.down))
 
 
 class Dir(metaclass=DirMeta):
     right = WVec(1, 0)
-    top = WVec(0, 1)
+    up = WVec(0, 1)
     left = WVec(-1, 0)
-    bottom = WVec(0, -1)
+    down = WVec(0, -1)
 
 
 class Colliders:
     def __init__(self):
         self.left = []
         self.right = []
-        self.bottom = []
-        self.top = []
+        self.down = []
+        self.up = []
 
     def __repr__(self):
-        return f"left: {self.left}, \nright: {self.right}, \nbottom: {self.bottom}, \ntop: {self.top}"
+        return f"left: {self.left}, \nright: {self.right}, \ndown: {self.down}, \nup: {self.up}"
 
     def __iter__(self):
-        return iter((self.left, self.right, self.bottom, self.top))
+        return iter((self.left, self.right, self.down, self.up))

@@ -15,12 +15,20 @@ BLOCK_BOUND_SHIFTS = WBounds(WVec(0, 0), WVec(1, 1))
 # ==== COLORS ====
 C_KEY = pg.Color(255, 0, 0)
 
+C_BLACK = pg.Color(0, 0, 0)
+C_WHITE = pg.Color(255, 255, 255)
 C_SKY = pg.Color(120, 190, 225)
 
 # ==== CAM ====
 CAM_FPS = 60
 CAM_DEFAULT_SCALE = 64.0
-CAM_SCALE_BOUNDS = (32.0, 128.0)
+CAM_SCALE_BOUNDS = (16.0, 128.0)
+
+# ==== GAME DYNAMICS ====
+GRAVITY = WVec(0.0, -22 / (CAM_FPS ** 2))
+PLAYER_ABILITY_FACTOR = 1
+ACTION_MAX_DISTANCE = PLAYER_ABILITY_FACTOR * 5
+ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
 
 # ==== PLAYER PARAMS ====
 PLAYER_DEFAULT_SPAWN_POS = WVec(0.5, WORLD_HEIGHT_BOUNDS.y)
@@ -28,10 +36,20 @@ PLAYER_POS_DAMPING_FACTOR = 0.5
 PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS.x - 50
 
 # ==== GAME PARAMS ====
-FULLSCREEN = True
-DEBUG = True
+DEBUG = False
+
+FULLSCREEN = False
+WHITE_WORLD = False
+CHUNK_BORDERS = False
 SAVE = True
 LOAD = True
+
+if not DEBUG:
+    FULLSCREEN = True
+    WHITE_WORLD = False
+    CHUNK_BORDERS = False
+    SAVE = True
+    LOAD = True
 
 # ==== PATHS ====
 CWD = os.getcwd()
@@ -42,16 +60,16 @@ RESOURCES_PATH = os.path.join(CWD, "resources")
 TEXTURES_PATH = os.path.join(RESOURCES_PATH, "textures")
 GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 
-# ==== GAME DYNAMICS ====
-GRAVITY = WVec(0.0, -22 / (CAM_FPS ** 2))
-ACTION_COOLDOWN_DELAY = 0.2 * CAM_FPS
-MAX_LIGHT_LEVEL = 15
+# ==== LIGHT DYNAMICS ====
+LIGHT_MAX_LEVEL = 15
+LIGHT_BLOCK_ATTENUATION = 5
+LIGHT_MAX_RECURSION = 3
 
 # ==== UTILITIES ====
-
 DIR_TO_ANGLE = {
     Dir.right: 0,
-    Dir.top: 90,
+    Dir.up: 90,
     Dir.left: 180,
-    Dir.bottom: 270,
+    Dir.down: 270,
     }
+PIX_ORIGIN = PixVec()

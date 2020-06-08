@@ -2,6 +2,8 @@ from enum import Enum
 import random
 from math import sin
 
+import numpy as np
+
 from core.classes import WVec
 from core.constants import CHUNK_W_SIZE, WORLD_HEIGHT_BOUNDS
 from world.block import Block
@@ -66,8 +68,8 @@ class WorldGenerator:
 
     def gen_chunk_blocks(self, chunk_w_pos: WVec):
         blocks_map = {}
-        for w_shift_x in range(CHUNK_W_SIZE[0]):
-            for w_shift_y in range(CHUNK_W_SIZE[1]):
+        for w_shift_x in range(CHUNK_W_SIZE.x):
+            for w_shift_y in range(CHUNK_W_SIZE.y):
                 block_w_pos = WVec(chunk_w_pos.x + w_shift_x, chunk_w_pos.y + w_shift_y)
                 material = self._choose_material_at_pos(block_w_pos)
                 if material is None:
