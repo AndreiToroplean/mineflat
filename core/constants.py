@@ -15,6 +15,8 @@ BLOCK_BOUND_SHIFTS = WBounds(WVec(0, 0), WVec(1, 1))
 # ==== COLORS ====
 C_KEY = pg.Color(255, 0, 0)
 
+C_BLACK = pg.Color(0, 0, 0)
+C_WHITE = pg.Color(255, 255, 255)
 C_SKY = pg.Color(120, 190, 225)
 
 # ==== CAM ====
@@ -34,10 +36,20 @@ PLAYER_POS_DAMPING_FACTOR = 0.5
 PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS.x - 50
 
 # ==== GAME PARAMS ====
-FULLSCREEN = True
-DEBUG = True
+DEBUG = False
+
+FULLSCREEN = False
+WHITE_WORLD = False
+CHUNK_BORDERS = False
 SAVE = True
 LOAD = True
+
+if not DEBUG:
+    FULLSCREEN = True
+    WHITE_WORLD = False
+    CHUNK_BORDERS = False
+    SAVE = True
+    LOAD = True
 
 # ==== PATHS ====
 CWD = os.getcwd()
@@ -51,6 +63,7 @@ GUI_PATH = os.path.join(RESOURCES_PATH, "gui")
 # ==== LIGHT DYNAMICS ====
 LIGHT_MAX_LEVEL = 15
 LIGHT_BLOCK_ATTENUATION = 5
+LIGHT_MAX_RECURSION = 3
 
 # ==== UTILITIES ====
 DIR_TO_ANGLE = {
@@ -59,3 +72,4 @@ DIR_TO_ANGLE = {
     Dir.left: 180,
     Dir.down: 270,
     }
+PIX_ORIGIN = PixVec()

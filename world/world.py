@@ -6,7 +6,8 @@ from math import floor
 import pygame as pg
 
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
-from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS
+from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS, DEBUG, \
+    LIGHT_MAX_RECURSION
 from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir, LoadResult
 from world.chunk import Chunk
 from world.generation import Material  # Needed for loading.
@@ -52,13 +53,15 @@ class World:
     def _get_chunk_map_on(self, w_pos: WVec, dir_):
         return self._get_chunk_map_at_w_pos(w_pos + dir_ * CHUNK_W_SIZE)
 
-    def _get_neighboring_sky_light_data(self, w_pos: WVec):
+    def _get_neighboring_sky_light_data(self, chunk_w_pos: WVec):
         neighboring_sky_light = {}
         for dir_ in Dir:
-            chunk_map = self._get_chunk_map_on(w_pos, dir_)
-            if chunk_map is None:
+            dir_chunk_map = self._get_chunk_map_on(chunk_w_pos, dir_)
+            if dir_chunk_map is None:
                 continue
-            neighboring_sky_light[dir_] = self._get_chunk_map_on(w_pos, dir_)[1].get_sky_light_border_for(dir_)
+
+            _, dir_chunk = dir_chunk_map
+            neighboring_sky_light[dir_] = dir_chunk.get_sky_light_border_for(dir_)
 
         return neighboring_sky_light
 
@@ -229,7 +232,9 @@ class World:
 
         updated_chunk_poss = {chunk_w_pos}
 
-        if recursion_level > 5:  # Maybe this can be removed...
+        if recursion_level > LIGHT_MAX_RECURSION:
+            if DEBUG:
+                print("Max lighting recursion reached.")
             return updated_chunk_poss
 
         req_relight = chunk.light(self._get_neighboring_sky_light_data(chunk_w_pos))

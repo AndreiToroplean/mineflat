@@ -6,7 +6,7 @@ import numpy as np
 
 from core.funcs import w_to_pix_shift, color_float_to_int
 from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY, CHUNK_PIX_SIZE, C_SKY, LIGHT_MAX_LEVEL, \
-    LIGHT_BLOCK_ATTENUATION
+    LIGHT_BLOCK_ATTENUATION, C_BLACK, DEBUG, C_WHITE, WHITE_WORLD, PIX_ORIGIN, CHUNK_BORDERS
 from core.classes import WVec, Colliders, Result, Dir
 from world.generation import WorldGenerator, Material
 
@@ -14,6 +14,12 @@ from world.generation import WorldGenerator, Material
 class Chunk:
     _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
     _empty_block_surf.fill(C_SKY)
+    _GRIDS_SIZE = CHUNK_W_SIZE + 2
+
+    # Debug elements:
+    _border_rect = pg.Rect(PIX_ORIGIN, CHUNK_PIX_SIZE)
+    _white_surf = pg.Surface(CHUNK_PIX_SIZE)
+    _white_surf.fill(C_WHITE)
 
     def __init__(self, w_pos: WVec, seed, blocks_map=None):
         self._w_pos = w_pos
@@ -25,13 +31,14 @@ class Chunk:
         else:
             self.blocks_map = self._generator.load_chunk_blocks(blocks_map)
 
-        self._is_block_grid = np.ones(CHUNK_W_SIZE + 2, dtype=bool)
+        self._is_block_grid = np.ones(self._GRIDS_SIZE, dtype=bool)
         self._is_block_grid[0, 1:-1] = False
         self._update_is_block_grid()
 
-        self._sky_light_grid = np.zeros(CHUNK_W_SIZE + 2, dtype=int)
+        self._sky_light_grid = np.zeros(self._GRIDS_SIZE, dtype=int)
         self._sky_light_surf = pg.Surface(CHUNK_W_SIZE)
         self._sky_light_surf_array = pg.surfarray.pixels2d(self._sky_light_surf)
+        self._scaled_sky_light_surf = pg.Surface(CHUNK_PIX_SIZE)
 
         self._has_been_highest_lit = False
 
@@ -48,26 +55,18 @@ class Chunk:
     def get_sky_light_border_for(self, dir_):
         if dir_ == Dir.right:
             light_in = self._sky_light_grid[1:-1, 1]
-            light_out = self._sky_light_grid[0:-1, 1]
             is_block_border = self._is_block_grid[1:-1, 1]
         elif dir_ == Dir.up:
             light_in = self._sky_light_grid[-2, 1:-1]
-            light_out = self._sky_light_grid[-1, 1:-1]
             is_block_border = self._is_block_grid[-2, 1:-1]
         elif dir_ == Dir.left:
             light_in = self._sky_light_grid[1:-1, -2]
-            light_out = self._sky_light_grid[1:-1, -1]
             is_block_border = self._is_block_grid[1:-1, -2]
         else:  # if dir_ == Dir.down:
             light_in = self._sky_light_grid[1, 1:-1]
-            light_out = self._sky_light_grid[0, 1:-1]
             is_block_border = self._is_block_grid[1, 1:-1]
 
-        if dir_ == Dir.down:
-            is_source = [x > y for x, y in zip(light_in, light_out)]
-        else:
-            is_source = [x >= y for x, y in zip(light_in, light_out)]
-        return light_in, is_source, is_block_border
+        return light_in, is_block_border
 
     def cell_index_to_block_w_pos(self, ij):
         i, j = ij
@@ -83,24 +82,28 @@ class Chunk:
         j = x + 1
         return i, j
 
-    @staticmethod
-    def _border_indices_gen(dir_):
+    @classmethod
+    def _border_indices_gen(cls, dir_):
         if dir_ == Dir.right:
             for y in range(CHUNK_W_SIZE.y):
-                index = y+1, CHUNK_W_SIZE.x+2-1
-                yield index
+                index_in = y+1, cls._GRIDS_SIZE.x-2
+                index_out = y+1, cls._GRIDS_SIZE.x-1
+                yield index_in, index_out
         if dir_ == Dir.up:
             for x in range(CHUNK_W_SIZE.x):
-                index = 0, x+1
-                yield index
+                index_in = 1, x+1
+                index_out = 0, x+1
+                yield index_in, index_out
         if dir_ == Dir.left:
             for y in range(CHUNK_W_SIZE.y):
-                index = y+1, 0
-                yield index
+                index_in = y+1, 1
+                index_out = y+1, 0
+                yield index_in, index_out
         if dir_ == Dir.down:
             for x in range(CHUNK_W_SIZE.x):
-                index = CHUNK_W_SIZE.y+2-1, x+1
-                yield index
+                index_in = cls._GRIDS_SIZE.y-2, x+1
+                index_out = cls._GRIDS_SIZE.y-1, x+1
+                yield index_in, index_out
 
     def _block_w_pos_to_w_shift(self, block_w_pos: WVec):
         return block_w_pos - self._w_pos
@@ -148,6 +151,9 @@ class Chunk:
                 cell[...] = self._sky_light_surf.map_rgb((value, value, value))
 
     def light(self, neigh_sky_light_data: dict):
+        """Light the chunk and return the dirs to the chunks that need updating.
+        """
+
         def cell_neigh_index_gen(ij):
             visited_cells.append(ij)
 
@@ -162,8 +168,8 @@ class Chunk:
             for candidate in candidates:
                 if candidate[0] in visited_cells:
                     continue
-                if not (0 <= candidate[0][0] < CHUNK_W_SIZE.y + 2
-                        and 0 <= candidate[0][1] < CHUNK_W_SIZE.x + 2):
+                if not (0 <= candidate[0][0] < self._GRIDS_SIZE.y
+                        and 0 <= candidate[0][1] < self._GRIDS_SIZE.x):
                     continue
 
                 yield candidate
@@ -177,25 +183,35 @@ class Chunk:
             ignore_neighbors = True
             self._has_been_highest_lit = True
 
-        self._sky_light_grid.fill(0)
-
         # Filling borders
         for dir_ in Dir:
-            for neigh_index, index in enumerate(self._border_indices_gen(dir_)):
+            for neigh_index, (index_in, index_out) in enumerate(self._border_indices_gen(dir_)):
                 if dir_ in neigh_sky_light_data:
-                    neigh_sky_light, neigh_is_source, neigh_is_block = neigh_sky_light_data[dir_]
-                    value = neigh_sky_light[neigh_index] if not ignore_neighbors and neigh_is_source[neigh_index] else 0
+                    neigh_sky_light, neigh_is_block = neigh_sky_light_data[dir_]
+                    value = neigh_sky_light[neigh_index]
+                    in_value = self._sky_light_grid[index_in]
+                    if (ignore_neighbors
+                            or value < in_value
+                            or (value == in_value and dir_ == Dir.down)):
+                        value = 0
                     is_block = neigh_is_block[neigh_index]
                 else:
                     value = LIGHT_MAX_LEVEL if dir_ == Dir.up else 0
                     is_block = False if dir_ == Dir.up else True
 
-                self._sky_light_grid[index] = value
-                self._is_block_grid[index] = is_block
+                self._sky_light_grid[index_out] = value
+                self._is_block_grid[index_out] = is_block
                 if value == LIGHT_MAX_LEVEL:
-                    visited_cells.append(index)
+                    visited_cells.append(index_out)
                 if value > 1:
-                    heappush(cells_priority_queue, (-value, index))
+                    heappush(cells_priority_queue, (-value, index_out))
+
+        # Emptying old light
+        self._sky_light_grid[1:-1, 1:-1].fill(0)
+        self._sky_light_grid[0, 0] = 0
+        self._sky_light_grid[0, -1] = 0
+        self._sky_light_grid[-1, -1] = 0
+        self._sky_light_grid[-1, 0] = 0
 
         # Computing lighting
         while len(cells_priority_queue) > 0:
@@ -216,9 +232,9 @@ class Chunk:
                         heappush(cells_priority_queue, (-cell_value, cell_index))
 
         for dir_ in neigh_sky_light_data:
-            for neigh_index, index in enumerate(self._border_indices_gen(dir_)):
-                neigh_sky_light, _, _ = neigh_sky_light_data[dir_]
-                if neigh_sky_light[neigh_index] != self._sky_light_grid[index]:
+            for neigh_index, (_, index_out) in enumerate(self._border_indices_gen(dir_)):
+                neigh_sky_light, _ = neigh_sky_light_data[dir_]
+                if neigh_sky_light[neigh_index] != self._sky_light_grid[index_out]:
                     neighbors_to_update.add(dir_)
 
         self._apply_sky_light_grid()
@@ -228,9 +244,15 @@ class Chunk:
     def draw(self):
         """Update lighting and draw the chunk's surf.
         """
-        scaled_sky_light_surf = pg.transform.scale(self._sky_light_surf, CHUNK_PIX_SIZE)
-        self.surf = self._blocks_surf.copy()
-        self.surf.blit(scaled_sky_light_surf, (0, 0), special_flags=pg.BLEND_MULT)
+        self._scaled_sky_light_surf = pg.transform.scale(self._sky_light_surf, CHUNK_PIX_SIZE, self._scaled_sky_light_surf)
+        if not WHITE_WORLD:
+            self.surf.blit(self._blocks_surf, PIX_ORIGIN)
+        else:
+            self.surf.blit(self._white_surf, PIX_ORIGIN)
+
+        self.surf.blit(self._scaled_sky_light_surf, PIX_ORIGIN, special_flags=pg.BLEND_MULT)
+        if CHUNK_BORDERS:
+            pg.draw.rect(self.surf, C_BLACK, self._border_rect, 1)
 
     def _draw_block(self, block_w_pos: WVec, block_surf):
         pix_shift = self._block_w_pos_to_pix_shift(block_w_pos)
