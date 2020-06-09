@@ -125,11 +125,11 @@ class World:
 
         ray_origin_shift = WVec()
         w_dir_horiz, w_dir_vert = w_dirs
-        if w_dir_horiz == Dir.right:
+        if (w_dir_horiz == Dir.right) ^ (not got_block):
             ray_origin_shift.x = BLOCK_BOUND_SHIFTS.min.x
         else:
             ray_origin_shift.x = BLOCK_BOUND_SHIFTS.max.x
-        if w_dir_vert == Dir.up:
+        if (w_dir_vert == Dir.up) ^ (not got_block):
             ray_origin_shift.y = BLOCK_BOUND_SHIFTS.min.y
         else:
             ray_origin_shift.y = BLOCK_BOUND_SHIFTS.max.y
