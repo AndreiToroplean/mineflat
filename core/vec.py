@@ -16,7 +16,6 @@ class Vec:
 
     def __init__(self, *args, **kwargs):
         # FIXME: There are still lots of usage patterns which shouldn't be legal but don't throw exceptions.
-        
         x = None
         y = None
         vec_like = None
@@ -56,7 +55,6 @@ class Vec:
             self.coords = np.array((x, y))
         else:
             self.coords = vec_like
-            
 
     @property
     def x(self):
@@ -207,4 +205,11 @@ class Vec:
         return self / self.norm()
 
     def dir_(self):
-        return self / abs(self)
+        return floor(self // abs(self))
+
+    def dirs_(self):
+        dir_x = self.dir_()
+        dir_x.y = 0
+        dir_y = self.dir_()
+        dir_y.x = 0
+        return dir_x, dir_y

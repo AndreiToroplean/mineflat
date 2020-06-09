@@ -85,6 +85,10 @@ class Camera:
         """Return selection based on player position and mouse position.
         Selection is one selected block and one selected space.
         """
+
+        if (self._mouse_w_pos - action_w_pos).norm() > ACTION_MAX_DISTANCE:
+            return BlockSelection(None, None)
+
         selection: BlockSelection
         selection = world.get_block_pos_and_space_pos(
             action_w_pos,
@@ -96,8 +100,6 @@ class Camera:
 
         if selection.block_w_pos is not None:
             return selection
-        else:
-            space_only = selection.space_only
 
         selection = world.get_intersected_block_pos_and_space_pos(
             action_w_pos,
@@ -106,7 +108,7 @@ class Camera:
             substeps=substeps,
             )
 
-        return BlockSelection(selection.block_w_pos, selection.space_w_pos_shift, space_only)
+        return selection
 
     # ==== DRAW ====
 

@@ -68,20 +68,6 @@ class Chunk:
 
         return light_in, is_block_border
 
-    def cell_index_to_block_w_pos(self, ij):
-        i, j = ij
-        x = j - 1
-        y = CHUNK_W_SIZE.y - i
-        w_shift = WVec(x, y)
-        return self._w_shift_to_block_w_pos(w_shift)
-
-    def block_w_pos_to_cell_index(self, block_w_pos):
-        w_shift = self._block_w_pos_to_w_shift(block_w_pos)
-        x, y = w_shift
-        i = CHUNK_W_SIZE.y - y
-        j = x + 1
-        return i, j
-
     @classmethod
     def _border_indices_gen(cls, dir_):
         if dir_ == Dir.right:
@@ -105,6 +91,20 @@ class Chunk:
                 index_out = cls._GRIDS_SIZE.y-1, x+1
                 yield index_in, index_out
 
+    def cell_index_to_block_w_pos(self, ij):
+        i, j = ij
+        x = j - 1
+        y = CHUNK_W_SIZE.y - i
+        w_shift = WVec(x, y)
+        return self._w_shift_to_block_w_pos(w_shift)
+
+    def block_w_pos_to_cell_index(self, block_w_pos):
+        w_shift = self._block_w_pos_to_w_shift(block_w_pos)
+        x, y = w_shift
+        i = CHUNK_W_SIZE.y - y
+        j = x + 1
+        return i, j
+
     def _block_w_pos_to_w_shift(self, block_w_pos: WVec):
         return block_w_pos - self._w_pos
 
@@ -116,7 +116,7 @@ class Chunk:
         return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self._blocks_surf.get_size())
 
     def get_sky_light_at_w_pos(self, w_pos: WVec):
-        index = self.block_w_pos_to_cell_index(w_pos)
+        index = self.block_w_pos_to_cell_index(floor(w_pos))
         return self._sky_light_grid[index]
 
     # ==== GENERATE AND DRAW ====
@@ -305,4 +305,3 @@ class Chunk:
         for block_w_pos, block in self.blocks_map.items():
             blocks_data[str(block_w_pos)] = str(block.material)
         return {str(self._w_pos): blocks_data}
-

@@ -67,7 +67,7 @@ class World:
 
     def get_sky_light_at_w_pos(self, w_pos: WVec):
         _, chunk = self._get_chunk_map_at_w_pos(w_pos)
-        return chunk.get_sky_light_at_w_pos(floor(w_pos))
+        return chunk.get_sky_light_at_w_pos(w_pos)
 
     def _get_chunk_maps_around(self, w_pos: WVec, c_radius):
         chunks_map = {}
@@ -104,50 +104,47 @@ class World:
         w_vel = end_w_pos - start_w_pos
         w_speed = w_vel.norm()
         w_dir = w_vel.dir_()
+        w_dirs = w_vel.dirs_()
 
         c_radius = min(w_speed, max_distance) // max(CHUNK_W_SIZE) + 1
 
         block_w_pos: WVec
         block_w_pos = floor(end_w_pos)
+
         blocks_map = self._get_blocks_map_around(end_w_pos, c_radius)
 
-        # Return early if block_w_pos is too far:
-        if w_speed > max_distance:
-            return BlockSelection(None, None, space_only=False)
-
         got_block = True
-        block_w_pos_shift = Dir.right
         if block_w_pos not in blocks_map:
             got_block = False
-            for dir_ in Dir:
+            for dir_ in w_dirs:
                 if block_w_pos + dir_ in blocks_map:
-                    block_w_pos_shift = dir_
                     break
             else:
-                # Return early if there's no block at block_w_pos:
-                return BlockSelection(None, None, space_only=True)
+                # Return early if there's no block at or next to block_w_pos:
+                return BlockSelection(None, None)
 
-        block_pos_shift = WVec()
-        if round(w_dir.x) == 1:
-            block_pos_shift.x = BLOCK_BOUND_SHIFTS.min.x
+        ray_origin_shift = WVec()
+        w_dir_horiz, w_dir_vert = w_dirs
+        if w_dir_horiz == Dir.right:
+            ray_origin_shift.x = BLOCK_BOUND_SHIFTS.min.x
         else:
-            block_pos_shift.x = BLOCK_BOUND_SHIFTS.max.x
-        if round(w_dir.y) == 1:
-            block_pos_shift.y = BLOCK_BOUND_SHIFTS.min.y
+            ray_origin_shift.x = BLOCK_BOUND_SHIFTS.max.x
+        if w_dir_vert == Dir.up:
+            ray_origin_shift.y = BLOCK_BOUND_SHIFTS.min.y
         else:
-            block_pos_shift.y = BLOCK_BOUND_SHIFTS.max.y
+            ray_origin_shift.y = BLOCK_BOUND_SHIFTS.max.y
 
         poss_to_check = set()
         for ray_index in range(max_rays):
             poss_to_check.add(
-                block_w_pos + WVec(block_pos_shift.x, ray_index / (max_rays-1))
+                block_w_pos + WVec(ray_origin_shift.x, ray_index / (max_rays-1))
                 )
             poss_to_check.add(
-                block_w_pos + WVec(ray_index / (max_rays-1), block_pos_shift.y)
+                block_w_pos + WVec(ray_index / (max_rays-1), ray_origin_shift.y)
                 )
 
         hits = 0
-        found_ray = False
+        found_path = False
         for pos_to_check in poss_to_check:
             w_vel_iter = pos_to_check - start_w_pos
             w_speed_iter = w_vel_iter.norm()
@@ -161,24 +158,29 @@ class World:
                 hits += 1
                 if hits < 2:  # This is to avoid selecting blocks for which only 1 corner is visible.
                     continue
-                found_ray = True
+                found_path = True
                 break
 
-        if not found_ray:
-            return BlockSelection(None, None, space_only=False)
+        if not found_path:
+            return BlockSelection(None, None)
 
-        if not got_block:
-            return BlockSelection(block_w_pos + block_w_pos_shift, -block_w_pos_shift, space_only=True)
-
+        if got_block:
+            block_w_pos_shifts = [-w_dir_horiz, -w_dir_vert]
+        else:
+            block_w_pos_shifts = [w_dir_vert, w_dir_horiz]
         block_center_rel_w_pos = end_w_pos - block_w_pos - WVec(0.5, 0.5)
-        space_w_pos_shifts = [WVec(0, -w_dir.y), WVec(-w_dir.x, 0)]
-        if -w_dir.x * block_center_rel_w_pos.x > -w_dir.y * block_center_rel_w_pos.y:
-            space_w_pos_shifts.reverse()
-        space_w_pos_shift = space_w_pos_shifts[0]
-        space_w_pos = block_w_pos + space_w_pos_shift
-        if space_w_pos in blocks_map:
-            space_w_pos_shift = space_w_pos_shifts[1]
-        return BlockSelection(block_w_pos, space_w_pos_shift, space_only=False)
+        if -w_dir.y * block_center_rel_w_pos.y > -w_dir.x * block_center_rel_w_pos.x:
+            block_w_pos_shifts.reverse()
+
+        block_w_pos_shift = block_w_pos_shifts[0]
+        if got_block:
+            if block_w_pos + block_w_pos_shift in blocks_map:
+                block_w_pos_shift = block_w_pos_shifts[1]
+            return BlockSelection(block_w_pos, block_w_pos_shift, space_only=False)
+        else:  # got space:
+            if block_w_pos + block_w_pos_shift not in blocks_map:
+                block_w_pos_shift = block_w_pos_shifts[1]
+            return BlockSelection(block_w_pos + block_w_pos_shift, -block_w_pos_shift, space_only=True)
 
     def get_intersected_block_pos_and_space_pos(self, start_w_pos: WVec, end_w_pos: WVec, max_distance, *, substeps=5) -> BlockSelection:
         w_vel = end_w_pos - start_w_pos
@@ -191,21 +193,24 @@ class World:
 
         blocks_map = self._get_blocks_map_around(start_w_pos, c_radius)
 
-        space_w_pos_shifts = [WVec(0, -w_dir.y), WVec(-w_dir.x, 0)]
-        if abs(w_vel.x) > abs(w_vel.y):
-            space_w_pos_shifts.reverse()
-
         for mult in range(max_mult + 1):
             w_pos = floor(start_w_pos + w_vel_step * mult)
             if w_pos in blocks_map:
-                space_w_pos_shift = space_w_pos_shifts[0]
-                space_w_pos = w_pos + space_w_pos_shift
-                if space_w_pos in blocks_map:
-                    space_w_pos_shift = space_w_pos_shifts[1]
-                return BlockSelection(w_pos, space_w_pos_shift, False)
+                break
+        else:
+            # If no block has been intersected up to max_distance:
+            return BlockSelection(None, None)
 
-        # If no block has been intersected up to max_distance:
-        return BlockSelection(None, None, False)
+        w_dir_horiz, w_dir_vert = w_vel.dirs_()
+        block_w_pos_shifts = [-w_dir_horiz, -w_dir_vert]
+        if abs(w_vel.y) > abs(w_vel.x):
+            block_w_pos_shifts.reverse()
+
+        space_only = w_vel_step.norm() * mult > w_speed
+        block_w_pos_shift = block_w_pos_shifts[0]
+        if w_pos + block_w_pos_shift in blocks_map:
+            block_w_pos_shift = block_w_pos_shifts[1]
+        return BlockSelection(w_pos, block_w_pos_shift, space_only=space_only)
 
     # ==== CHECK BOOLEANS ====
 

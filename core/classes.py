@@ -29,7 +29,7 @@ class CBounds(NamedTuple):
 class BlockSelection(NamedTuple):
     block_w_pos: WVec or None
     space_w_pos_shift: WVec or None
-    space_only: bool
+    space_only: bool = False
 
 
 class Result(Enum):
