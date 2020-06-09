@@ -5,14 +5,15 @@ import pygame as pg
 import numpy as np
 
 from core.funcs import w_to_pix_shift, light_level_to_color_int
-from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, C_KEY, CHUNK_PIX_SIZE, C_SKY, LIGHT_MAX_LEVEL, \
-    LIGHT_BLOCK_ATTENUATION, C_BLACK, DEBUG, C_WHITE, WHITE_WORLD, PIX_ORIGIN, CHUNK_BORDERS
+from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_SKY, LIGHT_MAX_LEVEL, \
+    LIGHT_BLOCK_ATTENUATION, C_BLACK, C_WHITE, WHITE_WORLD, PIX_ORIGIN, CHUNK_BORDERS
 from core.classes import WVec, Colliders, Result, Dir
-from world.generation import WorldGenerator, Material
+from world.generation import WorldGenerator
+from item.block import BlockType
 
 
 class Chunk:
-    _empty_block_surf = pg.Surface((BLOCK_PIX_SIZE, BLOCK_PIX_SIZE))
+    _empty_block_surf = pg.Surface(BLOCK_PIX_SIZE)
     _empty_block_surf.fill(C_SKY)
     _GRIDS_SIZE = CHUNK_W_SIZE + 2
 
@@ -113,7 +114,7 @@ class Chunk:
 
     def _block_w_pos_to_pix_shift(self, block_w_pos: WVec):
         w_shift = self._block_w_pos_to_w_shift(block_w_pos)
-        return w_to_pix_shift(w_shift, (BLOCK_PIX_SIZE,) * 2, self._blocks_surf.get_size())
+        return w_to_pix_shift(w_shift, BLOCK_PIX_SIZE, CHUNK_PIX_SIZE)
 
     def get_sky_light_at_w_pos(self, w_pos: WVec):
         index = self.block_w_pos_to_cell_index(floor(w_pos))
@@ -270,7 +271,7 @@ class Chunk:
         Then, update the chunk in consequence.
         """
         block = self.blocks_map[block_w_pos]
-        if block.material == Material.bedrock:
+        if block.block_type == BlockType.bedrock:
             return Result.failure
 
         self.blocks_map.pop(block_w_pos, None)
@@ -279,7 +280,7 @@ class Chunk:
         self._draw_block(block_w_pos, self._empty_block_surf)
         return Result.success
 
-    def req_place_block(self, block_w_pos: WVec, material: Material):
+    def req_place_block(self, block_w_pos: WVec, block_type: BlockType):
         """
         Place block at block_w_pos if the space is free and return result (success or failure).
         Then, update the chunk in consequence.
@@ -288,7 +289,7 @@ class Chunk:
         if block_w_pos in self.blocks_map:
             return Result.failure
 
-        block = self._generator.get_block(material)
+        block = self._generator.get_block(block_type)
         self.blocks_map[block_w_pos] = block
         self._update_is_block_grid()
         self._update_colliders()
@@ -303,5 +304,5 @@ class Chunk:
         """
         blocks_data = {}
         for block_w_pos, block in self.blocks_map.items():
-            blocks_data[str(block_w_pos)] = str(block.material)
+            blocks_data[str(block_w_pos)] = str(block.block_type)
         return {str(self._w_pos): blocks_data}

@@ -7,7 +7,7 @@ import pygame as pg
 from core.classes import WVec, BlockSelection, WBounds, PixVec
 from core.funcs import w_to_pix_shift, pix_to_w_shift, light_level_to_color_int
 from core.constants import BLOCK_PIX_SIZE, PLAYER_S_POS, FULLSCREEN, C_KEY, CAM_FPS, CAM_DEFAULT_SCALE, \
-    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH, ACTION_MAX_DISTANCE, PIX_ORIGIN
+    CAM_SCALE_BOUNDS, DIR_TO_ANGLE, GUI_PATH, ACTION_MAX_DISTANCE, PIX_ORIGIN, HOTBAR_S_POS
 
 
 class Camera:
@@ -69,9 +69,9 @@ class Camera:
         mouse_pix_shift = PixVec(pg.mouse.get_pos())
         mouse_w_shift = pix_to_w_shift(
             mouse_pix_shift,
-            (0, 0),
+            PixVec(),
             self._pix_size,
-            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
+            dest_pivot=self._pix_size * PLAYER_S_POS,
             scale=self._scale,
             )
         mouse_w_pos = mouse_w_shift + self._pos
@@ -123,7 +123,7 @@ class Camera:
             w_shift,
             max_surf_scaled_pix_size,
             self._pix_size,
-            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
+            dest_pivot=self._pix_size * PLAYER_S_POS,
             scale=self._scale
             )
 
@@ -142,8 +142,8 @@ class Camera:
             w_shift,
             surf_scaled_pix_size,
             self._pix_size,
-            source_pivot=(surf_scaled_pix_size.x / 2, 0),
-            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
+            source_pivot=surf_scaled_pix_size * PixVec(0.5, 0.0),
+            dest_pivot=self._pix_size * PLAYER_S_POS,
             scale=self._scale
             )
 
@@ -160,7 +160,7 @@ class Camera:
         self.selected_block_w_pos = selection.block_w_pos
         self.selected_space_w_pos = self.selected_block_w_pos + selection.space_w_pos_shift
 
-        surf_pix_size = (floor(self._scale), floor(self._scale))
+        surf_pix_size = floor(PixVec(self._scale, self._scale))
         if not selection.space_only:
             surf = self._block_selector_surf
         else:
@@ -180,11 +180,14 @@ class Camera:
             w_shift,
             surf_pix_size,
             self._pix_size,
-            source_pivot=(-1, 1),
-            dest_pivot=(self._pix_size.x * PLAYER_S_POS.x, self._pix_size.y * PLAYER_S_POS.y),
+            source_pivot=PixVec(-1, 1),
+            dest_pivot=self._pix_size * PLAYER_S_POS,
             scale=self._scale)
 
         self._screen.blit(self._block_selector_surf_scaled, pix_shift)
+
+    def draw_hotbar(self, surf, pix_shift):
+        self._screen.blit(surf, self._pix_size * (1-HOTBAR_S_POS) - pix_shift)
 
     def draw_debug_info(self):
         fps_surf = self._font.render(f"{self._clock.get_fps():.1f}", True, (255, 255, 255))

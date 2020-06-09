@@ -8,9 +8,9 @@ import pygame as pg
 from core.funcs import w_to_c_vec, w_to_pix_shift, w_to_c_to_w_vec
 from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_DELAY, BLOCK_BOUND_SHIFTS, DEBUG, \
     LIGHT_MAX_RECURSION
-from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir, LoadResult
+from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir, LoadResult, PixVec
 from world.chunk import Chunk
-from world.generation import Material  # Needed for loading.
+from item.block import BlockType
 
 
 class World:
@@ -286,7 +286,7 @@ class World:
 
     def _chunk_w_pos_to_pix_shift(self, chunk_w_pos: WVec):
         max_view_w_shift = chunk_w_pos - self._max_view.min
-        return w_to_pix_shift(max_view_w_shift, CHUNK_PIX_SIZE, self._max_surf.get_size())
+        return w_to_pix_shift(max_view_w_shift, CHUNK_PIX_SIZE, PixVec(self._max_surf.get_size()))
 
     def _draw_max_surf(self):
         self._update_chunks_visible()
@@ -333,7 +333,7 @@ class World:
         self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
         self._break_block(block_w_pos)
 
-    def req_place_block(self, w_pos: WVec, material: Material, player_bounds: WBounds):
+    def req_place_block(self, w_pos: WVec, block_type: BlockType, player_bounds: WBounds):
         """Check whether a block can be placed at w_pos and if so, place it.
         """
         # Case where the block selector hasn't reached a block
@@ -349,7 +349,7 @@ class World:
             return
 
         self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
-        self._place_block(block_w_pos, material)
+        self._place_block(block_w_pos, block_type)
 
     def _break_block(self, block_w_pos: WVec):
         """Request breaking of the block at block_w_pos to the relevant chunk.
@@ -366,8 +366,8 @@ class World:
 
         self._redraw_chunk(chunk_map)
 
-    def _place_block(self, block_w_pos: WVec, material: Material):
-        """Request placing of the block of the given material at block_w_pos to the relevant chunk.
+    def _place_block(self, block_w_pos: WVec, block_type: BlockType):
+        """Request placing of the block of the given block_type at block_w_pos to the relevant chunk.
         Then update the world in consequence.
         """
         chunk_map = self._get_chunk_map_at_w_pos(block_w_pos)
@@ -375,7 +375,7 @@ class World:
             return
 
         chunk_w_pos, chunk = chunk_map
-        result = chunk.req_place_block(block_w_pos, material=material)
+        result = chunk.req_place_block(block_w_pos, block_type=block_type)
         if result == Result.failure:
             return
 
@@ -399,8 +399,8 @@ class World:
         for chunk_w_pos_str, blocks_data_str in data["chunks_data"].items():
             chunk_w_pos = eval(chunk_w_pos_str)
             blocks_map = {}
-            for block_w_pos_str, material_str in blocks_data_str.items():
-                blocks_map[eval(block_w_pos_str)] = eval(material_str)
+            for block_w_pos_str, block_type_str in blocks_data_str.items():
+                blocks_map[eval(block_w_pos_str)] = eval(block_type_str)
             chunks_map[chunk_w_pos] = blocks_map
 
         for chunk_w_pos, blocks_map in sorted(chunks_map.items(), key=lambda x: -x[0][1]):

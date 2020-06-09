@@ -10,9 +10,6 @@ class WVec(Vec): pass
 class CVec(Vec): pass
 
 
-class SVec(Vec): pass
-
-
 class PixVec(Vec): pass
 
 
