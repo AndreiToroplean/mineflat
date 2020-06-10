@@ -16,6 +16,7 @@ class BlockType(Enum):
     gravel = "13"
     oak_log = "17"
     oak_leaves = "18"
+    sandstone = "24"
 
     bedrock = "7"
 

@@ -7,7 +7,7 @@ from core.classes import PixVec, WVec, WBounds, Dir
 # ==== TECHNICAL DIMENSIONS ====
 PLAYER_S_POS = PixVec(0.5, 0.333)
 HOTBAR_S_POS = PixVec(0.5, 0.1)
-HOTBAR_ORIG_PIX_SIZE = PixVec(182, 22)
+HOTBAR_ORIG_PIX_SIZE = PixVec(184, 24)
 HOTBAR_PIX_SIZE = HOTBAR_ORIG_PIX_SIZE * 4
 BLOCK_PIX_SIZE = PixVec(16, 16)  # Should stay equal to block texture size resolution. That is, 16.
 CHUNK_W_SIZE = WVec(8, 8)

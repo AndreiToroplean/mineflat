@@ -280,7 +280,7 @@ class Chunk:
         self._draw_block(block_w_pos, self._empty_block_surf)
         return Result.success
 
-    def req_place_block(self, block_w_pos: WVec, block_type: BlockType):
+    def req_place_block(self, block_w_pos: WVec, block: Block):
         """
         Place block at block_w_pos if the space is free and return result (success or failure).
         Then, update the chunk in consequence.
@@ -289,7 +289,6 @@ class Chunk:
         if block_w_pos in self.blocks_map:
             return Result.failure
 
-        block = Block(block_type)
         self.blocks_map[block_w_pos] = block
         self._update_is_block_grid()
         self._update_colliders()

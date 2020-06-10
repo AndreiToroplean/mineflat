@@ -10,7 +10,7 @@ from core.constants import CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_KEY, ACTION_COOLDOWN_
     LIGHT_MAX_RECURSION
 from core.classes import CBounds, CVec, WVec, Colliders, Result, WBounds, BlockSelection, Dir, LoadResult, PixVec
 from world.chunk import Chunk
-from item.block import BlockType
+from item.block import BlockType, Block
 
 
 class World:
@@ -333,7 +333,7 @@ class World:
         self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
         self._break_block(block_w_pos)
 
-    def req_place_block(self, w_pos: WVec, block_type: BlockType, player_bounds: WBounds):
+    def req_place_block(self, w_pos: WVec, block: Block, player_bounds: WBounds):
         """Check whether a block can be placed at w_pos and if so, place it.
         """
         # Case where the block selector hasn't reached a block
@@ -349,7 +349,7 @@ class World:
             return
 
         self._action_cooldown_remaining = ACTION_COOLDOWN_DELAY
-        self._place_block(block_w_pos, block_type)
+        self._place_block(block_w_pos, block)
 
     def _break_block(self, block_w_pos: WVec):
         """Request breaking of the block at block_w_pos to the relevant chunk.
@@ -366,7 +366,7 @@ class World:
 
         self._redraw_chunk(chunk_map)
 
-    def _place_block(self, block_w_pos: WVec, block_type: BlockType):
+    def _place_block(self, block_w_pos: WVec, block: Block):
         """Request placing of the block of the given block_type at block_w_pos to the relevant chunk.
         Then update the world in consequence.
         """
@@ -375,7 +375,7 @@ class World:
             return
 
         chunk_w_pos, chunk = chunk_map
-        result = chunk.req_place_block(block_w_pos, block_type=block_type)
+        result = chunk.req_place_block(block_w_pos, block=block)
         if result == Result.failure:
             return
 

@@ -22,6 +22,18 @@ class GameAction(Enum):
 
 
 class Game:
+    _control_to_selected_index = {
+        Controls.select_item_0: 0,
+        Controls.select_item_1: 1,
+        Controls.select_item_2: 2,
+        Controls.select_item_3: 3,
+        Controls.select_item_4: 4,
+        Controls.select_item_5: 5,
+        Controls.select_item_6: 6,
+        Controls.select_item_7: 7,
+        Controls.select_item_8: 8,
+        }
+
     def __init__(self):
         pg.init()
         pg.mouse.set_cursor(*CURSOR)
@@ -84,18 +96,23 @@ class Game:
             # Mouse inputs
             mb_pressed = pg.mouse.get_pressed()
 
+            # Select item in hotbar
+            for control in self._control_to_selected_index:
+                if keys_pressed[control]:
+                    self._hotbar.req_select_index(self._control_to_selected_index[control])
+
             # Breaking blocks
             if mb_pressed[Controls.break_block]:
                 self._world.req_break_block(self._camera.selected_block_w_pos)
 
             # Placing blocks
             if mb_pressed[Controls.place_block]:
+                block = self._hotbar.selected_item
                 self._world.req_place_block(
                     self._camera.selected_space_w_pos,
-                    BlockType.dirt,
+                    block,
                     self._main_player.get_bounds()
                     )
-                # TODO: choosing the block_type.
 
             # Applying movements
             self._main_player.move(self._world)
