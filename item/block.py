@@ -28,7 +28,7 @@ class Block:
     def __init__(self, block_type):
         self.block_type = block_type
         self._pix_size = BLOCK_PIX_SIZE
-        self.surf = None
+        self.surf = pg.Surface(self._pix_size)
         self._draw()
 
     def _draw(self):
@@ -37,7 +37,7 @@ class Block:
         else:
             file_name = name
         file_path = os.path.join(TEXTURES_PATH, self._BLOCK_DIR, f"{file_name}.png")
-        self.surf = pg.transform.scale(pg.image.load(file_path), self._pix_size).convert()
+        self.surf = pg.transform.scale(pg.image.load(file_path).convert(), self._pix_size, self.surf)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.block_type})"
