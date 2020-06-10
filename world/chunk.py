@@ -9,7 +9,7 @@ from core.constants import BLOCK_PIX_SIZE, CHUNK_W_SIZE, CHUNK_PIX_SIZE, C_SKY, 
     LIGHT_BLOCK_ATTENUATION, C_BLACK, C_WHITE, WHITE_WORLD, PIX_ORIGIN, CHUNK_BORDERS
 from core.classes import WVec, Colliders, Result, Dir
 from world.generation import WorldGenerator
-from item.block import BlockType
+from item.block import BlockType, Block
 
 
 class Chunk:
@@ -289,7 +289,7 @@ class Chunk:
         if block_w_pos in self.blocks_map:
             return Result.failure
 
-        block = self._generator.get_block(block_type)
+        block = Block(block_type)
         self.blocks_map[block_w_pos] = block
         self._update_is_block_grid()
         self._update_colliders()

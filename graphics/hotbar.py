@@ -25,9 +25,9 @@ class Hotbar:
 
         self._empty_surf = pg.Surface(HOTBAR_ORIG_PIX_SIZE, flags=pg.SRCALPHA)
         self._empty_surf.blit(widget_surf, PIX_ORIGIN)
+
         self._pix_size = HOTBAR_PIX_SIZE
-        self._empty_surf = pg.transform.scale(self._empty_surf, self._pix_size)
-        self._surf = self._empty_surf.copy()
+        self._surf = pg.Surface(self._pix_size, flags=pg.SRCALPHA)
 
         self._update_surf()
 
@@ -46,6 +46,7 @@ class Hotbar:
 
     def _update_surf(self):
         ...
+        self._empty_surf = pg.transform.scale(self._empty_surf, HOTBAR_PIX_SIZE)
 
     def draw(self, camera):
         camera.draw_hotbar(self._surf, self._pix_size/2)

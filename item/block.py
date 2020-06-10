@@ -25,6 +25,18 @@ class Block:
 
     _special_file_names = {"grass": "grass_block_side"}
 
+    _blocks = {}
+
+    def __new__(cls, block_type, *args, **kwargs):
+        try:
+            return cls._blocks[block_type]
+        except KeyError:
+            pass
+
+        new_block = super(Block, cls).__new__(cls, *args, **kwargs)
+        cls._blocks[block_type] = new_block
+        return new_block
+
     def __init__(self, block_type):
         self.block_type = block_type
         self._pix_size = BLOCK_PIX_SIZE

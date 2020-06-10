@@ -13,19 +13,8 @@ class WorldGenerator:
     WORLD_HEIGHT_FREQ = 50
     CAVES_PROBABILITY = -0.25
 
-    _block_types = {}
-
     def __init__(self, seed):
         self.seed = seed
-
-    def get_block(self, block_type):
-        try:
-            block = self._block_types[block_type]
-        except KeyError:
-            block = Block(block_type)
-            self._block_types[block_type] = block
-
-        return block
 
     def _choose_block_type_at_pos(self, block_w_pos):
         # Terrain height
@@ -62,11 +51,11 @@ class WorldGenerator:
                 block_type = self._choose_block_type_at_pos(block_w_pos)
                 if block_type is None:
                     continue
-                blocks_map[block_w_pos] = self.get_block(block_type)
+                blocks_map[block_w_pos] = Block(block_type)
         return blocks_map
 
     def load_chunk_blocks(self, blocks_data):
         blocks_map = {}
         for block_w_pos, block_type in blocks_data.items():
-            blocks_map[block_w_pos] = self.get_block(block_type)
+            blocks_map[block_w_pos] = Block(block_type)
         return blocks_map
