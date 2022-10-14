@@ -41,13 +41,13 @@ PLAYER_POS_MIN_HEIGHT = WORLD_HEIGHT_BOUNDS.x - 50
 # ==== GAME PARAMS ====
 DEBUG = False
 
-FULLSCREEN = False
-WHITE_WORLD = False
-CHUNK_BORDERS = False
-SAVE = True
-LOAD = True
-
-if not DEBUG:
+if DEBUG:
+    FULLSCREEN = False
+    WHITE_WORLD = False
+    CHUNK_BORDERS = False
+    SAVE = True
+    LOAD = True
+else:
     FULLSCREEN = True
     WHITE_WORLD = False
     CHUNK_BORDERS = False
