@@ -11,6 +11,7 @@ from graphics.hotbar import Hotbar
 from item.block import BlockType
 from graphics.camera import Camera
 from player.player import Player
+from utils.install_utils import install_textures
 from world.world import World
 
 
@@ -35,6 +36,8 @@ class Game:
         }
 
     def __init__(self):
+        install_textures()
+
         pg.init()
         pg.mouse.set_cursor(*CURSOR)
 
