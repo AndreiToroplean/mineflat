@@ -11,7 +11,7 @@ from graphics.hotbar import Hotbar
 from item.block import BlockType
 from graphics.camera import Camera
 from player.player import Player
-from utils.install_utils import install_textures
+from utils.install_utils import install_textures, TextureInstallationError
 from world.world import World
 
 
@@ -36,7 +36,13 @@ class Game:
         }
 
     def __init__(self):
-        install_textures()
+        try:
+            install_textures()
+        except TextureInstallationError as e:
+            raise TextureInstallationError(
+                "Could not install textures automatically.\n"
+                "Check out `resources/README.md` for more info on installing them manually."
+            ) from e
 
         pg.init()
         pg.mouse.set_cursor(*CURSOR)
